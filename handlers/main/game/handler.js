@@ -1,0 +1,603 @@
+import axios from 'axios'
+import db from '../../../db.js'
+import {getRedisValue, setRedisValue} from '../../../redis.js'
+import logger from '../../../logger.js'
+
+async function processDevelopers(gameDataForDB, idGame, client) {
+    let developers = [];
+
+    for (let i = 0; i < gameDataForDB.developers.length; i++) {
+        const findDeveloperInDB = await client.query(
+            'SELECT * FROM developers ' +
+            'WHERE name = $1',
+            [gameDataForDB.developers[i].name]
+        );
+
+        if (findDeveloperInDB.rows.length > 0) {
+            logger.info(`Разработчик ${gameDataForDB.developers[i].name} есть в БД, связываем его с игрой`);
+            const addDeveloperToGame = await client.query(
+                'INSERT INTO developers_to_game (id_game, id_developer) VALUES ($1, $2) ' +
+                'RETURNING *',
+                [idGame, findDeveloperInDB.rows[0].id_developer]
+            );
+
+            if (i === gameDataForDB.developers.length - 1) {
+                const getDevelopersByGame = await client.query(
+                    'SELECT developers.name, developers.logo, developers.id_developer FROM developers ' +
+                    'INNER JOIN public.developers_to_game dtg ' +
+                    'ON developers.id_developer = dtg.id_developer ' +
+                    'WHERE dtg.id_game = $1', [idGame]
+                );
+
+                developers.push(getDevelopersByGame.rows);
+            }
+        } else {
+            logger.info('Не нашли разработчика в БД, создаем запись');
+            const createDeveloper = await client.query(
+                'INSERT INTO developers (name, logo) VALUES ($1, null) ' +
+                'RETURNING *',
+                [gameDataForDB.developers[i].name]
+            );
+
+            developers.push(createDeveloper.rows[0]);
+
+            if (i === gameDataForDB.developers.length - 1) {
+                const getDevelopersByGame = await client.query(
+                    'SELECT developers.name, developers.logo, developers.id_developer FROM developers ' +
+                    'INNER JOIN public.developers_to_game dtg ' +
+                    'ON developers.id_developer = dtg.id_developer ' +
+                    'WHERE dtg.id_game = $1', [idGame]
+                );
+
+                developers.push(getDevelopersByGame.rows);
+            }
+
+            logger.info(`Связываем разработчика ${gameDataForDB.developers[i].name} с игрой`);
+            const addDeveloperToGame = await client.query(
+                'INSERT INTO developers_to_game (id_game, id_developer) VALUES ($1, $2)',
+                [idGame, createDeveloper.rows[0].id_developer]
+            );
+        }
+    }
+
+    return developers;
+}
+
+class GameHandler {
+    async getGameInfo(req, res) {
+        const { id } = req.params;
+        let dataForRedis = {};
+
+        const client = await db.connect();
+
+        try {
+            let gameInfo = await getRedisValue(`game-info:${id}`);
+
+            if (gameInfo !== null) {
+                res.status(200).json({ message: 'Получили данные об игре', game: JSON.parse(gameInfo) });
+            }
+            else {
+                await client.query('BEGIN');
+
+                const getGameInfo = await client.query(
+                    'SELECT * FROM games ' +
+                    'WHERE id_game = $1',
+                    [id]
+                );
+
+                if (getGameInfo.rows.length > 0) {
+                    const getGenresByGame = await client.query(
+                        'SELECT genres.name, genres.id_genre FROM genres ' +
+                        'INNER JOIN public.genre_to_game gtg ' +
+                        'ON genres.id_genre = gtg.id_genre ' +
+                        'WHERE gtg.id_game = $1',
+                        [id]
+                    );
+
+                    const getGameScore = await client.query(
+                        'SELECT AVG(score) as game_score FROM scores ' +
+                        'WHERE id_game = $1',
+                        [id]
+                    );
+
+                    if (getGameInfo.rows[0].description === null) {
+                        logger.info(`Отправляем запрос в RAWG для получение описания для игры ${getGameInfo.rows[0].name}`);
+                        const getInfoAboutGame = await axios.get(`https://api.rawg.io/api/games/${getGameInfo.rows[0].id_from_rawg}?key=${process.env.RAWG_API}&search_precise=true`);
+
+                        let gameDataForDB = {};
+                        gameDataForDB.description = getInfoAboutGame.data.description_raw;
+                        gameDataForDB.developers = getInfoAboutGame.data.publishers;
+
+                        logger.info('Получили данные с RAWG и создали JSON объект');
+                        logger.info(JSON.stringify(gameDataForDB));
+
+                        const updateGameDescription = await client.query(
+                            'UPDATE games SET description = $1 ' +
+                            'WHERE id_game = $2 ' +
+                            'RETURNING *',
+                            [gameDataForDB.description, id]
+                        );
+
+                        dataForRedis = { ...updateGameDescription.rows[0] };
+
+                        if (gameDataForDB.developers.length > 0) {
+                            logger.info('Проверяем добавлены ли разработчики в нашу базу');
+                            let developers = [];
+
+                            for (let i = 0; i < gameDataForDB.developers.length; i++) {
+                                const findDeveloperInDB = await client.query(
+                                    'SELECT * FROM developers ' +
+                                    'WHERE name = $1',
+                                    [gameDataForDB.developers[i].name]
+                                );
+
+                                if (findDeveloperInDB.rows.length > 0) {
+                                    logger.info(`Разработчик ${gameDataForDB.developers[i].name} есть в БД связываем его с игрой`);
+                                    const addDeveloperToGame = await client.query(
+                                        'INSERT INTO developers_to_game (id_game, id_developer) VALUES ($1, $2) ' +
+                                        'RETURNING *',
+                                        [id, findDeveloperInDB.rows[0].id_developer]
+                                    );
+
+                                    if (i === gameDataForDB.developers.length - 1) {
+                                        const getDevelopersByGame = await client.query(
+                                            'SELECT developers.name, developers.logo, developers.id_developer FROM developers ' +
+                                            'INNER JOIN public.developers_to_game dtg ' +
+                                            'ON developers.id_developer = dtg.id_developer ' +
+                                            'WHERE dtg.id_game = $1', [id]
+                                        );
+
+                                        developers.push(getDevelopersByGame.rows);
+                                        dataForRedis.developers = developers;
+                                    }
+                                }
+                                else {
+                                    logger.info('Не нашли разработчика в БД создаем запись');
+                                    const createDeveloper = await client.query(
+                                        'INSERT INTO developers (name, logo) VALUES ($1, null) ' +
+                                        'RETURNING *',
+                                        [gameDataForDB.developers[i].name]
+                                    );
+
+                                    developers.push(createDeveloper.rows[0]);
+
+                                    if (i === gameDataForDB.developers.length - 1) {
+                                        dataForRedis.developers = developers;
+                                    }
+
+                                    logger.info(`Связываем разработчика ${gameDataForDB.developers[i].name} с игрой`);
+                                    const addDeveloperToGame = await client.query(
+                                        'INSERT INTO developers_to_game (id_game, id_developer) VALUES ($1, $2)',
+                                        [id, createDeveloper.rows[0].id_developer]
+                                    );
+                                }
+                            }
+
+                        }
+                        else {
+                            logger.info('С RAWG не получили никаких разработчиков');
+                            dataForRedis.developers = [];
+                        }
+
+                        dataForRedis.genres = getGenresByGame.rows;
+                        dataForRedis.score = parseFloat(getGameScore.rows[0].game_score).toFixed(2);
+
+                        logger.info('Собрали JSON объект для клиента');
+
+                        await setRedisValue(`game-info:${id}`, JSON.stringify(dataForRedis));
+                        res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis });
+                    }
+                    else {
+                        logger.info('Все данные присутствуют отправляем');
+
+                        dataForRedis = { ...getGameInfo.rows[0] };
+
+                        const getDevelopersByGame = await client.query(
+                            'SELECT developers.name, developers.logo, developers.id_developer FROM developers ' +
+                            'INNER JOIN public.developers_to_game dtg ' +
+                            'ON developers.id_developer = dtg.id_developer ' +
+                            'WHERE dtg.id_game = $1', [id]
+                        );
+
+                        dataForRedis.developers = getDevelopersByGame.rows;
+                        dataForRedis.genres = getGenresByGame.rows;
+                        dataForRedis.score = getGameScore.rows[0].game_score !== null ? parseFloat(getGameScore.rows[0].game_score).toFixed(2) : null;
+
+                        logger.info('Собрали JSON объект для клиента');
+
+                        await setRedisValue(`game-info:${id}`, JSON.stringify(dataForRedis));
+                        res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis });
+                    }
+                }
+                else {
+                    logger.info('Не нашли игру по основному ID. Проверяем по ID RAWG');
+                    const getInfoAboutGame = await axios.get(`https://api.rawg.io/api/games/${id}?key=${process.env.RAWG_API}&search_precise=true`);
+
+                    let gameDataForDB = {};
+                    let idGame;
+                    let isFoundByIdRAWG = false;
+
+                    gameDataForDB.developers = getInfoAboutGame.data.developers;
+                    gameDataForDB.genres = getInfoAboutGame.data.genres;
+
+                    if (getInfoAboutGame.data) {
+                        const checkIdByRawg = await client.query(
+                            'SELECT * FROM games ' +
+                            'WHERE id_from_rawg = $1',
+                            [getInfoAboutGame.data.id]
+                        );
+
+                        if (checkIdByRawg.rows.length > 0) {
+                            logger.info(`Игра есть в базе нашли по ID RAWG: ${id}`);
+                            idGame = checkIdByRawg.rows[0].id_game;
+
+                            dataForRedis = { ...checkIdByRawg.rows[0] };
+
+                            const getGameScore = await client.query(
+                                'SELECT AVG(score) as game_score FROM scores ' +
+                                'WHERE id_game = $1',
+                                [idGame]
+                            );
+
+                            dataForRedis.score = parseFloat(getGameScore.rows[0].game_score).toFixed(2);
+
+
+                            isFoundByIdRAWG = true;
+                        }
+                        else {
+                            logger.info('Добавляем игру в БД');
+
+                            gameDataForDB.name = getInfoAboutGame.data.name_original;
+                            gameDataForDB.main_picture = getInfoAboutGame.data.background_image;
+                            gameDataForDB.description = getInfoAboutGame.data.description;
+                            gameDataForDB.release_date = getInfoAboutGame.data.released;
+                            gameDataForDB.id_from_rawg = getInfoAboutGame.data.id;
+
+                            const addGameToDB = await client.query(
+                                'INSERT INTO games (name, main_picture, description, release_date, id_from_rawg) ' +
+                                'VALUES ($1, $2, $3, $4, $5) ' +
+                                'RETURNING *',
+                                [
+                                    gameDataForDB.name,
+                                    gameDataForDB.main_picture,
+                                    gameDataForDB.description,
+                                    gameDataForDB.release_date,
+                                    gameDataForDB.id_from_rawg
+                                ]
+                            );
+                            //todo: пока не работает починить
+                            // await deleteKeysWithPattern(`*page-released-date*`);
+
+                            idGame = addGameToDB.rows[0].id_game;
+
+                            dataForRedis = { ...addGameToDB.rows };
+
+                            dataForRedis.score = null;
+                        }
+
+                        if (gameDataForDB.genres.length > 0) {
+                            if (isFoundByIdRAWG !== true) {
+                                logger.info('Связываем жанры с игрой');
+                                for (let i = 0; i < gameDataForDB.genres.length; i++) {
+                                    const getGenreFromDB = await client.query(
+                                        'SELECT * FROM genres ' +
+                                        'WHERE name = $1',
+                                        [gameDataForDB.genres[i].name]
+                                    );
+
+                                    const addGenreToGame = await client.query(
+                                        'INSERT INTO genre_to_game (id_game, id_genre) VALUES ($1, $2)',
+                                        [idGame, getGenreFromDB.rows[0].id_genre]
+                                    );
+                                }
+                            }
+
+                            const getGenresByGame = await client.query(
+                                'SELECT genres.name, genres.id_genre FROM genres ' +
+                                'INNER JOIN public.genre_to_game gtg ' +
+                                'ON genres.id_genre = gtg.id_genre ' +
+                                'WHERE gtg.id_game = $1',
+                                [idGame]
+                            );
+
+                            dataForRedis.genres = getGenresByGame.rows;
+                        }
+
+                        if (gameDataForDB.developers.length > 0) {
+                            logger.info('Проверяем добавлены ли разработчики в нашу базу');
+                            let developers = [];
+
+                            if (isFoundByIdRAWG === true) {
+                                const getDevelopersByGame = await client.query(
+                                    'SELECT developers.name, developers.logo, developers.id_developer FROM developers ' +
+                                    'INNER JOIN public.developers_to_game dtg ' +
+                                    'ON developers.id_developer = dtg.id_developer ' +
+                                    'WHERE dtg.id_game = $1', [idGame]
+                                );
+
+                                if (getDevelopersByGame.rows.length > 0) {
+                                    developers.push(getDevelopersByGame.rows);
+                                    dataForRedis.developers = developers;
+                                }
+                                else {
+                                    const developers = await processDevelopers(gameDataForDB, idGame, client);
+                                    dataForRedis.developers = developers;
+                                }
+                            }
+                            else {
+                                const developers = await processDevelopers(gameDataForDB, idGame, client);
+                                dataForRedis.developers = developers;
+                            }
+                        }
+                        else {
+                            logger.info('С RAWG не получили никаких разработчиков');
+                            dataForRedis.developers = [];
+                        }
+
+                        logger.info('Собрали JSON объект для клиента');
+
+                        await setRedisValue(`game-info:${idGame}`, JSON.stringify(dataForRedis));
+                        res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis });
+
+                    }
+                    else {
+                        res.status(404).json({ message: 'Данной игры не было найдено' });
+                    }
+                }
+
+                await client.query('COMMIT');
+            }
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error('Ошибка получение информации игры:', e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
+    async getGamesByReleaseDate(req, res) {
+        const { page = 1 } = req.query;
+        const limit = 20
+        const offset = (page - 1) * limit;
+
+        const client = await db.connect();
+
+        try {
+            let pageInfo = await getRedisValue(`page-released-date:${page}`);
+
+            if (pageInfo !== null) {
+                pageInfo = JSON.parse(pageInfo);
+
+                const response = {
+                    message: pageInfo.message,
+                    data: pageInfo.data,
+                    pagination: pageInfo.pagination
+                };
+
+                res.status(200).json(response);
+            }
+            else {
+
+                await client.query('BEGIN');
+
+                const { rows } = await client.query(
+                    'SELECT id_game, name, main_picture, release_date, id_from_rawg FROM games ' +
+                    'ORDER BY release_date DESC LIMIT $1 OFFSET $2',
+                    [limit, offset]
+                );
+
+                if (rows.length > 0) {
+                    logger.info('Добавляем ключ, что игра не из RAWG и данные для игр на главной странице');
+
+                    for (const row of rows) {
+                        const getGenresByGame = await client.query(
+                            'SELECT genres.name FROM genres ' +
+                            'INNER JOIN public.genre_to_game gtg ' +
+                            'ON genres.id_genre = gtg.id_genre ' +
+                            'WHERE gtg.id_game = $1',
+                            [row.id_game]
+                        );
+
+                        const getGameScore = await client.query(
+                            'SELECT AVG(score) as game_score FROM scores ' +
+                            'WHERE id_game = $1',
+                            [row.id_game]
+                        );
+
+                        const getDevelopersByGame = await client.query(
+                            'SELECT developers.name FROM developers ' +
+                            'INNER JOIN public.developers_to_game dtg ' +
+                            'ON developers.id_developer = dtg.id_developer ' +
+                            'WHERE dtg.id_game = $1',
+                            [row.id_game]
+                        );
+
+                        row.genres = getGenresByGame.rows;
+                        row.score = getGameScore.rows[0].game_score;
+                        row.developers = getDevelopersByGame.rows;
+                        row.isRAWG = false;
+                    }
+                }
+                else {
+                    logger.info('Игры из базы закончились');
+                }
+
+                logger.info('Теперь получаем игры с RAWG');
+                const getGames = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&ordering=released&search_precise=true&page=${page}&page_size=${limit}`);
+
+                let rowsFromRAWG = [];
+
+                for (const value of getGames.data.results) {
+                    const isNameUnique = rows.every(row => row.name !== value.name);
+                    if (isNameUnique) {
+                        let rawgJSON = {};
+                        rawgJSON.name = value.name;
+                        rawgJSON.main_picture = value.background_image;
+                        rawgJSON.release_date = value.released;
+                        rawgJSON.id_from_rawg = value.id;
+                        rawgJSON.isRAWG = true;
+
+                        rowsFromRAWG.push(rawgJSON);
+                    }
+                }
+
+
+                rowsFromRAWG.push(...rows);
+                rowsFromRAWG.sort((a, b) => b.release_date - a.release_date);
+
+                const totalCount = getGames.data.count
+                const totalPages = Math.ceil(totalCount / limit);
+
+                let pageForRedis = JSON.stringify({
+                    message: 'Получили данные',
+                    data: rowsFromRAWG,
+                    pagination: {
+                        total: parseInt(totalCount),
+                        totalPages,
+                        currentPage: parseInt(page),
+                        limit: parseInt(limit)
+                    }
+                });
+
+                await setRedisValue(`page-released-date:${page}`, pageForRedis);
+
+                res.status(200).json(
+                    {
+                        message: 'Получили данные',
+                        data: rowsFromRAWG,
+                        pagination: {
+                            total: parseInt(totalCount),
+                            totalPages,
+                            currentPage: parseInt(page),
+                            limit: parseInt(limit)
+                        }
+                    }
+                );
+
+                await client.query('COMMIT');
+            }
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error('Ошибка получения страницы:', e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
+    async searchGameByName(req, res) {
+        const { name } = req.query;
+
+        const client = await db.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            const getGamesByName = await client.query(
+                'SELECT name, main_picture, release_date, id_from_rawg FROM games ' +
+                'WHERE LOWER(name) LIKE $1',
+                [`%${name}%`]
+            );
+
+            if (getGamesByName.rows.length < 15) {
+                logger.info('Данных по поиску с нашей базы не хватило добавляем еще из RAWG');
+                let rowsFromRAWG = [];
+                const getGamesBySearch = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&search=${name}&search_precise=true`);
+
+                for (const value of getGamesBySearch.data.results) {
+                    const isNameUnique = getGamesByName.rows.every(row => row.name !== value.name);
+                    if (isNameUnique) {
+                        let rawgJSON = {};
+                        rawgJSON.name = value.name;
+                        rawgJSON.main_picture = value.background_image;
+                        rawgJSON.release_date = value.released;
+                        rawgJSON.id_from_rawg = value.id;
+                        rawgJSON.isRAWG = true;
+
+                        rowsFromRAWG.push(rawgJSON);
+                    }
+                }
+
+                rowsFromRAWG.length = 15 - getGamesByName.rows.length;
+                rowsFromRAWG.push(...getGamesByName.rows);
+
+                res.status(200).json({ message: 'Получили данные по поиску', data: rowsFromRAWG});
+            }
+            else {
+                for (const row of getGamesByName.rows) {
+                    row.isRAWG = false;
+                }
+                res.status(200).json({ message: 'Получили данные по поиску', data: getGamesByName.rows });
+            }
+
+            await client.query('COMMIT');
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error('Ошибка поиска игры:', e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
+    async getFeedbacksByGame(req, res) {
+        const { id } = req.params;
+        const client = await db.connect();
+
+        try {
+            const getFeedbackByRedis = await getRedisValue(`feedback-to-game:${id}`);
+            if (getFeedbackByRedis !== null) {
+                res.status(200).json({ message: 'Получили отзывы по игре', data: JSON.parse(getFeedbackByRedis) });
+            }
+            else {
+                await client.query('BEGIN');
+
+                const getFeedbacks = await client.query(
+                    'SELECT id_feedback, id_user, description FROM feedbacks ' +
+                    'WHERE id_game = $1',
+                    [id]
+                );
+
+                if (getFeedbacks.rows.length) {
+                    for (const feedback of getFeedbacks.rows) {
+                        const getNegativeScore = await client.query(
+                            'SELECT COUNT(score) AS negative FROM feedback_score ' +
+                            'WHERE id_feedback = $1 AND score = false',
+                            [feedback.id_feedback]
+                        );
+
+                        const getPositiveScore = await client.query(
+                            'SELECT COUNT(score) AS positive FROM feedback_score ' +
+                            'WHERE id_feedback = $1 AND score = true',
+                            [feedback.id_feedback]
+                        );
+
+                        feedback.feedback_score = getPositiveScore.rows[0].positive - getNegativeScore.rows[0].negative;
+                    }
+
+                    await setRedisValue(`feedback-to-game:${id}`, JSON.stringify(getFeedbacks.rows));
+                    res.status(200).json({ message: 'Получили отзывы по игре', data: getFeedbacks.rows });
+                }
+                else {
+                    res.status(200).json({ message: 'Отзывов по игре не было найдено' });
+                }
+
+                await client.query('COMMIT');
+            }
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error('Ошибка получения отзывов об игре:', e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
+}
+
+export default new GameHandler();

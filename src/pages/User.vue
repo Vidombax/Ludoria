@@ -1,0 +1,263 @@
+<script setup>
+  import { useRoute } from 'vue-router'
+  import { onMounted, ref } from 'vue'
+
+  import api from '@/api/api.js'
+  import {ElNotification} from "element-plus";
+  import Friend from "@/components/user/Friend.vue";
+
+  const { getUserInfo } = api;
+
+  const route = useRoute();
+
+  const id = ref(route.params.id);
+  const token = localStorage.getItem('token');
+
+  const userData = ref({
+    token: token,
+    id: id.value,
+  });
+
+  const userDataForSettings = ref({});
+
+  const getUser = async () => {
+    try {
+      const response = await getUserInfo(userData.value);
+      if (response) {
+        userData.value.name = response.data.name;
+
+        if (response.data.gender === true) {
+          userData.value.gender = 'муж.';
+        }
+        else if (response.data.gender === false) {
+          userData.value.gender = 'жен.';
+        }
+        else {
+          userData.value.gender = '';
+        }
+
+        userData.value.age = response.data.age;
+        userData.value.photo = response.data.photo;
+        userData.value.email_user = response.data.email_user;
+
+        userDataForSettings.value = { ...userData.value }
+      }
+    }
+    catch (e) {
+      if (e.response.data.message !== 'Invalid or expired token.') {
+        console.error('Ошибка при выполнении запроса:', e);
+        ElNotification({
+          message: e.response.data.message,
+          type: 'error',
+        });
+      }
+      else {
+        localStorage.clear();
+        location.replace('/');
+      }
+    }
+  }
+
+  const isModalSettingsClosed = ref(true);
+  let settingsDiv;
+  const activitySettingsModal = () => {
+    if (isModalSettingsClosed.value === true) {
+      isModalSettingsClosed.value = false;
+
+      settingsDiv.style.opacity = 1;
+      settingsDiv.style.left = '0px';
+    }
+    else {
+      isModalSettingsClosed.value = true;
+
+      settingsDiv.style.opacity = 0;
+      settingsDiv.style.left = '-100px';
+    }
+  }
+
+  const genders = [
+    {
+      value: true,
+      label: 'Мужской',
+    },
+    {
+      value: false,
+      label: 'Женский',
+    },
+    {
+      value: null,
+      label: '',
+    },
+  ]
+
+  onMounted(async () => {
+    await getUser();
+    settingsDiv = document.getElementsByClassName('settings')[0];
+  });
+</script>
+
+<template>
+  <div class="settings">
+    <p class="h">Настройки профиля</p>
+    <el-form :label-width="auto" style="max-width: 600px">
+      <el-form-item
+          label="Электронная почта"
+          label-position="top"
+      >
+        <el-input v-model="userDataForSettings.email_user" />
+      </el-form-item>
+      <el-form-item
+          label="Пароль"
+          label-position="top"
+      >
+        <el-input v-model="userDataForSettings.password_user"
+                  type="password"
+                  show-password />
+      </el-form-item>
+      <el-form-item
+          label="Имя профиля"
+          label-position="top"
+      >
+        <el-input v-model="userDataForSettings.name" />
+      </el-form-item>
+      <el-form-item
+          label="Фото профиля"
+          label-position="top"
+      >
+        <el-input />
+      </el-form-item>
+      <el-form-item
+          label="Возраст"
+          label-position="top"
+      >
+        <el-input v-model="userDataForSettings.age" />
+      </el-form-item>
+      <el-form-item
+          label="Пол"
+          label-position="top"
+      >
+        <el-select
+            v-model="userDataForSettings.gender"
+            placeholder="Не определен"
+            style="width: 240px"
+        >
+          <el-option
+              v-for="item in genders"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item>
+        <el-button style="width: 230px;">Сохранить</el-button>
+      </el-form-item>
+    </el-form>
+  </div>
+  <div class="user">
+    <div class="user_photo">
+      <img :src="userData.photo" alt="user photo" width="250px" height="250px">
+    </div>
+    <div class="user_info">
+      <div class="bio">
+        <p class="h">{{ userData.name }}</p>
+        <div class="bio_text">
+          <span v-if="userData.gender !== ''">{{ userData.gender }} *</span>
+          <span>{{ userData.age }} лет  *</span>
+          <el-button v-if="isModalSettingsClosed" @click="activitySettingsModal">Ред.</el-button>
+          <el-button v-else @click="activitySettingsModal">Закрыть</el-button>
+        </div>
+      </div>
+      <div class="games-list">
+        <p class="h">Список игр</p>
+        <div>
+<!--    todo: сделать круговую диаграмму с кол-во игор      -->
+        </div>
+      </div>
+      <div class="comments">
+        <p>Комментарии: <a href="/comments">1 комментарий</a></p>
+      </div>
+    </div>
+    <div class="friends">
+      <a href=""><p class="h">Друзья</p></a>
+      <div class="items">
+        <Friend />
+        <Friend />
+        <Friend />
+      </div>
+    </div>
+    <div class="subscribes">
+      <a href=""><p class="h">Подписки</p></a>
+      <div class="items">
+        <a href="/subscribes">Разработчики</a>
+        <a href="/subscribes">Игры</a>
+        <a href="/subscribes">Франшизы</a>
+      </div>
+    </div>
+    <div class="users_posts">
+      <p class="h">Посты пользователя</p>
+      <div class="posts">
+
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+  .user {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    justify-items: center;
+    align-items: center;
+    gap: 8px;
+  }
+  .users_posts {
+    grid-column: span 2 / span 2;
+  }
+  .user_info {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .bio_text span {
+    margin-right: 0.5rem;
+  }
+  .h {
+    font-size: larger;
+    font-weight: 600;
+  }
+  .friends,
+  .friends .items {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .subscribes,
+  .subscribes .items {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .settings {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 24px;
+    transition: .5s linear;
+    position: absolute;
+    left: -100px;
+    opacity: 0;
+    padding: 50px;
+    background-color: #e6e6e7;
+    border-bottom-right-radius: 12px;
+    border-top-right-radius: 12px;
+  }
+</style>
