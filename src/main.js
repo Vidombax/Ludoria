@@ -11,6 +11,7 @@ import { createPinia } from 'pinia'
 import Index from '@/pages/Index.vue'
 import Login from '@/pages/Login.vue'
 import User from '@/pages/User.vue'
+import Game from '@/pages/Game.vue'
 
 const pinia = createPinia();
 const app = createApp(App);
@@ -19,6 +20,7 @@ const routes = [
     { path: '/', name: 'Index', component: Index},
     { path: '/login', name: 'Login', component: Login},
     { path: '/user/:id', name: 'User', component: User},
+    { path: '/game/:id', name: 'Game', component: Game},
 ];
 
 const router = createRouter({
