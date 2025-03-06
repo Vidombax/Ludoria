@@ -4,13 +4,15 @@ import { createApp } from 'vue'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import App from './App.vue'
-import { createRouter, createWebHistory } from "vue-router"
+import { createRouter, createWebHistory } from 'vue-router'
 import VueTheMask from 'vue-the-mask'
+import { createPinia } from 'pinia'
 
 import Index from '@/pages/Index.vue'
 import Login from '@/pages/Login.vue'
 import User from '@/pages/User.vue'
 
+const pinia = createPinia();
 const app = createApp(App);
 
 const routes = [
@@ -27,4 +29,5 @@ const router = createRouter({
 app.use(router);
 app.use(VueTheMask);
 app.use(ElementPlus);
+app.use(pinia);
 app.mount('#app');

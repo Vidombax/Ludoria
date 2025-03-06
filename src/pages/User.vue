@@ -3,10 +3,13 @@
   import { onMounted, ref } from 'vue'
 
   import api from '@/api/api.js'
-  import {ElNotification} from "element-plus";
-  import Friend from "@/components/user/Friend.vue";
+  import { useUserStore } from '@/stores/user/store.js'
+  import { ElNotification } from 'element-plus'
+  import { genders } from '../../services/constants.js'
+  import Friend from '@/components/user/Friend.vue'
 
-  const { getUserInfo } = api;
+  const { getUserInfo, updateUser, updateUserPhoto } = api;
+  const userStore = useUserStore();
 
   const route = useRoute();
 
@@ -58,6 +61,57 @@
     }
   }
 
+  const fileInput = ref(null);
+  const selectedFile = ref(null);
+
+  const triggerFileInput = () => {
+    fileInput.value.click();
+  }
+
+  const handleFileChange = async () => {
+    const files = fileInput.value.files;
+    if (files && files.length > 0) {
+      if (files[0].size < 5 * 1024 * 1024) {
+        selectedFile.value = files[0];
+
+        await uploadPhoto();
+      }
+      else {
+        ElNotification({
+          message: 'Файл не прошел проверку! Размер файла должен быть меньше 5 МБ',
+          type: 'error',
+        });
+      }
+    }
+  }
+
+  const uploadPhoto = async () => {
+    if (!selectedFile.value) {
+      ElNotification({
+        message: 'Файл не выбран',
+        type: 'error',
+      });
+
+      return;
+    }
+
+    try {
+      const response = await updateUserPhoto({
+        id: id.value,
+        file: selectedFile.value,
+      });
+
+      location.reload();
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.response.data.message,
+        type: 'error',
+      });
+    }
+  }
+
   const isModalSettingsClosed = ref(true);
   let settingsDiv;
   const activitySettingsModal = () => {
@@ -75,21 +129,6 @@
     }
   }
 
-  const genders = [
-    {
-      value: true,
-      label: 'Мужской',
-    },
-    {
-      value: false,
-      label: 'Женский',
-    },
-    {
-      value: null,
-      label: '',
-    },
-  ]
-
   onMounted(async () => {
     await getUser();
     settingsDiv = document.getElementsByClassName('settings')[0];
@@ -99,7 +138,7 @@
 <template>
   <div class="settings">
     <p class="h">Настройки профиля</p>
-    <el-form :label-width="auto" style="max-width: 600px">
+    <el-form style="max-width: 600px">
       <el-form-item
           label="Электронная почта"
           label-position="top"
@@ -124,7 +163,15 @@
           label="Фото профиля"
           label-position="top"
       >
-        <el-input />
+        <input
+            type="file"
+            id="fileInput"
+            @change="handleFileChange"
+            ref="fileInput"
+            accept=".jpg, .png, .jpeg"
+            style="opacity: 0; position: absolute; z-index: 1;"
+        />
+        <el-button @click="triggerFileInput" style="z-index: 1000;">Выбрать файл</el-button>
       </el-form-item>
       <el-form-item
           label="Возраст"

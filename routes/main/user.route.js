@@ -1,11 +1,13 @@
-import {Router} from "express";
+import {Router} from 'express'
 import { authenticateToken } from '../../middleware/auth.js'
-import handler from "../../handlers/main/user/handler.js";
+import handler from '../../handlers/main/user/handler.js'
+import { uploadProfilePicture } from '../../services/files_uploader.js'
 
 const router = new Router();
 
 router.post('/register', handler.createUser);
-router.post('/update', handler.updateUser);
+router.post('/update', authenticateToken, handler.updateUser);
+router.post('/update-photo', uploadProfilePicture.single('file'), handler.updateUserPhoto);
 router.post('/login', handler.authorizationUser);
 router.post('/user/:id', authenticateToken, handler.getUser);
 router.post('/subscribe', authenticateToken, handler.subscribeToGame);

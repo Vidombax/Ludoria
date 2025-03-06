@@ -1,10 +1,12 @@
 <script setup>
   import { ref, onMounted } from 'vue'
   import api from '@/api/api.js'
-  import SearchGame from "@/components/SearchGame.vue"
-  import {ElNotification} from "element-plus";
+  import { useUserStore } from '@/stores/user/store.js'
+  import SearchGame from '@/components/SearchGame.vue'
+  import {ElNotification} from 'element-plus'
 
   const { getUserInfo } = api;
+  const userStore = useUserStore();
 
   const idUser = Number(localStorage.getItem('idUser'));
   const token = localStorage.getItem('token');
@@ -87,7 +89,11 @@
       <a href="/login" class="text-xl" v-if="idUser === 0">Вход</a>
       <div v-else class="user_info">
         <a :href="userUrl">
-          <img :src="userData.photo" alt="user logo" v-if="userData.photo !== null"/>
+          <img
+              :src="userData.photo"
+              alt="user logo"
+              v-if="userData.photo !== null"
+          />
         </a>
         <a :href="userUrl" class="text-xl">{{ userData.name }}</a>
       </div>

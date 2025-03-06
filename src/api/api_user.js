@@ -22,9 +22,32 @@ async function getUserInfo(data) {
 
     return (await axios.post(`/api/user/${data.id}`, null, config)).data;
 }
+async function updateUser(data) {
+    const config = {
+        headers: {
+            Authorization: `${data.token}`
+        }
+    };
+
+    return (await axios.post(`/api/user/${data.id}`, null, config)).data;
+}
+async function updateUserPhoto(data) {
+    const formData = new FormData();
+
+    formData.append('file', data.file);
+    formData.append('id', data.id);
+
+    return (await axios.post(`/api/update-photo`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        }
+    })).data;
+}
 
 export default {
     loginUser,
     registrationUser,
     getUserInfo,
+    updateUser,
+    updateUserPhoto
 }

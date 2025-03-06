@@ -130,6 +130,41 @@ class UserHandler {
             client.release();
         }
     }
+    async updateUserPhoto(req, res) {
+        if (!req.file) {
+            return res.status(400).json({ message: 'Файл не был загружен' });
+        }
+
+        const photoName = '/profilePictures/' + req.file.filename;
+        const { id } = req.body;
+
+        const client = await db.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            const user = await client.query(
+                'UPDATE users SET photo = $1 ' +
+                'WHERE id_user = $2 ' +
+                'RETURNING photo',
+                [photoName, id]
+            );
+
+            await deleteRedisValue(`user:${id}`);
+
+            res.status(200).json({ message: 'Фотография обновлена', photo: user.rows[0].photo });
+
+            await client.query('COMMIT');
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error('Ошибка обновления фотографии:', e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
     async authorizationUser(req, res) {
         const { email, password } = req.body;
 
