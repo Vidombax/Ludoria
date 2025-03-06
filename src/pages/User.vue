@@ -29,6 +29,13 @@
       if (response) {
         userData.value.name = response.data.name;
 
+        userData.value.age = response.data.age;
+        userData.value.photo = response.data.photo;
+        userData.value.email_user = response.data.email_user;
+        userData.value.gender = response.data.gender;
+
+        userDataForSettings.value = { ...userData.value };
+
         if (response.data.gender === true) {
           userData.value.gender = 'муж.';
         }
@@ -39,11 +46,7 @@
           userData.value.gender = '';
         }
 
-        userData.value.age = response.data.age;
-        userData.value.photo = response.data.photo;
-        userData.value.email_user = response.data.email_user;
-
-        userDataForSettings.value = { ...userData.value }
+        delete userDataForSettings.value.photo;
       }
     }
     catch (e) {
@@ -82,6 +85,41 @@
           type: 'error',
         });
       }
+    }
+  }
+
+  const updateUserClick = async () => {
+    try {
+      const response = await updateUser(userDataForSettings.value);
+      if (response) {
+        ElNotification({
+          message: 'Данные успешно обновлены',
+          type: 'success',
+        });
+
+        userData.value.name = userDataForSettings.value.name;
+
+        userData.value.age = userDataForSettings.value.age;
+        userData.value.email_user = userDataForSettings.value.email_user;
+        userData.value.gender = userDataForSettings.value.gender;
+
+        if (userData.value.gender === true) {
+          userData.value.gender = 'муж.';
+        }
+        else if (userData.value.gender === false) {
+          userData.value.gender = 'жен.';
+        }
+        else {
+          userData.value.gender = '';
+        }
+      }
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.response.data.message,
+        type: 'error',
+      });
     }
   }
 
@@ -197,7 +235,7 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button style="width: 230px;">Сохранить</el-button>
+        <el-button style="width: 230px;" @click="updateUserClick">Сохранить</el-button>
       </el-form-item>
     </el-form>
   </div>

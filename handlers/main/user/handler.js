@@ -66,12 +66,11 @@ class UserHandler {
             const getUserInfo = await client.query(
                 'SELECT * FROM users ' +
                 'WHERE id_user = $1',
-                [data.id_user]
+                [data.id]
             );
 
             if (getUserInfo.rows.length > 0) {
                 let needChangeInfo = {};
-
                 for (const key in getUserInfo.rows[0]) {
                     //Если есть разница между данными полученными и из базы
                     if (data[key] !== undefined && data[key] !== getUserInfo.rows[0][key]) {
@@ -102,16 +101,16 @@ class UserHandler {
                         WHERE id_user = $1
                     `;
 
-                    const values = [data.id_user, ...Object.values(needChangeInfo)];
+                    const values = [data.id, ...Object.values(needChangeInfo)];
 
                     await client.query(query, values);
 
-                    await deleteRedisValue(`user:${data.id_user}`);
+                    await deleteRedisValue(`user:${data.id}`);
 
                     res.status(200).json({ message: 'Данные обновлены' });
                 }
                 else {
-                    logger.info(`Данные пользователя ${data.id_user} такие же, не обновляем`);
+                    logger.info(`Данные пользователя ${data.id} такие же, не обновляем`);
                     res.status(200).json({ message: 'Данные обновлены' });
                 }
             }

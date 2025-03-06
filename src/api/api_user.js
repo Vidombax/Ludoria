@@ -29,7 +29,7 @@ async function updateUser(data) {
         }
     };
 
-    return (await axios.post(`/api/user/${data.id}`, null, config)).data;
+    return (await axios.post(`/api/update`, data, config)).data;
 }
 async function updateUserPhoto(data) {
     const formData = new FormData();
