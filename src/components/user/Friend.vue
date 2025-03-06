@@ -20,7 +20,8 @@
     gap: 8px;
   }
   img {
-    width: 30px;
-    height: 30px;
+    object-fit: cover;
+    width: 35px;
+    height: 35px;
   }
 </style>

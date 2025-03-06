@@ -98,6 +98,7 @@
         });
 
         userData.value.name = userDataForSettings.value.name;
+        userStore.name = userData.value.name;
 
         userData.value.age = userDataForSettings.value.age;
         userData.value.email_user = userDataForSettings.value.email_user;
@@ -241,7 +242,7 @@
   </div>
   <div class="user">
     <div class="user_photo">
-      <img :src="userData.photo" alt="user photo" width="250px" height="250px">
+      <img :src="userData.photo" alt="user photo" class="img_user">
     </div>
     <div class="user_info">
       <div class="bio">
@@ -306,6 +307,15 @@
     gap: 20px;
     justify-content: center;
     align-items: flex-start;
+  }
+  .user_photo {
+    line-height: 1.65;
+  }
+  .img_user {
+    object-fit: cover;
+    width: 200px;
+    height: 200px;
+    max-width: 100%;
   }
   .bio_text span {
     margin-right: 0.5rem;

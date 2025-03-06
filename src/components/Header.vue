@@ -26,6 +26,8 @@
       if (response) {
         userData.value.name = response.data.name;
         userData.value.photo = response.data.photo;
+
+        userStore.setName(userData.value.name);
       }
     }
     catch (e) {
@@ -92,10 +94,11 @@
           <img
               :src="userData.photo"
               alt="user logo"
+              class="img_user"
               v-if="userData.photo !== null"
           />
         </a>
-        <a :href="userUrl" class="text-xl">{{ userData.name }}</a>
+        <a :href="userUrl" class="text-xl">{{ userStore.name }}</a>
       </div>
     </div>
   </header>
@@ -119,9 +122,11 @@
     align-items: center;
     gap: 6px;
   }
-  .user_info img {
+  .img_user {
+    object-fit: cover;
     width: 40px;
     height: 40px;
+    max-width: 100%;
   }
   .search {
     width: 500px;
