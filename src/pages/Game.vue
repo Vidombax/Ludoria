@@ -29,7 +29,6 @@
         await openLoading(loading.value);
         const checkId = async () => {
           const response = await getGameInfo(id.value);
-          console.log(response.game.id_game)
           if (response.game.id_game !== undefined) {
             loading.value = true;
             routes.push(`/game/${response.game.id_game}`).then(() => {
