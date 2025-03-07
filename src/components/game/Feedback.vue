@@ -1,16 +1,24 @@
 <script setup>
-
+  const props = defineProps({
+    name: String,
+    photo: String,
+    id: Number,
+    score: Number,
+    feedback: String
+  });
 </script>
 
 <template>
   <div class="item">
     <div class="header">
       <div>
-        <img src="/profilePictures/utkin.jpg" alt="author logo">
-        <a href="/account"><p class="h">Дмитрий Уткин</p></a>
+        <img :src="photo" alt="author logo">
+        <a href="/account"><p class="h">{{ name }}</p></a>
       </div>
       <div>
-        <div class="positive">18</div>
+        <div class="positive" v-if="score > 0">{{ score }}</div>
+        <div style="margin-right: 2rem; font-weight: 800;" v-else-if="score === 0">{{ score }}</div>
+        <div class="negative" v-else>{{ score }}</div>
         <div>
           <el-button>+</el-button>
           <el-button>-</el-button>
@@ -18,10 +26,7 @@
       </div>
     </div>
     <div class="text">
-      <p>Большие яйца, большой член и завтрак со звездой «Мишлен»
-        Большие яйца, большой член, большие яйца, большой член
-        Большие яйца, большой член и завтрак со звездой «Мишлен»
-        Большие яйца, большой член и завтрак со звездой «Мишлен»</p>
+      <p>{{ feedback }}</p>
     </div>
   </div>
 </template>
@@ -53,6 +58,14 @@
   .positive {
     margin-right: 2rem;
     background-color: #55c51c;
+    padding: 0.5rem;
+    color: #f2f2f2;
+    font-weight: 800;
+    border-radius: 4px;
+  }
+  .negative {
+    margin-right: 2rem;
+    background-color: #d3132a;
     padding: 0.5rem;
     color: #f2f2f2;
     font-weight: 800;

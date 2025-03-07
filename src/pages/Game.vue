@@ -1,8 +1,11 @@
 <script setup>
-  import { useRoute } from 'vue-router'
+  import { useRoute, useRouter } from 'vue-router'
   import { onMounted, ref } from 'vue'
+  import { getDate, getMonth, getYear, parseISO } from 'date-fns'
 
   import api from '@/api/api.js'
+  import { months } from '../../services/constants.js'
+  import { openLoading } from '../../services/helpers.js'
   import { ElNotification } from 'element-plus'
 
   import Feedback from '@/components/game/Feedback.vue'
@@ -10,18 +13,90 @@
   import FranchiseGame from '@/components/game/FranchiseGame.vue'
 
   const route = useRoute();
+  const routes = useRouter();
   const id = ref(route.params.id);
 
-  onMounted(async () => {
+  const { getGameInfo, getFeedbacksByGame } = api;
+  const info = ref({});
+  const feedbacks = ref([]);
+  const correctDate = ref('');
+  const loading = ref(false);
 
+  const getGame = async () => {
+    try {
+      const response = await getGameInfo(id.value);
+      if (response.status_rawg === true) {
+        await openLoading(loading.value);
+        const checkId = async () => {
+          const response = await getGameInfo(id.value);
+          console.log(response.game.id_game)
+          if (response.game.id_game !== undefined) {
+            loading.value = true;
+            routes.push(`/game/${response.game.id_game}`).then(() => {
+              location.reload();
+            });
+          }
+          else {
+            setTimeout(checkId, 100);
+          }
+        }
+
+        await checkId();
+      }
+      else {
+        loading.value = true;
+        info.value = response.game;
+
+        const date = parseISO(info.value.release_date);
+        const month = getMonth(date) + 1;
+
+        for (const item of months) {
+          if ('0' + month === item.value) {
+            correctDate.value = `${getDate(date)} ${item.label} ${getYear(date)}`;
+            break;
+          }
+          else if (month.toString() === item.value) {
+            correctDate.value = `${getDate(date)} ${item.label} ${getYear(date)}`;
+            break;
+          }
+        }
+      }
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.response.data.message,
+        type: 'error',
+      });
+    }
+  }
+
+  const getFeedbacks = async () => {
+    try {
+      const response = await getFeedbacksByGame(id.value);
+      feedbacks.value = response.data;
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.response.data.message,
+        type: 'error',
+      });
+    }
+  }
+  onMounted(async () => {
+    await getGame();
+    if (loading.value) {
+      await getFeedbacks();
+    }
   });
 </script>
 
 <template>
-  <div class="game">
+  <div class="game" v-if="loading">
     <div class="left_block">
       <div class="fixed_block based">
-        <img src="https://media.rawg.io/media/games/a9c/a9c789951de65da545d51f664b4f2ce0.jpg" alt="game photo">
+        <img :src="info.main_picture" alt="game photo">
         <div class="statistic">
           <div class="header h">
             Статистика
@@ -43,27 +118,29 @@
       </div>
     </div>
     <div class="info">
-      <p class="game_name h">Название игры</p>
+      <p class="game_name h">{{ info.name }}</p>
       <div class="items">
         <div class="item">
           <p class="h-item">Дата выхода</p>
-          <p>15-05-2018</p>
+          <p v-if="info.release_date !== undefined">{{ correctDate }}</p>
         </div>
         <div class="item">
           <p class="h-item">Разработчики</p>
-          <p>Atlus</p>
+          <div>
+            <span v-for="item in info.developers">{{ item.name + ' ' }}</span>
+          </div>
         </div>
-        <div class="item">
+        <div class="item" style="display: none">
           <p class="h-item">Платформы</p>
           <p>PC PS5 XBOX</p>
         </div>
         <div class="item">
           <p class="h-item">Описание</p>
-          <p>Don the mask and join the Phantom Thieves of Hearts as they stage grand heists, infiltrate the minds of the corrupt, and make them change their ways!</p>
+          <p v-html="info.description"></p>
         </div>
-        <div class="item">
+        <div class="item" v-if="info.score !== null">
           <p class="h-item">Рейтинг игры</p>
-          <p class="positive">5</p>
+          <p class="positive">{{ info.score }}</p>
         </div>
       </div>
     </div>
@@ -73,33 +150,37 @@
         <a href=""><p class="show_more">Смотреть все</p></a>
       </div>
       <div class="items">
-        <Feedback />
-        <Feedback />
-        <Feedback />
+        <Feedback
+            v-for="item in feedbacks"
+            :key="item.id"
+            :id="item.id_user"
+            :name="item.user_name"
+            :photo="item.user_photo"
+            :feedback="item.description"
+            :score="item.feedback_score"
+        />
       </div>
     </div>
-    <div class="posts">
-      <div class="header">
-        <p class="h">Новости</p>
-        <a href=""><p class="show_more">Смотреть все</p></a>
-      </div>
-      <div class="items">
-        <Post />
-        <Post />
-        <Post />
-      </div>
-    </div>
-    <div class="franchise">
-      <div class="header">
-        <p>Франшиза<sup>5</sup></p>
-      </div>
-      <div class="items">
-        <FranchiseGame />
-        <FranchiseGame />
-        <FranchiseGame />
-        <FranchiseGame />
-      </div>
-    </div>
+<!--    <div class="posts">-->
+<!--      <div class="header">-->
+<!--        <p class="h">Новости</p>-->
+<!--        <a href=""><p class="show_more">Смотреть все</p></a>-->
+<!--      </div>-->
+<!--      <div class="items">-->
+<!--        <Post />-->
+<!--      </div>-->
+<!--    </div>-->
+<!--    <div class="franchise">-->
+<!--      <div class="header">-->
+<!--        <p>Франшиза<sup>5</sup></p>-->
+<!--      </div>-->
+<!--      <div class="items">-->
+<!--        <FranchiseGame />-->
+<!--        <FranchiseGame />-->
+<!--        <FranchiseGame />-->
+<!--        <FranchiseGame />-->
+<!--      </div>-->
+<!--    </div>-->
   </div>
 </template>
 
@@ -160,7 +241,6 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(4, auto);
-    gap: 8px;
     padding: 24px;
   }
   .left_block {
@@ -168,7 +248,7 @@
   }
   .fixed_block {
     position: fixed;
-    left: 5rem;
+    left: 8rem;
   }
   .fixed_block img {
     width: 300px;
@@ -200,7 +280,7 @@
     display: grid;
     justify-items: left;
     align-items: center;
-    grid-template-columns: 15% 35%;
+    grid-template-columns: 15% auto;
   }
   .feedbacks {
     grid-column: span 2 / span 2;

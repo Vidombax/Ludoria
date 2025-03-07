@@ -74,7 +74,7 @@ class GameHandler {
             let gameInfo = await getRedisValue(`game-info:${id}`);
 
             if (gameInfo !== null) {
-                res.status(200).json({ message: 'Получили данные об игре', game: JSON.parse(gameInfo) });
+                res.status(200).json({ message: 'Получили данные об игре', game: JSON.parse(gameInfo), status_rawg: false });
             }
             else {
                 await client.query('BEGIN');
@@ -185,7 +185,7 @@ class GameHandler {
                         logger.info('Собрали JSON объект для клиента');
 
                         await setRedisValue(`game-info:${id}`, JSON.stringify(dataForRedis));
-                        res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis });
+                        res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis, status_rawg: false });
                     }
                     else {
                         logger.info('Все данные присутствуют отправляем');
@@ -206,7 +206,7 @@ class GameHandler {
                         logger.info('Собрали JSON объект для клиента');
 
                         await setRedisValue(`game-info:${id}`, JSON.stringify(dataForRedis));
-                        res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis });
+                        res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis, status_rawg: false });
                     }
                 }
                 else {
@@ -317,7 +317,7 @@ class GameHandler {
 
                                 if (getDevelopersByGame.rows.length > 0) {
                                     developers.push(getDevelopersByGame.rows);
-                                    dataForRedis.developers = developers;
+                                    dataForRedis.developers = developers[0];
                                 }
                                 else {
                                     const developers = await processDevelopers(gameDataForDB, idGame, client);
@@ -337,7 +337,7 @@ class GameHandler {
                         logger.info('Собрали JSON объект для клиента');
 
                         await setRedisValue(`game-info:${idGame}`, JSON.stringify(dataForRedis));
-                        res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis });
+                        res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis, status_rawg: true });
 
                     }
                     else {
@@ -576,7 +576,15 @@ class GameHandler {
                             [feedback.id_feedback]
                         );
 
+                        const getUserData = await client.query(
+                            'SELECT name, photo FROM users ' +
+                            'WHERE id_user = $1',
+                            [feedback.id_user]
+                        );
+
                         feedback.feedback_score = getPositiveScore.rows[0].positive - getNegativeScore.rows[0].negative;
+                        feedback.user_name = getUserData.rows[0].name;
+                        feedback.user_photo = getUserData.rows[0].photo;
                     }
 
                     await setRedisValue(`feedback-to-game:${id}`, JSON.stringify(getFeedbacks.rows));

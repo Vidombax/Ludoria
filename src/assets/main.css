@@ -1,2 +1,6 @@
 @import './base.css';
-@import "tailwindcss";
+
+a {
+    text-decoration: none;
+    color: #344a4e;
+}
