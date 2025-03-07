@@ -73,7 +73,10 @@
   const getFeedbacks = async () => {
     try {
       const response = await getFeedbacksByGame(id.value);
-      feedbacks.value = response.data;
+      if (response.message === 'Получили отзывы по игре') {
+        feedbacks.value = response.data;
+        feedbacks.value.count = response.count;
+      }
     }
     catch (e) {
       console.error('Ошибка при выполнении запроса:', e);
@@ -145,11 +148,12 @@
     </div>
     <div class="feedbacks">
       <div class="header">
-        <p class="h">Отзывы<sup>10</sup></p>
-        <a href=""><p class="show_more">Смотреть все</p></a>
+        <p class="h">Отзывы<sup v-if="feedbacks.count">{{ feedbacks.count }}</sup></p>
+        <a href="" v-if="feedbacks.count"><p class="show_more">Смотреть все</p></a>
       </div>
       <div class="items">
         <Feedback
+            v-if="feedbacks.count"
             v-for="item in feedbacks"
             :key="item.id"
             :id="item.id_user"
@@ -158,6 +162,10 @@
             :feedback="item.description"
             :score="item.feedback_score"
         />
+        <div v-else class="based" style="gap: 24px">
+          <p class="h">Отсутствуют</p>
+          <el-button>Оставить отзыв</el-button>
+        </div>
       </div>
     </div>
 <!--    <div class="posts">-->
@@ -184,9 +192,6 @@
 </template>
 
 <style scoped>
-  sup {
-    font-size: small;
-  }
   .based {
     display: flex;
     flex-direction: column;

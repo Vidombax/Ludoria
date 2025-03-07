@@ -180,7 +180,12 @@ class GameHandler {
                         }
 
                         dataForRedis.genres = getGenresByGame.rows;
-                        dataForRedis.score = parseFloat(getGameScore.rows[0].game_score).toFixed(2);
+                        if (getGameScore.rows[0].game_score !== null) {
+                            dataForRedis.score = parseFloat(getGameScore.rows[0].game_score).toFixed(2);
+                        }
+                        else {
+                            dataForRedis.score = null;
+                        }
 
                         logger.info('Собрали JSON объект для клиента');
 
@@ -551,7 +556,7 @@ class GameHandler {
         try {
             const getFeedbackByRedis = await getRedisValue(`feedback-to-game:${id}`);
             if (getFeedbackByRedis !== null) {
-                res.status(200).json({ message: 'Получили отзывы по игре', data: JSON.parse(getFeedbackByRedis) });
+                res.status(200).json({ message: 'Получили отзывы по игре', data: JSON.parse(getFeedbackByRedis), count: JSON.parse(getFeedbackByRedis).length });
             }
             else {
                 await client.query('BEGIN');
@@ -588,7 +593,7 @@ class GameHandler {
                     }
 
                     await setRedisValue(`feedback-to-game:${id}`, JSON.stringify(getFeedbacks.rows));
-                    res.status(200).json({ message: 'Получили отзывы по игре', data: getFeedbacks.rows });
+                    res.status(200).json({ message: 'Получили отзывы по игре', data: getFeedbacks.rows, count: getFeedbacks.rows.length });
                 }
                 else {
                     res.status(200).json({ message: 'Отзывов по игре не было найдено' });
