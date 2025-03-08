@@ -8,7 +8,7 @@ export const useGameStore = defineStore('game', {
                 {
                     label: '',
                     data: [],
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#FFCE22'],
+                    backgroundColor: ['#46e81b', '#cc302b', '#3769c7', '#FFCE22'],
                     hoverOffset: 4,
                 },
             ],
