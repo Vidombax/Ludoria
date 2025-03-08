@@ -1,4 +1,6 @@
 <script setup>
+  import ArrowRight from "@/assets/svg/ArrowRight.vue";
+
   defineProps({
     nameInfo: String,
     colorScheme: String,
@@ -9,27 +11,31 @@
 
 <template>
   <div class="info" :style="{ backgroundColor: colorScheme }">
-    <a v-if="href" :href="href" :style="{ color: colorName }">{{ nameInfo }}</a>
+    <a v-if="href" :href="href" :style="{ color: colorName }"><p>{{ nameInfo }}</p></a>
     <p v-else :style="{ color: colorName }">{{ nameInfo }}</p>
+    <a :href="href"><p><ArrowRight :color="colorName"/></p></a>
   </div>
 </template>
 
 <style scoped>
   .info {
     display: flex;
-    justify-content: flex-start;
-    padding: 4px;
+    justify-content: space-between;
+    padding: 8px;
+    align-items: center;
     border-left: 4px solid #236473;
     margin: 12px;
   }
+  p {
+    transition: .3s linear;
+  }
+  p:hover {
+    color: #57a5b5;
+  }
   .info a,
   .info p {
-    font-size: x-large;
-    padding: 4px;
-    font-weight: bold;
-    transition: .2s linear;
-  }
-  .info a:hover {
-    color: #57a5b5;
+    font-size: 24px;
+    font-weight: 700;
+    transition: color 0.3s ease;
   }
 </style>

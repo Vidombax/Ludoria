@@ -28,10 +28,12 @@
     subToGame,
     unSubToGame
   } = api;
+
   const info = ref({});
   const feedbacks = ref([]);
   const correctDate = ref('');
   const loading = ref(false);
+  const photoList = ref([]);
 
   const getGame = async () => {
     try {
@@ -56,6 +58,7 @@
       else {
         loading.value = true;
         info.value = response.game;
+        photoList.value.push(info.value.main_picture);
 
         const date = parseISO(info.value.release_date);
         const month = getMonth(date) + 1;
@@ -305,7 +308,7 @@
         </div>
         <div class="item">
           <p class="h-item">Описание</p>
-          <p v-html="info.description"></p>
+          <p class="description" v-html="info.description"></p>
         </div>
       </div>
     </div>
@@ -402,13 +405,17 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 30px;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
   }
   .game {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(4, auto);
+    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
     padding: 24px;
+    min-height: 105vh;
   }
   .left_block {
     grid-row: span 4 / span 4;
@@ -416,12 +423,25 @@
   .fixed_block {
     position: fixed;
     left: 8rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
   .fixed_block img {
     width: 300px;
     height: 300px;
     object-fit: cover;
-    margin-bottom: 30px;
+    border-radius: 12px;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 20px;
+  }
+  .fixed_block img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
   }
   .statistic {
     margin-bottom: 2rem;
@@ -453,6 +473,10 @@
     grid-column: span 2 / span 2;
     grid-column-start: 2;
     grid-row-start: 2;
+    background: rgba(255, 255, 255, 0.9); /* Полупрозрачный белый фон */
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
   .posts {
     grid-column: span 2 / span 2;
@@ -492,6 +516,12 @@
     }
   }
   @media screen and (max-width: 768px) {
+    .game {
+      padding: 0;
+    }
+    .description {
+      padding: 10px;
+    }
     .h-item {
       font-weight: 800;
     }
@@ -531,6 +561,9 @@
       flex-direction: column;
       justify-content: center;
       flex-wrap: wrap;
+    }
+    .feedbacks {
+      padding: 15px;
     }
   }
 </style>

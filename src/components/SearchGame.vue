@@ -20,7 +20,7 @@
       <img :src="picture" alt="game">
     </a>
 <!--    TODO: взять за основу див поиска с шикимори с имеющимися rawg данными-->
-    <a :href="urlToGame" class="text-xl game-name">{{ name }}</a>
+    <a :href="urlToGame" class="game-name">{{ name }}</a>
   </div>
 </template>
 
@@ -35,6 +35,10 @@
   img {
    width: 75px;
    height: 75px;
+   border-radius: 12px;
+  }
+  .game-name {
+    color: #f2f2f2;
   }
   .info_game {
     display: grid;

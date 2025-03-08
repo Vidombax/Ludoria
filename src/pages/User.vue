@@ -303,6 +303,9 @@
     justify-items: center;
     align-items: center;
     gap: 8px;
+    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+    padding: 24px;
+    min-height: 100vh;
   }
   .users_posts {
     grid-column: span 2 / span 2;
@@ -321,14 +324,21 @@
     object-fit: cover;
     width: 200px;
     height: 200px;
-    max-width: 100%;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
   .bio_text span {
     margin-right: 0.5rem;
+    color: #555;
+    font-size: 16px;
   }
   .h {
-    font-size: larger;
-    font-weight: 600;
+    font-size: 24px;
+    font-weight: 700;
+    color: #2c3e50;
+    transition: color 0.3s ease;
   }
   .friends,
   .friends .items {
@@ -356,10 +366,11 @@
     position: absolute;
     left: -100px;
     opacity: 0;
-    padding: 50px;
-    background-color: #e6e6e7;
-    border-bottom-right-radius: 12px;
-    border-top-right-radius: 12px;
+    background: rgba(255, 255, 255);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
   }
   .non_active {
     pointer-events: none;
@@ -371,6 +382,7 @@
     .user {
       display: flex !important;
       flex-direction: column;
+      width: 100%;
     }
     .h {
       font-size: 20px;

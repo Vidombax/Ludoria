@@ -113,7 +113,7 @@
         <el-button style="width: 250px" @click="registrationClick" v-else disabled="disabled">Зарегистрироваться</el-button>
       </el-form-item>
     </el-form>
-    <p class="registration_select" v-if="isLogin" @click="setModalType">Зарегистироваться</p>
+    <p class="registration_select" v-if="isLogin" @click="setModalType">Зарегистрироваться</p>
     <p class="registration_select" v-else @click="setModalType">Войти в свой аккаунт</p>
   </div>
 </template>
@@ -131,5 +131,9 @@
     font-size: 12px;
     cursor: pointer;
     text-decoration: underline;
+  }
+  .el-form-item {
+    font-size: 24px;
+    transition: color 0.3s ease;
   }
 </style>

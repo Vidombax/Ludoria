@@ -88,7 +88,7 @@
       </div>
     </div>
     <div>
-      <a href="/login" class="text-xl" v-if="idUser === 0">Вход</a>
+      <a href="/login" class="a_user_non_auth" v-if="idUser === 0">Вход</a>
       <div v-else class="user_info">
         <a :href="userUrl">
           <img
@@ -114,37 +114,79 @@
     top: 0;
     left: 0;
     width: 100%;
-    background-color: #3b92a3;
+    background: linear-gradient(135deg, #0f2027, #203a43);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   }
+
+  .logo {
+    transition: transform 0.3s ease;
+  }
+
+  .logo:hover {
+    transform: scale(1.05);
+  }
+
   .user_info {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 6px;
   }
+
   .img_user {
     object-fit: cover;
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     max-width: 100%;
+    border-radius: 50%;
+    border: 2px solid #ffd700;
   }
+
+  .a_user {
+    display: block;
+    color: #fff;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .a_user:hover {
+    color: #ffd700;
+  }
+
+  .a_user_non_auth {
+    display: block;
+    color: #fff;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .a_user_non_auth:hover {
+    color: #ffd700;
+  }
+
   .search {
     width: 500px;
   }
+
   .search_items {
-    background-color: #f2f2f2;
+    background-color: rgba(15, 32, 39);
+    color: #fff;
     position: absolute;
     height: 750px;
     z-index: 1;
     overflow-y: auto;
     width: 500px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    margin-top: 8px;
   }
+
   .selector {
     width: 150px;
   }
-  .a_user {
-    display: block;
-  }
+
   @media screen and (max-width: 1050px) {
     .search {
       width: 150px;
@@ -154,6 +196,7 @@
       margin-left: -75px;
     }
   }
+
   @media screen and (max-width: 768px) {
     .selector {
       width: 100px;
