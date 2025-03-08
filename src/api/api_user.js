@@ -43,11 +43,31 @@ async function updateUserPhoto(data) {
         }
     })).data;
 }
+async function getGameRateByUser(data) {
+    const config = {
+        headers: {
+            Authorization: `${data.token}`
+        }
+    };
+
+    return (await axios.get(`/api/get-rate/${data.id_user}/${data.id_game}`, config)).data;
+}
+async function rateGame(data) {
+    const config = {
+        headers: {
+            Authorization: `${data.token}`
+        }
+    };
+
+    return (await axios.post(`/api/rate-game`, data, config)).data;
+}
 
 export default {
     loginUser,
     registrationUser,
     getUserInfo,
     updateUser,
-    updateUserPhoto
+    updateUserPhoto,
+    getGameRateByUser,
+    rateGame
 }

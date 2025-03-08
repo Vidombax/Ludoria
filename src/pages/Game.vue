@@ -16,7 +16,7 @@
   const routes = useRouter();
   const id = ref(route.params.id);
 
-  const { getGameInfo, getFeedbacksByGame } = api;
+  const { getGameInfo, getFeedbacksByGame, rateGame, getGameRateByUser } = api;
   const info = ref({});
   const feedbacks = ref([]);
   const correctDate = ref('');
@@ -86,10 +86,72 @@
       });
     }
   }
+
+  const rateScore = ref(0);
+  const getUserRate = async () => {
+    try {
+      const data = {
+        id_user: Number(localStorage.getItem('idUser')),
+        token: localStorage.getItem('token'),
+        id_game: id.value
+      };
+
+      const response = await getGameRateByUser(data);
+      if (response.message !== 'Оценки нету') {
+        rateScore.value = response.message;
+      }
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.response.data.message,
+        type: 'error',
+      });
+    }
+  }
+
+  const setRate = async () => {
+    try {
+      if (localStorage.getItem('idUser')) {
+        const data = {
+          token: localStorage.getItem('token'),
+          newScore: rateScore.value,
+          idUser: Number(localStorage.getItem('idUser')),
+          idGame: id.value
+        };
+
+        const response = await rateGame(data);
+        if (response.message === 'Оценка поставлена' || response.message === 'Оценка обновлена') {
+          ElNotification({
+            message: response.message,
+            type: 'success',
+          });
+        }
+      }
+      else {
+        ElNotification({
+          message: 'Авторизуйтесь чтобы поставить оценку!',
+          type: 'error',
+        });
+        rateScore.value = 0;
+      }
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.response.data.message,
+        type: 'error',
+      });
+    }
+  }
+
   onMounted(async () => {
     await getGame();
     if (loading.value) {
       await getFeedbacks();
+      if (localStorage.getItem('idUser')) {
+        await getUserRate();
+      }
     }
   });
 </script>
@@ -115,7 +177,7 @@
         </div>
         <div class="based">
           <p class="h">Поставить оценку</p>
-          <el-rate />
+          <el-rate v-model="rateScore" @click="setRate" />
         </div>
       </div>
     </div>
@@ -142,7 +204,9 @@
         </div>
         <div class="item" v-if="info.score !== null">
           <p class="h-item">Рейтинг игры</p>
-          <p class="positive">{{ info.score }}</p>
+          <p class="positive" v-if="info.score > 3">{{ info.score }}</p>
+          <p class="neutral" v-else-if="info.score > 2">{{ info.score }}</p>
+          <p class="negative" v-else>{{ info.score }}</p>
         </div>
       </div>
     </div>

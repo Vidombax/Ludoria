@@ -462,7 +462,7 @@ class UserHandler {
                 res.status(200).json({ message: score.rows[0].score });
             }
             else {
-                res.status(200).json({ message: null });
+                res.status(200).json({ message: 'Оценки нету' });
             }
 
             await client.query('COMMIT');
