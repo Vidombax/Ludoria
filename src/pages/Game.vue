@@ -245,6 +245,7 @@
   <div class="game" v-if="loading">
     <div class="left_block">
       <div class="fixed_block based">
+        <p class="game_name h phone_active">{{ info.name }}</p>
         <img :src="info.main_picture" alt="game photo">
         <div class="statistic">
           <div class="header h">
@@ -280,8 +281,14 @@
       </div>
     </div>
     <div class="info">
-      <p class="game_name h">{{ info.name }}</p>
+      <p class="game_name h phone_disable">{{ info.name }}</p>
       <div class="items">
+        <div class="item" v-if="info.score !== null">
+          <p class="h-item">Рейтинг игры</p>
+          <p class="positive" v-if="info.score > 3">{{ info.score }}</p>
+          <p class="neutral" v-else-if="info.score > 2">{{ info.score }}</p>
+          <p class="negative" v-else>{{ info.score }}</p>
+        </div>
         <div class="item">
           <p class="h-item">Дата выхода</p>
           <p v-if="info.release_date !== undefined">{{ correctDate }}</p>
@@ -299,12 +306,6 @@
         <div class="item">
           <p class="h-item">Описание</p>
           <p v-html="info.description"></p>
-        </div>
-        <div class="item" v-if="info.score !== null">
-          <p class="h-item">Рейтинг игры</p>
-          <p class="positive" v-if="info.score > 3">{{ info.score }}</p>
-          <p class="neutral" v-else-if="info.score > 2">{{ info.score }}</p>
-          <p class="negative" v-else>{{ info.score }}</p>
         </div>
       </div>
     </div>
@@ -468,5 +469,68 @@
     gap: 24px;
     align-items: center;
     justify-content: flex-start;
+  }
+  .phone_active {
+    display: none;
+  }
+  @media screen and (max-width: 1400px) {
+    .fixed_block {
+      left: 2rem;
+    }
+    .info .items .item {
+      grid-template-columns: 25% auto;
+    }
+  }
+  @media screen and (max-width: 1050px) {
+    .game {
+      display: flex;
+      flex-direction: column;
+    }
+    .fixed_block {
+      left: 0;
+      position: relative;
+    }
+  }
+  @media screen and (max-width: 768px) {
+    .h-item {
+      font-weight: 800;
+    }
+    .left_block {
+      margin-bottom: 20px;
+    }
+    .phone_disable {
+      display: none;
+    }
+    .phone_active {
+      display: block;
+    }
+    .info .items {
+      display: grid;
+      grid-template-columns: repeat(2, auto);
+      grid-template-rows: repeat(3, auto);
+      gap: 8px;
+    }
+    .info .items .item:nth-child(1) {
+      grid-column: span 2 / span 2;
+    }
+    .info .items .item:nth-child(2) {
+      grid-row-start: 2;
+    }
+    .info .items .item:nth-child(3) {
+      grid-row-start: 2;
+    }
+    .info .items .item:nth-child(4) {
+      grid-row-start: 2;
+    }
+    .info .items .item:nth-child(5) {
+      grid-column: span 2 / span 2;
+    }
+    .info .items .item {
+      display: flex;
+      gap: 12px;
+      flex-direction: column;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
   }
 </style>

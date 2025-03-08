@@ -139,8 +139,9 @@
         id: id.value,
         file: selectedFile.value,
       });
-
-      location.reload();
+      if (response) {
+        location.reload();
+      }
     }
     catch (e) {
       console.error('Ошибка при выполнении запроса:', e);
@@ -159,12 +160,14 @@
 
       settingsDiv.style.opacity = 1;
       settingsDiv.style.left = '0px';
+      settingsDiv.classList.remove('non_active');
     }
     else {
       isModalSettingsClosed.value = true;
 
       settingsDiv.style.opacity = 0;
       settingsDiv.style.left = '-100px';
+      settingsDiv.classList.add('non_active');
     }
   }
 
@@ -175,8 +178,11 @@
 </script>
 
 <template>
-  <div class="settings">
-    <p class="h">Настройки профиля</p>
+  <div class="settings non_active">
+    <div class="header">
+      <p class="h">Настройки профиля</p>
+      <el-button class="header_close_btn" @click="activitySettingsModal">X</el-button>
+    </div>
     <el-form style="max-width: 600px">
       <el-form-item
           label="Электронная почта"
@@ -354,5 +360,37 @@
     background-color: #e6e6e7;
     border-bottom-right-radius: 12px;
     border-top-right-radius: 12px;
+  }
+  .non_active {
+    pointer-events: none;
+  }
+  .header_close_btn {
+    display: none;
+  }
+  @media screen and (max-width: 768px) {
+    .user {
+      display: flex !important;
+      flex-direction: column;
+    }
+    .h {
+      font-size: 20px;
+    }
+    .settings .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 50px;
+    }
+    .header_close_btn {
+      display: block;
+    }
+    .friends .items {
+      display: grid;
+      grid-template-columns: repeat(3, auto);
+      gap: 12px;
+    }
+    .subscribes .items {
+      display: grid;
+      grid-template-columns: repeat(3, auto);
+    }
   }
 </style>

@@ -69,7 +69,7 @@
 <template>
   <header>
     <div>
-      <a href="/">
+      <a href="/" class="logo">
         <el-image src="./src/assets/bosinn.gif" alt="Logo" class="logo" style="height: 25px; width: 100px;" />
       </a>
     </div>
@@ -98,7 +98,7 @@
               v-if="userData.photo !== null"
           />
         </a>
-        <a :href="userUrl" class="text-xl">{{ userStore.name }}</a>
+        <a :href="userUrl"  class="a_user">{{ userStore.name }}</a>
       </div>
     </div>
   </header>
@@ -142,6 +142,9 @@
   .selector {
     width: 150px;
   }
+  .a_user {
+    display: block;
+  }
   @media screen and (max-width: 1050px) {
     .search {
       width: 150px;
@@ -152,11 +155,14 @@
     }
   }
   @media screen and (max-width: 768px) {
-    .logo {
-      display: none;
-    }
     .selector {
       width: 100px;
+    }
+    .a_user {
+      display: none;
+    }
+    .logo {
+      display: none;
     }
   }
 </style>
