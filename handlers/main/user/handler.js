@@ -268,7 +268,7 @@ class UserHandler {
                     [idUser, idGame, followType]
                 );
 
-                res.status(200).json({ message: 'Подписка была оформлена' });
+                res.status(200).json({ message: 'Добавили игру в список' });
             }
             else {
                 logger.info('Игры нету в нашей базе отправляем запрос в RAWG');
@@ -380,7 +380,7 @@ class UserHandler {
                 [idUser, idGame]
             );
 
-            res.status(200).json({ message: 'Подписка была отменена' });
+            res.status(200).json({ message: 'Удалили игру из списка' });
 
             await client.query('COMMIT');
         }

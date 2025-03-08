@@ -4,7 +4,7 @@
   import { getDate, getMonth, getYear, parseISO } from 'date-fns'
 
   import api from '@/api/api.js'
-  import { months } from '../../services/constants.js'
+  import { months, statusGame } from '../../services/constants.js'
   import { openLoading } from '../../services/helpers.js'
   import { ElNotification } from 'element-plus'
 
@@ -16,7 +16,13 @@
   const routes = useRouter();
   const id = ref(route.params.id);
 
-  const { getGameInfo, getFeedbacksByGame, rateGame, getGameRateByUser } = api;
+  const {
+    getGameInfo,
+    getFeedbacksByGame,
+    rateGame,
+    getGameRateByUser,
+    subToGame
+  } = api;
   const info = ref({});
   const feedbacks = ref([]);
   const correctDate = ref('');
@@ -144,6 +150,52 @@
       });
     }
   }
+  const nowStatusGame = ref('');
+  const getFollowingStatus = async () => {
+    try {
+
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.response.data.message,
+        type: 'error',
+      });
+    }
+  }
+
+  const addGameToList = async () => {
+    try {
+      if (localStorage.getItem('idUser')) {
+        const data = {
+          token: localStorage.getItem('token'),
+          idUser: Number(localStorage.getItem('idUser')),
+          followType: nowStatusGame.value,
+          idGame: id.value
+        }
+        const response = await subToGame(data);
+        if (response.message === 'Подписка была оформлена') {
+          ElNotification({
+            message: response.message,
+            type: 'success',
+          });
+        }
+      }
+      else {
+        ElNotification({
+          message: 'Авторизуйтесь чтобы добавить игру в список!',
+          type: 'error',
+        });
+      }
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.response.data.message,
+        type: 'error',
+      });
+    }
+  }
 
   onMounted(async () => {
     await getGame();
@@ -151,6 +203,7 @@
       await getFeedbacks();
       if (localStorage.getItem('idUser')) {
         await getUserRate();
+        await getFollowingStatus();
       }
     }
   });
@@ -171,9 +224,21 @@
           <!--  todo: инфографику найти библиотеку      -->
         </div>
         <div class="game_activity based">
-          <el-button style="width: 250px;">Добавить игру</el-button>
+          <el-select
+              style="width: 250px;"
+              placeholder="Добавить в список"
+              v-model="nowStatusGame"
+          >
+            <el-option
+                v-for="item in statusGame"
+                :key="item.id"
+                :label="item.label"
+                :value="item.value"
+                @click="addGameToList"
+            />
+          </el-select>
           <el-button style="width: 250px;">Написать отзыв</el-button>
-          <el-button style="width: 250px;">Подписаться</el-button>
+<!--          <el-button style="width: 250px;">Подписаться</el-button>-->
         </div>
         <div class="based">
           <p class="h">Поставить оценку</p>

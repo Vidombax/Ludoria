@@ -61,6 +61,15 @@ async function rateGame(data) {
 
     return (await axios.post(`/api/rate-game`, data, config)).data;
 }
+async function subToGame(data) {
+    const config = {
+        headers: {
+            Authorization: `${data.token}`
+        }
+    };
+
+    return (await axios.post(`/api/subscribe`, data, config)).data;
+}
 
 export default {
     loginUser,
@@ -69,5 +78,6 @@ export default {
     updateUser,
     updateUserPhoto,
     getGameRateByUser,
-    rateGame
+    rateGame,
+    subToGame
 }
