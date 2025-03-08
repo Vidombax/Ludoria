@@ -1,6 +1,6 @@
 import axios from 'axios'
 import db from '../../../db.js'
-import {getRedisValue, setRedisValue} from '../../../redis.js'
+import {deleteRedisValue, getRedisValue, setRedisValue} from '../../../redis.js'
 import logger from '../../../logger.js'
 
 async function processDevelopers(gameDataForDB, idGame, client) {
@@ -280,8 +280,6 @@ class GameHandler {
                                     gameDataForDB.id_from_rawg
                                 ]
                             );
-                            //todo: пока не работает починить
-                            // await deleteKeysWithPattern(`*page-released-date*`);
 
                             idGame = addGameToDB.rows[0].id_game;
 
@@ -352,6 +350,7 @@ class GameHandler {
                         logger.info('Собрали JSON объект для клиента');
 
                         await setRedisValue(`game-info:${idGame}`, JSON.stringify(dataForRedis));
+                        await deleteRedisValue(`page-released-date:1`);
                         res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis, status_rawg: true });
 
                     }
