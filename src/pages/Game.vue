@@ -286,11 +286,12 @@
     <div class="info">
       <p class="game_name h phone_disable">{{ info.name }}</p>
       <div class="items">
-        <div class="item" v-if="info.score !== null">
+        <div class="item">
           <p class="h-item">Рейтинг игры</p>
           <p class="positive" v-if="info.score > 3">{{ info.score }}</p>
           <p class="neutral" v-else-if="info.score > 2">{{ info.score }}</p>
-          <p class="negative" v-else>{{ info.score }}</p>
+          <p class="negative" v-else-if="info.score > 0">{{ info.score }}</p>
+          <p class="empty" v-else>0.00</p>
         </div>
         <div class="item">
           <p class="h-item">Дата выхода</p>
@@ -389,6 +390,14 @@
   }
   .negative {
     background-color: #d3132a;
+    padding: 1rem;
+    color: #f2f2f2;
+    font-size: large;
+    font-weight: 800;
+    border-radius: 4px;
+  }
+  .empty {
+    background-color: #5e5e5e;
     padding: 1rem;
     color: #f2f2f2;
     font-size: large;
