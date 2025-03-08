@@ -61,6 +61,15 @@ async function rateGame(data) {
 
     return (await axios.post(`/api/rate-game`, data, config)).data;
 }
+async function getSubToGame(data) {
+    const config = {
+        headers: {
+            Authorization: `${data.token}`
+        }
+    };
+
+    return (await axios.get(`/api/sub-to-game/${data.id_user}/${data.id_game}`, config)).data;
+}
 async function subToGame(data) {
     const config = {
         headers: {
@@ -69,6 +78,15 @@ async function subToGame(data) {
     };
 
     return (await axios.post(`/api/subscribe`, data, config)).data;
+}
+async function unSubToGame(data) {
+    const config = {
+        headers: {
+            Authorization: `${data.token}`
+        }
+    };
+
+    return (await axios.post(`/api/unsubscribe`, data, config)).data;
 }
 
 export default {
@@ -79,5 +97,7 @@ export default {
     updateUserPhoto,
     getGameRateByUser,
     rateGame,
-    subToGame
+    getSubToGame,
+    subToGame,
+    unSubToGame
 }

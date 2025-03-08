@@ -247,6 +247,38 @@ class UserHandler {
             client.release();
         }
     }
+    async getSubscribeToGameByUser(req, res) {
+        const {iduser, idgame} = req.params;
+
+        const client = await db.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            const sub = await client.query(
+                'SELECT * FROM following_to_game ' +
+                'WHERE id_follower = $1 AND id_following = $2',
+                [iduser, idgame]
+            );
+
+            if (sub.rows.length > 0) {
+                res.status(200).json({ message: sub.rows[0].follow_type });
+            }
+            else {
+                res.status(200).json({ message: '' });
+            }
+
+            await client.query('COMMIT');
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error('Ошибка ...:', e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
     async subscribeToGame(req, res) {
         const { idUser, idGame, followType, nameGame } = req.body;
 
@@ -397,7 +429,7 @@ class UserHandler {
                 [idUser, idGame]
             );
 
-            res.status(200).json({ message: 'Удалили игру из списка' });
+            res.status(200).json({ message: 'Игра удалена из списка' });
 
             await client.query('COMMIT');
         }

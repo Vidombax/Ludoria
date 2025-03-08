@@ -4,6 +4,7 @@
   import { getDate, getMonth, getYear, parseISO } from 'date-fns'
 
   import api from '@/api/api.js'
+  import { useUserStore } from '@/stores/user/store.js'
   import { months, statusGame } from '../../services/constants.js'
   import { openLoading } from '../../services/helpers.js'
   import { ElNotification } from 'element-plus'
@@ -16,12 +17,16 @@
   const routes = useRouter();
   const id = ref(route.params.id);
 
+  const userStore = useUserStore();
+
   const {
     getGameInfo,
     getFeedbacksByGame,
     rateGame,
     getGameRateByUser,
-    subToGame
+    getSubToGame,
+    subToGame,
+    unSubToGame
   } = api;
   const info = ref({});
   const feedbacks = ref([]);
@@ -153,7 +158,16 @@
   const nowStatusGame = ref('');
   const getFollowingStatus = async () => {
     try {
+      const data = {
+        token: localStorage.getItem('token'),
+        id_user: Number(localStorage.getItem('idUser')),
+        id_game: id.value
+      };
 
+      const response = await getSubToGame(data);
+
+      nowStatusGame.value = response.message;
+      userStore.setStatusGame(nowStatusGame.value);
     }
     catch (e) {
       console.error('Ошибка при выполнении запроса:', e);
@@ -164,7 +178,7 @@
     }
   }
 
-  const addGameToList = async () => {
+  const HandlerGameToList = async () => {
     try {
       if (localStorage.getItem('idUser')) {
         const data = {
@@ -173,12 +187,28 @@
           followType: nowStatusGame.value,
           idGame: id.value
         }
-        const response = await subToGame(data);
-        if (response.message === 'Подписка была оформлена') {
-          ElNotification({
-            message: response.message,
-            type: 'success',
-          });
+
+        if (userStore.previousStatusGame === nowStatusGame.value) {
+          const response = await unSubToGame(data);
+          if (response) {
+            ElNotification({
+              message: response.message,
+              type: 'success',
+            });
+
+            nowStatusGame.value = '';
+          }
+        }
+        else {
+          const response = await subToGame(data);
+          if (response) {
+            ElNotification({
+              message: response.message,
+              type: 'success',
+            });
+
+            userStore.previousStatusGame = nowStatusGame.value;
+          }
         }
       }
       else {
@@ -186,6 +216,8 @@
           message: 'Авторизуйтесь чтобы добавить игру в список!',
           type: 'error',
         });
+
+        nowStatusGame.value = '';
       }
     }
     catch (e) {
@@ -234,14 +266,15 @@
                 :key="item.id"
                 :label="item.label"
                 :value="item.value"
-                @click="addGameToList"
+                @click="HandlerGameToList"
             />
           </el-select>
           <el-button style="width: 250px;">Написать отзыв</el-button>
 <!--          <el-button style="width: 250px;">Подписаться</el-button>-->
         </div>
         <div class="based">
-          <p class="h">Поставить оценку</p>
+          <p class="h" v-if="rateScore > 0">Ваша оценка</p>
+          <p class="h" v-else>Поставить оценку</p>
           <el-rate v-model="rateScore" @click="setRate" />
         </div>
       </div>
@@ -293,7 +326,7 @@
         />
         <div v-else class="based" style="gap: 24px">
           <p class="h">Отсутствуют</p>
-          <el-button>Оставить отзыв</el-button>
+          <el-button>Написать отзыв</el-button>
         </div>
       </div>
     </div>
