@@ -262,13 +262,30 @@ class UserHandler {
             );
 
             if (getGame.rows.length > 0) {
-                const sub = await client.query(
-                    'INSERT INTO following_to_game (id_follower, id_following, follow_type)' +
-                    ' VALUES ($1, $2, $3)',
-                    [idUser, idGame, followType]
+                const getFollow = await client.query(
+                    'SELECT * FROM following_to_game ' +
+                    'WHERE id_follower = $1 AND id_following = $2',
+                    [idUser, idGame]
                 );
 
-                res.status(200).json({ message: 'Добавили игру в список' });
+                if (getFollow.rows.length > 0) {
+                    const update = await client.query(
+                        'UPDATE following_to_game SET follow_type = $1 ' +
+                        'WHERE id_follow = $2',
+                        [followType, getFollow.rows[0].id_follow]
+                    );
+
+                    res.status(200).json({ message: 'Статус обновлен' });
+                }
+                else {
+                    const sub = await client.query(
+                        'INSERT INTO following_to_game (id_follower, id_following, follow_type)' +
+                        ' VALUES ($1, $2, $3)',
+                        [idUser, idGame, followType]
+                    );
+
+                    res.status(200).json({ message: 'Игра добавлена в список' });
+                }
             }
             else {
                 logger.info('Игры нету в нашей базе отправляем запрос в RAWG');
