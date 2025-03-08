@@ -1,3 +1,4 @@
+import { ref } from 'vue'
 export const genders = [
     {
         value: true,
@@ -82,3 +83,35 @@ export const statusGame = [
         label: 'Запланировано'
     }
 ]
+
+export const chartOptions = ref({
+    indexAxis: 'y',
+    elements: {
+        bar: {
+            borderWidth: 2,
+        }
+    },
+    responsive: true,
+    plugins: {
+        legend: {
+            position: 'right',
+            display: false
+        },
+        title: {
+            display: false,
+            text: ''
+        }
+    },
+    scales: {
+        x: {
+            ticks: {
+                stepSize: 1,
+                callback: function (value) {
+                    if (value % 1 === 0) {
+                        return value;
+                    }
+                },
+            },
+        },
+    },
+},);

@@ -620,6 +620,46 @@ class GameHandler {
             client.release();
         }
     }
+    async getSubsToGame(req, res) {
+        const { id } = req.params;
+
+        const client = await db.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            let index = 0;
+
+            const data = {
+                complete: 0,
+                playing: 0,
+                dropped: 0,
+                planned: 0,
+            };
+
+            for (let [type, value] of Object.entries(data)) {
+                const sub = await client.query(
+                    'SELECT COUNT(*) FROM following_to_game ' +
+                    'WHERE follow_type = $1 AND id_following = $2', [index, id]
+                );
+                data[type] = Number(sub.rows[0].count);
+
+                index++;
+            }
+
+            res.status(200).json({ message: 'Получили список', data: data });
+
+            await client.query('COMMIT');
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error('Ошибка получения подписок на игру:', e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
 }
 
 export default new GameHandler();

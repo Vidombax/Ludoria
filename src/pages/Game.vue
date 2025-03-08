@@ -5,19 +5,22 @@
 
   import api from '@/api/api.js'
   import { useUserStore } from '@/stores/user/store.js'
-  import { months, statusGame } from '../../services/constants.js'
+  import { useGameStore } from '@/stores/game/store.js'
+  import { months, statusGame, chartOptions } from '../../services/constants.js'
   import { openLoading } from '../../services/helpers.js'
   import { ElNotification } from 'element-plus'
 
   import Feedback from '@/components/game/Feedback.vue'
   import Post from '@/components/game/Post.vue'
   import FranchiseGame from '@/components/game/FranchiseGame.vue'
+  import DoughnutChart from "@/components/DoughnutChart.vue";
 
   const route = useRoute();
   const routes = useRouter();
   const id = ref(route.params.id);
 
   const userStore = useUserStore();
+  const gameStore = useGameStore();
 
   const {
     getGameInfo,
@@ -26,7 +29,8 @@
     getGameRateByUser,
     getSubToGame,
     subToGame,
-    unSubToGame
+    unSubToGame,
+    getSubscribes
   } = api;
 
   const info = ref({});
@@ -232,10 +236,30 @@
     }
   }
 
+  const getSubsByGame = async () => {
+    try {
+      const response = await getSubscribes(id.value);
+
+      gameStore.chartGameData.datasets[0].data = [];
+
+      const numbers = Object.values(response.data);
+
+      gameStore.chartGameData.datasets[0].data = numbers;
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.response.data.message,
+        type: 'error',
+      });
+    }
+  }
+
   onMounted(async () => {
     await getGame();
     if (loading.value) {
       await getFeedbacks();
+      await getSubsByGame();
       if (localStorage.getItem('idUser')) {
         await getUserRate();
         await getFollowingStatus();
@@ -250,15 +274,6 @@
       <div class="fixed_block based">
         <p class="game_name h phone_active">{{ info.name }}</p>
         <img :src="info.main_picture" alt="game photo">
-        <div class="statistic">
-          <div class="header h">
-            Статистика
-          </div>
-          <div class="items">
-
-          </div>
-          <!--  todo: инфографику найти библиотеку      -->
-        </div>
         <div class="game_activity based">
           <el-select
               style="width: 250px;"
@@ -277,6 +292,13 @@
 <!--          <el-button style="width: 250px;">Подписаться</el-button>-->
         </div>
         <div class="based">
+          <p class="h">Рейтинг игры</p>
+          <p class="positive" v-if="info.score > 3">{{ info.score }}</p>
+          <p class="neutral" v-else-if="info.score > 2">{{ info.score }}</p>
+          <p class="negative" v-else-if="info.score > 0">{{ info.score }}</p>
+          <p class="empty" v-else>Отсутствует</p>
+        </div>
+        <div class="based">
           <p class="h" v-if="rateScore > 0">Ваша оценка</p>
           <p class="h" v-else>Поставить оценку</p>
           <el-rate v-model="rateScore" @click="setRate" />
@@ -287,11 +309,15 @@
       <p class="game_name h phone_disable">{{ info.name }}</p>
       <div class="items">
         <div class="item">
-          <p class="h-item">Рейтинг игры</p>
-          <p class="positive" v-if="info.score > 3">{{ info.score }}</p>
-          <p class="neutral" v-else-if="info.score > 2">{{ info.score }}</p>
-          <p class="negative" v-else-if="info.score > 0">{{ info.score }}</p>
-          <p class="empty" v-else>0.00</p>
+          <div class="h-item">
+            Статистика
+          </div>
+          <div class="items">
+            <DoughnutChart
+                :chart-data="gameStore.chartGameData"
+                :chart-options="chartOptions"
+            />
+          </div>
         </div>
         <div class="item">
           <p class="h-item">Дата выхода</p>
@@ -397,9 +423,8 @@
     border-radius: 4px;
   }
   .empty {
-    background-color: #5e5e5e;
     padding: 1rem;
-    color: #f2f2f2;
+    color: #5e5e5e;
     font-size: large;
     font-weight: 800;
     border-radius: 4px;
@@ -425,6 +450,7 @@
     background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
     padding: 24px;
     min-height: 105vh;
+    width: 100%;
   }
   .left_block {
     grid-row: span 4 / span 4;
@@ -508,7 +534,7 @@
   }
   @media screen and (max-width: 1400px) {
     .fixed_block {
-      left: 2rem;
+      left: 0;
     }
     .info .items .item {
       grid-template-columns: 25% auto;
