@@ -206,7 +206,12 @@ class GameHandler {
 
                         dataForRedis.developers = getDevelopersByGame.rows;
                         dataForRedis.genres = getGenresByGame.rows;
-                        dataForRedis.score = getGameScore.rows[0].game_score !== null ? parseFloat(getGameScore.rows[0].game_score).toFixed(2) : null;
+                        if (getGameScore.rows[0].game_score !== null) {
+                            dataForRedis.score = parseFloat(getGameScore.rows[0].game_score).toFixed(2);
+                        }
+                        else {
+                            dataForRedis.score = null;
+                        }
 
                         logger.info('Собрали JSON объект для клиента');
 
@@ -244,7 +249,12 @@ class GameHandler {
                                 [idGame]
                             );
 
-                            dataForRedis.score = parseFloat(getGameScore.rows[0].game_score).toFixed(2);
+                            if (getGameScore.rows[0].game_score !== null) {
+                                dataForRedis.score = parseFloat(getGameScore.rows[0].game_score).toFixed(2);
+                            }
+                            else {
+                                dataForRedis.score = null;
+                            }
 
 
                             isFoundByIdRAWG = true;
