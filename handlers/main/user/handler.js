@@ -465,6 +465,7 @@ class UserHandler {
                         [newScore, idUser, idGame]
                     );
                     await deleteRedisValue(`game-info:${idGame}`);
+                    await deleteRedisValue('page-released-date:1');
                     res.status(200).json({ message: 'Оценка обновлена' });
                 }
                 else {
@@ -479,6 +480,7 @@ class UserHandler {
                     [idUser, idGame, newScore]
                 );
                 await deleteRedisValue(`game-info:${idGame}`);
+                await deleteRedisValue('page-released-date:1');
                 res.status(200).json({ message: 'Оценка поставлена' });
             }
 

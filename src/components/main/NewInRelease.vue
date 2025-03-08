@@ -62,7 +62,7 @@
           :picture="item.main_picture"
           :id="item.id_game"
           :genres="item.genres"
-          :score="item.score"
+          :score="Number(item.score).toFixed(2)"
       />
     </div>
   </div>
