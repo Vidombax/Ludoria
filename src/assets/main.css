@@ -4,3 +4,43 @@ a {
     text-decoration: none;
     color: #344a4e;
 }
+
+.based {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.positive {
+    background-color: #55c51c;
+    padding: 1rem;
+    color: #f2f2f2;
+    font-size: large;
+    font-weight: 800;
+    border-radius: 4px;
+}
+.neutral {
+    background-color: #eec911;
+    padding: 1rem;
+    color: #f2f2f2;
+    font-size: large;
+    font-weight: 800;
+    border-radius: 4px;
+}
+.negative {
+    background-color: #d3132a;
+    padding: 1rem;
+    color: #f2f2f2;
+    font-size: large;
+    font-weight: 800;
+    border-radius: 4px;
+}
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}

@@ -617,7 +617,7 @@ class UserHandler {
                 }
                 else {
                     logger.info('Оценка точно такая же не обновляем');
-                    res.status(200).json({ message: 'Обновили оценку' });
+                    res.status(200).json({ message: 'Не обновляем' });
                 }
             }
             else {

@@ -13,7 +13,7 @@
   import Feedback from '@/components/game/Feedback.vue'
   import Post from '@/components/game/Post.vue'
   import FranchiseGame from '@/components/game/FranchiseGame.vue'
-  import DoughnutChart from "@/components/DoughnutChart.vue";
+  import DoughnutChart from '@/components/DoughnutChart.vue'
 
   const route = useRoute();
   const routes = useRouter();
@@ -94,6 +94,7 @@
       if (response.message === 'Получили отзывы по игре') {
         feedbacks.value = response.data;
         feedbacks.value.count = response.count;
+        feedbacks.value.length = 3;
       }
     }
     catch (e) {
@@ -342,14 +343,15 @@
     <div class="feedbacks">
       <div class="header">
         <p class="h">Отзывы<sup v-if="feedbacks.count">{{ feedbacks.count }}</sup></p>
-        <a href="" v-if="feedbacks.count"><p class="show_more">Смотреть все</p></a>
+        <a href="" v-if="feedbacks.count"><p class="show_more h">Смотреть все</p></a>
       </div>
       <div class="items">
         <Feedback
             v-if="feedbacks.count"
             v-for="item in feedbacks"
             :key="item.id"
-            :id="item.id_user"
+            :id="item.id_feedback"
+            :id-user="item.id_user"
             :name="item.user_name"
             :photo="item.user_photo"
             :feedback="item.description"
@@ -385,42 +387,12 @@
 </template>
 
 <style scoped>
-  .based {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
   .h {
     font-weight: 800;
     font-size: larger;
   }
   .h-item {
     font-weight: 500;
-  }
-  .positive {
-    background-color: #55c51c;
-    padding: 1rem;
-    color: #f2f2f2;
-    font-size: large;
-    font-weight: 800;
-    border-radius: 4px;
-  }
-  .neutral {
-    background-color: #eec911;
-    padding: 1rem;
-    color: #f2f2f2;
-    font-size: large;
-    font-weight: 800;
-    border-radius: 4px;
-  }
-  .negative {
-    background-color: #d3132a;
-    padding: 1rem;
-    color: #f2f2f2;
-    font-size: large;
-    font-weight: 800;
-    border-radius: 4px;
   }
   .empty {
     padding: 1rem;
@@ -434,14 +406,6 @@
   }
   .show_more:hover {
     color: #6dc6d9;
-  }
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 2px solid #e0e0e0;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
   }
   .game {
     display: grid;

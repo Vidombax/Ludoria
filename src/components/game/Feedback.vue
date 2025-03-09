@@ -1,11 +1,57 @@
 <script setup>
+  import { ref } from 'vue'
+
+  import api from '@/api/api.js'
+  import {ElNotification} from "element-plus";
+
+  const { rateFeedback } = api;
+
   const props = defineProps({
     name: String,
     photo: String,
+    idUser: Number,
     id: Number,
     score: Number,
     feedback: String
   });
+
+  const refScore = ref(props.score)
+  const urlUser = ref(`/user/${props.idUser}`);
+
+  const rateClick = async (score) => {
+    try {
+      if (localStorage.getItem('idUser')) {
+        const data = {
+          token: localStorage.getItem('token'),
+          idFeedback: props.id,
+          score: score,
+          idUser: Number(localStorage.getItem('idUser'))
+        }
+        const response = await rateFeedback(data);
+        if (response.message !== 'Не обновляем') {
+          if (score === true) {
+            refScore.value += 1;
+          }
+          else {
+            refScore.value -= 1;
+          }
+        }
+      }
+      else {
+        ElNotification({
+          message: 'Авторизуйтесь чтобы поставить оценку!',
+          type: 'error',
+        });
+      }
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.response.data.message,
+        type: 'error',
+      });
+    }
+  }
 </script>
 
 <template>
@@ -13,15 +59,15 @@
     <div class="header">
       <div>
         <img :src="photo" alt="author logo">
-        <a href="/account"><p class="h name">{{ name }}</p></a>
+        <a :href="urlUser"><p class="h name">{{ name }}</p></a>
       </div>
       <div>
-        <div class="positive" v-if="score > 0">{{ score }}</div>
-        <div style="margin-right: 2rem; font-weight: 800;" v-else-if="score === 0">{{ score }}</div>
-        <div class="negative" v-else>{{ score }}</div>
+        <div class="positive" v-if="refScore > 0">{{ refScore }}</div>
+        <div style="margin-right: 2rem; font-weight: 800;" v-else-if="refScore === 0">{{ refScore }}</div>
+        <div class="negative" v-else>{{ refScore }}</div>
         <div>
-          <el-button>+</el-button>
-          <el-button>-</el-button>
+          <el-button @click="rateClick(true)">+</el-button>
+          <el-button @click="rateClick(false)">-</el-button>
         </div>
       </div>
     </div>
@@ -67,7 +113,7 @@
     gap: 4px;
   }
   .text p {
-    font-size: 16px;
+    font-size: 14px;
     line-height: 1.6;
     color: #333;
   }
