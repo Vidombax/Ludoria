@@ -53,3 +53,11 @@ a {
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 100;
 }
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.loading p {
+    font-size: x-large;
+}

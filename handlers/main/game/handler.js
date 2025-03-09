@@ -503,7 +503,7 @@ class GameHandler {
         }
     }
     async searchGameByName(req, res) {
-        const { name } = req.query;
+        const { name } = req.body;
 
         const client = await db.connect();
 
@@ -511,15 +511,20 @@ class GameHandler {
             await client.query('BEGIN');
 
             const getGamesByName = await client.query(
-                'SELECT name, main_picture, release_date, id_from_rawg FROM games ' +
+                'SELECT id_game AS id, name, main_picture, release_date, id_from_rawg FROM games ' +
                 'WHERE LOWER(name) LIKE $1',
                 [`%${name}%`]
             );
 
+            for (const gamesByNameElement of getGamesByName.rows) {
+                gamesByNameElement.isRAWG = false;
+            }
+
             if (getGamesByName.rows.length < 15) {
                 logger.info('Данных по поиску с нашей базы не хватило добавляем еще из RAWG');
+                const pageSize = 15 - getGamesByName.rows.length;
                 let rowsFromRAWG = [];
-                const getGamesBySearch = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&search=${name}&search_precise=true`);
+                const getGamesBySearch = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&search=${name}&search_precise=true&page_size=${pageSize}`);
 
                 for (const value of getGamesBySearch.data.results) {
                     const isNameUnique = getGamesByName.rows.every(row => row.name !== value.name);
@@ -528,17 +533,22 @@ class GameHandler {
                         rawgJSON.name = value.name;
                         rawgJSON.main_picture = value.background_image;
                         rawgJSON.release_date = value.released;
-                        rawgJSON.id_from_rawg = value.id;
+                        rawgJSON.id = value.id;
                         rawgJSON.isRAWG = true;
 
                         rowsFromRAWG.push(rawgJSON);
                     }
                 }
 
-                rowsFromRAWG.length = 15 - getGamesByName.rows.length;
                 rowsFromRAWG.push(...getGamesByName.rows);
 
-                res.status(200).json({ message: 'Получили данные по поиску', data: rowsFromRAWG});
+                const sortedData = [...rowsFromRAWG].sort((a, b) => {
+                   if (a.isRAWG === b.isRAWG) return 0;
+                    if (a.isRAWG === false) return -1;
+                    return 1;
+                });
+
+                res.status(200).json({ message: 'Получили данные по поиску', data: sortedData});
             }
             else {
                 for (const row of getGamesByName.rows) {

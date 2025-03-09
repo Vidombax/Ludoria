@@ -17,36 +17,51 @@
 <template>
   <div class="game">
     <a :href="urlToGame">
-      <img :src="picture" alt="game">
+      <div class="info_game">
+        <a :href="urlToGame">
+          <img :src="picture" alt="game">
+        </a>
+        <a :href="urlToGame"><p class="game-name">{{ name }}</p></a>
+      </div>
+      <div>
+
+      </div>
     </a>
-<!--    TODO: взять за основу див поиска с шикимори с имеющимися rawg данными-->
-    <a :href="urlToGame" class="game-name">{{ name }}</a>
   </div>
 </template>
 
 <style scoped>
   .game {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    padding: 2rem;
-    gap: 24px;
+    background: rgba(246, 241, 241, 0.9);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .game:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
   }
   img {
-   width: 75px;
-   height: 75px;
+   width: 100px;
+   height: 100px;
    border-radius: 12px;
+   object-fit: cover;
   }
   .game-name {
-    color: #f2f2f2;
+    color: #0f2027;
+    transition: .2s linear;
+  }
+  .game-name:hover {
+    color: #57a5b5;
   }
   .info_game {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-  .list_developers {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    gap: 12px;
     align-items: center;
   }
 </style>

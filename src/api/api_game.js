@@ -17,10 +17,17 @@ async function getFeedbacksByGame(id) {
 async function getSubscribes(id) {
     return (await axios.get(`/api/subs-by-game/${id}`)).data;
 }
+async function getGameByName(name) {
+    const data = {
+        name: name
+    }
+    return (await axios.post(`/api/search-game`, data)).data;
+}
 
 export default {
     getNewReleaseGames,
     getGameInfo,
     getFeedbacksByGame,
-    getSubscribes
+    getSubscribes,
+    getGameByName
 }

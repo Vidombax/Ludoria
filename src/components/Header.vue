@@ -1,11 +1,13 @@
 <script setup>
   import { ref, onMounted } from 'vue'
+
   import api from '@/api/api.js'
   import { useUserStore } from '@/stores/user/store.js'
+
   import SearchGame from '@/components/SearchGame.vue'
   import {ElNotification} from 'element-plus'
 
-  const { getUserInfo } = api;
+  const { getUserInfo, getGameByName } = api;
   const userStore = useUserStore();
 
   const idUser = Number(localStorage.getItem('idUser'));
@@ -45,18 +47,50 @@
     }
   }
 
+  const isLoading = ref(false);
   const search = ref('');
+  const search_data = ref([]);
 
-  const card_info = {
-    name: 'Persona 4 Golden',
-    date: '2012-11-20',
-    developers: [
-      'Atlus',
-      'SEGA'
-    ],
-    picture: 'https://media.rawg.io/media/games/b2c/b2c9c6115114c8f7d461b5430e8a7d4a.jpg',
-    id: 5,
-    score: 4.7
+  let timeoutId = null;
+
+  const onInput = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+
+    timeoutId = setTimeout(() => {
+      searchHandler();
+    }, 500);
+  };
+
+  const searchHandler = async () => {
+    try {
+      if (search.value.trim() === '') {
+        search_data.value = [];
+        return;
+      }
+
+      const response = await getGameByName(search.value);
+      if (response.data.length > 0) {
+        search_data.value = response.data;
+        isLoading.value = true;
+      } else {
+        search_data.value = [];
+        isLoading.value = true;
+
+        ElNotification({
+          message: 'Ничего не найдено',
+          type: 'error',
+        });
+      }
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.response.data.message,
+        type: 'error',
+      });
+    }
   }
 
   onMounted(async () => {
@@ -74,17 +108,24 @@
       </a>
     </div>
     <div class="search">
-      <el-input placeholder="Поиск" v-model="search" />
+      <el-input
+          placeholder="Поиск"
+          v-model="search"
+          @input="onInput"
+          clearable
+      />
       <div class="search_items" v-if="search !== ''">
         <SearchGame
-            v-for="item in 12"
+            v-if="isLoading"
+            v-for="item in search_data"
             :key="item.id"
-            :id="card_info.id"
-            :name="card_info.name"
-            :picture="card_info.picture"
-            :developers="card_info.developers"
-            :score="card_info.score"
+            :id="item.id"
+            :name="item.name"
+            :picture="item.main_picture"
         />
+        <div class="loading" v-else>
+          <p>Загрузка...</p>
+        </div>
       </div>
     </div>
     <div>
@@ -171,7 +212,7 @@
   }
 
   .search_items {
-    background-color: rgba(15, 32, 39);
+    background-color: rgba(39, 68, 80);
     color: #fff;
     position: absolute;
     height: 750px;
@@ -181,6 +222,10 @@
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 1rem;
   }
 
   .selector {
@@ -192,8 +237,8 @@
       width: 150px;
     }
     .search_items {
-      width: 300px;
-      margin-left: -75px;
+      width: 400px;
+      margin-left: -130px;
     }
   }
 
@@ -206,6 +251,9 @@
     }
     .logo {
       display: none;
+    }
+    .search_items {
+      margin-left: -110px;
     }
   }
 </style>
