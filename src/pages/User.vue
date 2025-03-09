@@ -4,12 +4,16 @@
 
   import api from '@/api/api.js'
   import { useUserStore } from '@/stores/user/store.js'
+  import { useGameStore } from '@/stores/game/store.js'
   import { ElNotification } from 'element-plus'
-  import { genders } from '../../services/constants.js'
+  import { genders, chartOptions } from '../../services/constants.js'
+
   import Friend from '@/components/user/Friend.vue'
+  import DoughnutChart from '@/components/DoughnutChart.vue'
 
   const { getUserInfo, updateUser, updateUserPhoto } = api;
   const userStore = useUserStore();
+  const gameStore = useGameStore();
 
   const route = useRoute();
 
@@ -33,6 +37,11 @@
         userData.value.photo = response.data.photo;
         userData.value.email_user = response.data.email_user;
         userData.value.gender = response.data.gender;
+
+        gameStore.chartGameData.datasets[0].data = [];
+        const numbers = Object.values(response.following);
+
+        gameStore.chartGameData.datasets[0].data = numbers;
 
         userDataForSettings.value = { ...userData.value };
 
@@ -261,9 +270,12 @@
         </div>
       </div>
       <div class="games-list">
-        <p class="h">Список игр</p>
+        <a href=""><p class="h">Список игр</p></a>
         <div>
-<!--    todo: сделать круговую диаграмму с кол-во игор      -->
+          <DoughnutChart
+              :chart-data="gameStore.chartGameData"
+              :chart-options="chartOptions"
+          />
         </div>
       </div>
       <div class="comments">
@@ -339,6 +351,9 @@
     font-weight: 700;
     color: #2c3e50;
     transition: color 0.3s ease;
+  }
+  .h:hover {
+    color: #57a5b5;
   }
   .friends,
   .friends .items {

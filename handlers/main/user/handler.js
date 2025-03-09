@@ -214,9 +214,10 @@ class UserHandler {
 
         try {
             let userInfo = await getRedisValue(`user:${id}`);
+            let followingInfo = await getRedisValue(`user-following:${id}`);
 
-            if (userInfo !== null) {
-                res.status(200).json({ message: 'Пользователь найден', data: JSON.parse(userInfo) });
+            if (userInfo !== null && followingInfo !== null) {
+                res.status(200).json({ message: 'Пользователь найден', data: JSON.parse(userInfo), following: JSON.parse(followingInfo) });
             }
             else {
                 await client.query('BEGIN');
@@ -227,9 +228,40 @@ class UserHandler {
                     [id]
                 );
 
+                let dataFollowing = {};
+                if (followingInfo === null) {
+                    let index = 0;
+                    dataFollowing = {
+                        complete: 0,
+                        playing: 0,
+                        dropped: 0,
+                        planned: 0,
+                    };
+
+                    for (let [type] of Object.entries(dataFollowing)) {
+                        const sub = await client.query(
+                            'SELECT COUNT(*) FROM following_to_game ' +
+                            'WHERE follow_type = $1 AND id_follower = $2', [index, id]
+                        );
+                        dataFollowing[type] = Number(sub.rows[0].count);
+
+                        index++;
+                    }
+
+                    await setRedisValue(`user-following:${id}`, JSON.stringify(dataFollowing));
+                }
+                else {
+                    dataFollowing = { ...JSON.parse(followingInfo) };
+                }
+
                 if (getUser.rows.length > 0) {
-                    await setRedisValue(`user:${id}`, JSON.stringify(getUser.rows[0]));
-                    res.status(200).json({ message: 'Пользователь найден', data: getUser.rows[0] });
+                    if (userInfo === null) {
+                        await setRedisValue(`user:${id}`, JSON.stringify(getUser.rows[0]));
+                        res.status(200).json({ message: 'Пользователь найден', data: getUser.rows[0], following: dataFollowing });
+                    }
+                    else {
+                        res.status(200).json({ message: 'Пользователь найден', data: JSON.parse(userInfo), following: dataFollowing });
+                    }
                 }
                 else {
                     res.status(404).json({ message: 'Пользователь не найден' });
