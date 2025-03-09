@@ -1,6 +1,6 @@
 <script setup>
   import { useRoute, useRouter } from 'vue-router'
-  import { onMounted, ref } from 'vue'
+  import { onMounted, ref, provide } from 'vue'
   import { getDate, getMonth, getYear, parseISO } from 'date-fns'
 
   import api from '@/api/api.js'
@@ -14,6 +14,7 @@
   import Post from '@/components/game/Post.vue'
   import FranchiseGame from '@/components/game/FranchiseGame.vue'
   import DoughnutChart from '@/components/DoughnutChart.vue'
+  import CreateFeedback from '@/components/game/CreateFeedback.vue'
 
   const route = useRoute();
   const routes = useRouter();
@@ -88,13 +89,25 @@
     }
   }
 
+  const isFoundUserFeedback = ref(false);
+  const userFeedback = ref('');
   const getFeedbacks = async () => {
     try {
       const response = await getFeedbacksByGame(id.value);
       if (response.message === 'Получили отзывы по игре') {
         feedbacks.value = response.data;
         feedbacks.value.count = response.count;
-        feedbacks.value.length = 3;
+
+        for (const feedback of feedbacks.value) {
+          if (feedback.id_user === Number(localStorage.getItem('idUser'))) {
+            isFoundUserFeedback.value = true;
+            userFeedback.value = feedback.description;
+          }
+        }
+
+        if (feedbacks.value.length > 3) {
+          feedbacks.value.length = 3;
+        }
       }
     }
     catch (e) {
@@ -103,6 +116,13 @@
         message: e.response.data.message,
         type: 'error',
       });
+    }
+  }
+
+  const emitFeedback = (data) => {
+    if (isFoundUserFeedback.value === false) {
+      feedbacks.value.push(data);
+      feedbacks.value.count = 1;
     }
   }
 
@@ -256,6 +276,16 @@
     }
   }
 
+  const isModalFeedbackOpen = ref(false);
+  const handleFeedbackModal = () => {
+    isModalFeedbackOpen.value = isModalFeedbackOpen.value !== true;
+  }
+
+  provide('game', {
+    handleFeedbackModal,
+    isFoundUserFeedback
+  });
+
   onMounted(async () => {
     await getGame();
     if (loading.value) {
@@ -271,6 +301,18 @@
 
 <template>
   <div class="game" v-if="loading">
+    <transition name="fade">
+      <div v-if="isModalFeedbackOpen" class="overlay" @click="handleFeedbackModal"></div>
+    </transition>
+    <transition name="fade">
+      <CreateFeedback
+          :name="info.name"
+          :id-game="id"
+          v-if="isModalFeedbackOpen"
+          :text="userFeedback"
+          @feedback="emitFeedback"
+      />
+    </transition>
     <div class="left_block">
       <div class="fixed_block based">
         <p class="game_name h phone_active">{{ info.name }}</p>
@@ -289,7 +331,8 @@
                 @click="HandlerGameToList"
             />
           </el-select>
-          <el-button style="width: 250px;">Написать отзыв</el-button>
+          <el-button style="width: 250px;" @click="handleFeedbackModal" v-if="isFoundUserFeedback">Обновить отзыв</el-button>
+          <el-button style="width: 250px;" @click="handleFeedbackModal" v-else>Написать отзыв</el-button>
 <!--          <el-button style="width: 250px;">Подписаться</el-button>-->
         </div>
         <div class="based">
@@ -359,7 +402,8 @@
         />
         <div v-else class="based" style="gap: 24px">
           <p class="h">Отсутствуют</p>
-          <el-button>Написать отзыв</el-button>
+          <el-button @click="handleFeedbackModal" v-if="isFoundUserFeedback">Обновить отзыв</el-button>
+          <el-button @click="handleFeedbackModal" v-else>Написать отзыв</el-button>
         </div>
       </div>
     </div>
@@ -495,6 +539,21 @@
   }
   .phone_active {
     display: none;
+  }
+  .fade-enter-from {
+    opacity: 0;
+    top: 5%;
+  }
+  .fade-enter-to, .fade-leave-from {
+    opacity: 1;
+    top: 15%;
+  }
+  .fade-leave-to {
+    opacity: 0;
+    top: 5%;
+  }
+  .fade-enter-active, .fade-leave-active {
+    transition: 0.15s ease;
   }
   @media screen and (max-width: 1400px) {
     .fixed_block {

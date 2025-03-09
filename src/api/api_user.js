@@ -97,6 +97,15 @@ async function rateFeedback(data) {
 
     return (await axios.post(`/api/rate-feedback`, data, config)).data;
 }
+async function createFeedback(data) {
+    const config = {
+        headers: {
+            Authorization: `${data.token}`
+        }
+    };
+
+    return (await axios.post(`/api/feedback`, data, config)).data;
+}
 
 export default {
     loginUser,
@@ -109,5 +118,6 @@ export default {
     getSubToGame,
     subToGame,
     unSubToGame,
-    rateFeedback
+    rateFeedback,
+    createFeedback
 }

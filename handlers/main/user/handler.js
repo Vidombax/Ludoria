@@ -545,12 +545,13 @@ class UserHandler {
             if (getFeedback.rows.length > 0) {
                 if (getFeedback.rows[0].description !== description.trim()) {
                     const updateFeedback = await client.query('UPDATE feedbacks SET description = $1 ' +
-                        'WHERE id_user = $2 AND id_game = $3',
+                        'WHERE id_user = $2 AND id_game = $3 ' +
+                        'RETURNING *',
                         [description.trim(), idUser, idGame]
                     );
 
                     await deleteRedisValue(`feedback-to-game:${idGame}`);
-                    res.status(200).json({ message: 'Отзыв обновлен' });
+                    res.status(200).json({ message: 'Отзыв обновлен', data: updateFeedback.rows[0] });
                 }
                 else {
                     logger.info('Отзыв точно такой же не обновляем');
@@ -565,8 +566,24 @@ class UserHandler {
                     [idUser, idGame, description.trim()]
                 );
 
+                const getUser = await client.query(
+                    'SELECT * FROM users ' +
+                    'WHERE id_user = $1',
+                    [idUser]
+                );
+
+                const data = {
+                    id_feedback: createFeedback.rows[0].id_feedback,
+                    id_game: createFeedback.rows[0].id_game,
+                    description: createFeedback.rows[0].description,
+                    id_user: idUser,
+                    user_name: getUser.rows[0].name,
+                    user_photo: getUser.rows[0].photo,
+                    feedback_score: 0
+                }
+
                 await deleteRedisValue(`feedback-to-game:${idGame}`);
-                res.status(200).json({ message: 'Отзыв создан', idFeedback: createFeedback.rows[0].id_feedback });
+                res.status(200).json({ message: 'Отзыв создан', data: data });
             }
 
             await client.query('COMMIT');
