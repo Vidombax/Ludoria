@@ -19,6 +19,7 @@
 
   const id = ref(route.params.id);
   const token = localStorage.getItem('token');
+  const url = ref(`/user/${id.value}`);
 
   const userData = ref({
     token: token,
@@ -270,7 +271,7 @@
         </div>
       </div>
       <div class="games-list">
-        <a href=""><p class="h">Список игр</p></a>
+        <a :href="url + '/list'"><p class="h">Список игр</p></a>
         <div>
           <DoughnutChart
               :chart-data="gameStore.chartGameData"

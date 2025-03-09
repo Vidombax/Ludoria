@@ -10,6 +10,7 @@ router.post('/update', authenticateToken, handler.updateUser);
 router.post('/update-photo', uploadProfilePicture.single('file'), handler.updateUserPhoto);
 router.post('/login', handler.authorizationUser);
 router.post('/user/:id', authenticateToken, handler.getUser);
+router.post('/user-following/:id', authenticateToken, handler.getFollowingGameByUser);
 router.get('/sub-to-game/:iduser/:idgame', authenticateToken, handler.getSubscribeToGameByUser);
 router.post('/subscribe', authenticateToken, handler.subscribeToGame);
 router.post('/unsubscribe', authenticateToken, handler.unsubscribeToGame);

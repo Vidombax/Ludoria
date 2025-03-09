@@ -962,6 +962,56 @@ class UserHandler {
             client.release();
         }
     }
+    async getFollowingGameByUser(req, res) {
+        const { id } = req.params;
+
+        const client = await db.connect();
+
+        try {
+            let followingInfo = await getRedisValue(`sub-game-by-user:${id}`);
+            if (followingInfo !== null) {
+                res.status(200).json({ message: 'Получили список игр', data: JSON.parse(followingInfo) });
+            }
+            else {
+                await client.query('BEGIN');
+
+                let dataFollowing;
+                let index = 0;
+
+                dataFollowing = {
+                    complete: [],
+                    playing: [],
+                    dropped: [],
+                    planned: [],
+                };
+
+                for (let [type] of Object.entries(dataFollowing)) {
+                    const sub = await client.query('SELECT games.id_game, games.name, s.score, ftg.follow_type FROM games ' +
+                        'INNER JOIN public.following_to_game ftg on games.id_game = ftg.id_following ' +
+                        'JOIN public.scores s on games.id_game = s.id_game ' +
+                        'WHERE ftg.id_follower = $1 AND ftg.follow_type = $2', [id, index]
+                    );
+
+                    dataFollowing[type] = sub.rows;
+
+                    index++;
+                }
+
+                await setRedisValue(`sub-game-by-user:${id}`, JSON.stringify(dataFollowing));
+                res.status(200).json({ message: 'Получили список игр', data: dataFollowing });
+
+                await client.query('COMMIT');
+            }
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error('Ошибка получения списка игр пользователя:', e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
 }
 
 export default new UserHandler();
