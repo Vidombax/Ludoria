@@ -304,7 +304,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка ...:', e);
+            logger.error('Ошибка получения статуса подписки на игру:', e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -348,6 +348,8 @@ class UserHandler {
                         [idUser, idGame, followType]
                     );
 
+                    await deleteRedisValue(`user-following:${idUser}`);
+                    await deleteRedisValue(`sub-game-by-user:${idUser}`);
                     res.status(200).json({ message: 'Игра добавлена в список' });
                 }
             }
@@ -429,6 +431,8 @@ class UserHandler {
                         [idUser, addGameToDB.rows[0].id_game, followType]
                     );
 
+                    await deleteRedisValue(`user-following:${idUser}`);
+                    await deleteRedisValue(`sub-game-by-user:${idUser}`);
                     res.status(200).json({ message: 'Подписка была оформлена' });
                 }
                 else {
@@ -461,6 +465,8 @@ class UserHandler {
                 [idUser, idGame]
             );
 
+            await deleteRedisValue(`user-following:${idUser}`);
+            await deleteRedisValue(`sub-game-by-user:${idUser}`);
             res.status(200).json({ message: 'Игра удалена из списка' });
 
             await client.query('COMMIT');
@@ -496,6 +502,8 @@ class UserHandler {
                         'WHERE id_user = $2 AND id_game = $3',
                         [newScore, idUser, idGame]
                     );
+
+                    await deleteRedisValue(`sub-game-by-user:${idUser}`);
                     await deleteRedisValue(`game-info:${idGame}`);
                     await deleteRedisValue('page-released-date:1');
                     res.status(200).json({ message: 'Оценка обновлена' });
@@ -511,6 +519,8 @@ class UserHandler {
                     'VALUES ($1, $2, $3)',
                     [idUser, idGame, newScore]
                 );
+
+                await deleteRedisValue(`sub-game-by-user:${idUser}`);
                 await deleteRedisValue(`game-info:${idGame}`);
                 await deleteRedisValue('page-released-date:1');
                 res.status(200).json({ message: 'Оценка поставлена' });
@@ -988,7 +998,7 @@ class UserHandler {
                 for (let [type] of Object.entries(dataFollowing)) {
                     const sub = await client.query('SELECT games.id_game, games.name, s.score, ftg.follow_type FROM games ' +
                         'INNER JOIN public.following_to_game ftg on games.id_game = ftg.id_following ' +
-                        'JOIN public.scores s on games.id_game = s.id_game ' +
+                        'LEFT JOIN public.scores s on games.id_game = s.id_game ' +
                         'WHERE ftg.id_follower = $1 AND ftg.follow_type = $2', [id, index]
                     );
 
