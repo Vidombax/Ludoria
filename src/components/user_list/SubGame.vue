@@ -35,4 +35,13 @@
     justify-content: flex-end;
     font-weight: 700;
   }
+
+  @media screen and (max-width: 768px) {
+    .item {
+      grid-template-columns: 1fr 0.1fr;
+    }
+    .item p {
+      font-size: medium;
+    }
+  }
 </style>

@@ -148,4 +148,10 @@
     padding: 0 0.4rem;
     border-bottom: 2px solid #e0e0e0;
   }
+
+  @media screen and (max-width: 768px) {
+    .container {
+      grid-template-columns: 1fr 0.05fr;
+    }
+  }
 </style>
