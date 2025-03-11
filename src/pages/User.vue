@@ -1,6 +1,6 @@
 <script setup>
   import { useRoute } from 'vue-router'
-  import { onMounted, ref } from 'vue'
+  import { onMounted, ref, provide } from 'vue'
 
   import api from '@/api/api.js'
   import { useUserStore } from '@/stores/user/store.js'
@@ -10,7 +10,7 @@
 
   import Friend from '@/components/user/Friend.vue'
   import DoughnutChart from '@/components/DoughnutChart.vue'
-  import Comment from '@/components/user/Comment.vue'
+  import Feedbacks from '@/components/user/Feedbacks.vue'
 
   const { getUserInfo, updateUser, updateUserPhoto } = api;
   const userStore = useUserStore();
@@ -62,6 +62,7 @@
         delete userDataForSettings.value.photo;
 
         feedbacks.value = response.feedbacks;
+        console.log(feedbacks.value)
 
         if (userStore.id === Number(id.value)) {
           isUser.value = true;
@@ -215,6 +216,15 @@
     }
   }
 
+  const isModalFeedbacksOpen = ref(false);
+  const handlerFeedbackModal = () => {
+    isModalFeedbacksOpen.value = isModalFeedbacksOpen.value !== true;
+  }
+
+  provide('user', {
+    handlerFeedbackModal,
+  });
+
   onMounted(async () => {
     await getUser();
     settingsDiv = document.getElementsByClassName('settings')[0];
@@ -319,6 +329,22 @@
           />
         </div>
       </div>
+      <div class="feedbacks">
+        <el-tooltip placement="top">
+          <template #content>Открыть</template>
+          <p class="feedback_header" @click="handlerFeedbackModal">Отзывы: {{ feedbacks.length }}</p>
+        </el-tooltip>
+      </div>
+      <transition name="fade">
+        <div v-if="isModalFeedbacksOpen" class="overlay"></div>
+      </transition>
+      <transition name="fade">
+        <Feedbacks
+            v-if="isModalFeedbacksOpen"
+            :feedbacks="feedbacks"
+            :name="userData.name"
+        />
+      </transition>
     </div>
     <div class="friends">
       <a href=""><p class="h">Друзья</p></a>
@@ -336,20 +362,6 @@
         <a href="/subscribes">Франшизы</a>
       </div>
     </div>
-    <div class="comments">
-      <p class="h">Отзывы пользователя</p>
-      <div class="feedbacks">
-        <Comment v-for="item in feedbacks"
-                 :key="item.id"
-                 :id="item.id_game"
-                 :name="item.name"
-                 :photo="item.main_picture"
-                 :score="item.score"
-                 :score_feedback="item.feedback_score"
-        />
-        <p v-if="feedbacks.length > 5">Показать еще</p>
-      </div>
-    </div>
     <div class="users_posts">
       <p class="h">Посты пользователя</p>
       <div class="posts">
@@ -363,16 +375,13 @@
   .user {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 1fr);
     justify-items: center;
     align-items: center;
     gap: 8px;
     background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
     padding: 24px;
     min-height: 100vh;
-  }
-  .comments {
-    grid-column: span 2 / span 2;
   }
   .users_posts {
     grid-column: span 2 / span 2;
@@ -452,6 +461,31 @@
   }
   .header_close_btn {
     display: none;
+  }
+  .feedback_header {
+    transition: .2s linear;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: larger;
+  }
+  .feedback_header:hover {
+    text-decoration: underline;
+  }
+  .fade-enter-from {
+    opacity: 0;
+    top: 0;
+    transform: scale(0.6);
+  }
+  .fade-enter-to, .fade-leave-from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .fade-leave-to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  .fade-enter-active, .fade-leave-active {
+    transition: 0.15s ease;
   }
   @media screen and (max-width: 768px) {
     .user {
