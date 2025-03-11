@@ -10,6 +10,7 @@
 
   import Friend from '@/components/user/Friend.vue'
   import DoughnutChart from '@/components/DoughnutChart.vue'
+  import Comment from '@/components/user/Comment.vue'
 
   const { getUserInfo, updateUser, updateUserPhoto } = api;
   const userStore = useUserStore();
@@ -28,6 +29,7 @@
 
   const userDataForSettings = ref({});
   const isUser = ref(false); //Проверяем зашел ли пользователь на свою страницу
+  const feedbacks = ref([]);
 
   const getUser = async () => {
     try {
@@ -59,7 +61,9 @@
 
         delete userDataForSettings.value.photo;
 
-        if (userStore.id === id.value) {
+        feedbacks.value = response.feedbacks;
+
+        if (userStore.id === Number(id.value)) {
           isUser.value = true;
         }
       }
@@ -74,7 +78,6 @@
       }
       else {
         localStorage.clear();
-        location.replace('/');
       }
     }
   }
@@ -198,7 +201,7 @@
       }
       else {
         ElNotification({
-          message: 'Авторизуйтесь чтобы добавить в друзья!',
+          message: 'Авторизуйтесь чтобы отправить запрос!',
           type: 'error',
         });
       }
@@ -295,8 +298,8 @@
       <div class="bio">
         <p class="h">{{ userData.name }}</p>
         <div class="bio_text">
-          <span v-if="userData.gender !== ''">{{ userData.gender }} *</span>
-          <span>{{ userData.age }} лет  *</span>
+          <span v-if="userData.gender !== ''">{{ userData.gender }} /</span>
+          <span>{{ userData.age }} лет /</span>
           <div v-if="isUser">
             <el-button v-if="isModalSettingsClosed" @click="activitySettingsModal">Ред.</el-button>
             <el-button v-else @click="activitySettingsModal">Закрыть</el-button>
@@ -316,9 +319,6 @@
           />
         </div>
       </div>
-      <div class="comments">
-        <p>Комментарии: <a href="/comments">1 комментарий</a></p>
-      </div>
     </div>
     <div class="friends">
       <a href=""><p class="h">Друзья</p></a>
@@ -336,6 +336,20 @@
         <a href="/subscribes">Франшизы</a>
       </div>
     </div>
+    <div class="comments">
+      <p class="h">Отзывы пользователя</p>
+      <div class="feedbacks">
+        <Comment v-for="item in feedbacks"
+                 :key="item.id"
+                 :id="item.id_game"
+                 :name="item.name"
+                 :photo="item.main_picture"
+                 :score="item.score"
+                 :score_feedback="item.feedback_score"
+        />
+        <p v-if="feedbacks.length > 5">Показать еще</p>
+      </div>
+    </div>
     <div class="users_posts">
       <p class="h">Посты пользователя</p>
       <div class="posts">
@@ -349,13 +363,16 @@
   .user {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(3, 1fr);
+    grid-template-rows: repeat(4, 1fr);
     justify-items: center;
     align-items: center;
     gap: 8px;
     background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
     padding: 24px;
     min-height: 100vh;
+  }
+  .comments {
+    grid-column: span 2 / span 2;
   }
   .users_posts {
     grid-column: span 2 / span 2;
@@ -378,6 +395,11 @@
     border: 4px solid #fff;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .bio_text {
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
   .bio_text span {
     margin-right: 0.5rem;

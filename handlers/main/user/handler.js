@@ -215,9 +215,10 @@ class UserHandler {
         try {
             let userInfo = await getRedisValue(`user:${id}`);
             let followingInfo = await getRedisValue(`user-following:${id}`);
+            let feedbackInfo = await getRedisValue(`user-feedback:${id}`);
 
-            if (userInfo !== null && followingInfo !== null) {
-                res.status(200).json({ message: 'Пользователь найден', data: JSON.parse(userInfo), following: JSON.parse(followingInfo) });
+            if (userInfo !== null && followingInfo !== null && feedbackInfo !== null) {
+                res.status(200).json({ message: 'Пользователь найден', data: JSON.parse(userInfo), following: JSON.parse(followingInfo), feedbacks: JSON.parse(feedbackInfo) });
             }
             else {
                 await client.query('BEGIN');
@@ -227,6 +228,33 @@ class UserHandler {
                     'WHERE id_user = $1',
                     [id]
                 );
+
+                let feedbackData = {};
+                if (feedbackInfo === null) {
+                    const getFeedbackByUser = await client.query(
+                        'SELECT feedbacks.id_feedback, s.id_user, g.main_picture, g.name, feedbacks.description, s.score, g.id_game ' +
+                        'FROM feedbacks INNER JOIN public.games g ON g.id_game = feedbacks.id_game ' +
+                        'LEFT JOIN public.scores s ON g.id_game = s.id_game ' +
+                        'WHERE feedbacks.id_user = $1',
+                        [id]
+                    );
+
+                    for (const feedback of getFeedbackByUser.rows) {
+                        const getScoreToFeedback = await client.query(
+                            'SELECT COUNT(CASE WHEN score = TRUE THEN 1 END) - COUNT(CASE WHEN score = FALSE THEN 1 END) AS feedback_score ' +
+                            'FROM feedback_score ' +
+                            'WHERE id_feedback = $1',
+                            [feedback.id_feedback]
+                        );
+                        feedback.feedback_score = getScoreToFeedback.rows[0].feedback_score;
+                    }
+
+                    feedbackData = getFeedbackByUser.rows;
+                    await setRedisValue(`user-feedback:${id}`, JSON.stringify(feedbackData));
+                }
+                else {
+                    feedbackData = { ...JSON.parse(feedbackInfo) };
+                }
 
                 let dataFollowing = {};
                 if (followingInfo === null) {
@@ -257,10 +285,10 @@ class UserHandler {
                 if (getUser.rows.length > 0) {
                     if (userInfo === null) {
                         await setRedisValue(`user:${id}`, JSON.stringify(getUser.rows[0]));
-                        res.status(200).json({ message: 'Пользователь найден', data: getUser.rows[0], following: dataFollowing });
+                        res.status(200).json({ message: 'Пользователь найден', data: getUser.rows[0], following: dataFollowing, feedbacks: feedbackData });
                     }
                     else {
-                        res.status(200).json({ message: 'Пользователь найден', data: JSON.parse(userInfo), following: dataFollowing });
+                        res.status(200).json({ message: 'Пользователь найден', data: JSON.parse(userInfo), following: dataFollowing, feedbacks: feedbackData });
                     }
                 }
                 else {
