@@ -27,6 +27,7 @@
   });
 
   const userDataForSettings = ref({});
+  const isUser = ref(false); //Проверяем зашел ли пользователь на свою страницу
 
   const getUser = async () => {
     try {
@@ -57,6 +58,10 @@
         }
 
         delete userDataForSettings.value.photo;
+
+        if (userStore.id === id.value) {
+          isUser.value = true;
+        }
       }
     }
     catch (e) {
@@ -181,6 +186,32 @@
     }
   }
 
+  const handlerFriend = async (isAdd) => {
+    try {
+      if (userStore.id !== 0) {
+        if (isAdd === true) {
+
+        }
+        else {
+
+        }
+      }
+      else {
+        ElNotification({
+          message: 'Авторизуйтесь чтобы добавить в друзья!',
+          type: 'error',
+        });
+      }
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.response.data.message,
+        type: 'error',
+      });
+    }
+  }
+
   onMounted(async () => {
     await getUser();
     settingsDiv = document.getElementsByClassName('settings')[0];
@@ -266,8 +297,14 @@
         <div class="bio_text">
           <span v-if="userData.gender !== ''">{{ userData.gender }} *</span>
           <span>{{ userData.age }} лет  *</span>
-          <el-button v-if="isModalSettingsClosed" @click="activitySettingsModal">Ред.</el-button>
-          <el-button v-else @click="activitySettingsModal">Закрыть</el-button>
+          <div v-if="isUser">
+            <el-button v-if="isModalSettingsClosed" @click="activitySettingsModal">Ред.</el-button>
+            <el-button v-else @click="activitySettingsModal">Закрыть</el-button>
+          </div>
+          <div v-else>
+            <el-button v-if="isModalSettingsClosed" @click="handlerFriend(true)">Отправить запрос</el-button>
+            <el-button v-else @click="handlerFriend(false)">Удалить из друзей</el-button>
+          </div>
         </div>
       </div>
       <div class="games-list">

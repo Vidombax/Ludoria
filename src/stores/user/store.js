@@ -2,19 +2,9 @@ import { defineStore } from 'pinia'
 
 export const useUserStore = defineStore('user', {
     state: () => ({
+        id: 0,
         name: '',
         previousStatusGame: '',
-        chartGameData : {
-            labels: ['Пройдено', 'Играю', 'Заброшено', 'Запланировано'],
-            datasets: [
-                {
-                    label: 'Пример данных',
-                    data: [],
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
-                    hoverOffset: 4,
-                },
-            ],
-        }
     }),
     actions: {
         setName(newName) {

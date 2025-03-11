@@ -26,6 +26,7 @@
     try {
       const response = await getUserInfo(userData.value);
       if (response) {
+        userStore.id = idUser;
         userData.value.name = response.data.name;
         userData.value.photo = response.data.photo;
 
