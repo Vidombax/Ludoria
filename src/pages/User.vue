@@ -334,7 +334,7 @@
           <p class="feedback_header" @click="handlerFeedbackModal">Отзывы: {{ feedbacks.length }}</p>
         </el-tooltip>
       </div>
-      <transition name="fade">
+      <transition name="overlay">
         <div v-if="isModalFeedbacksOpen" class="overlay"></div>
       </transition>
       <transition name="fade">

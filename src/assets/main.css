@@ -53,6 +53,18 @@ a {
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 100;
 }
+.overlay-enter-from {
+    opacity: 0;
+}
+.overlay-enter-to {
+    opacity: 1;
+}
+.overlay-leave-to {
+    opacity: 0;
+}
+.overlay-enter-active {
+    transition: 0.15s ease;
+}
 .loading {
     display: flex;
     justify-content: center;

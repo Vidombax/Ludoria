@@ -301,7 +301,7 @@
 
 <template>
   <div class="game" v-if="loading">
-    <transition name="fade">
+    <transition name="overlay">
       <div v-if="isModalFeedbackOpen" class="overlay" @click="handleFeedbackModal"></div>
     </transition>
     <transition name="fade">
