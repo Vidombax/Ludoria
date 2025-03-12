@@ -8,8 +8,8 @@
   const { getNewReleaseGames } = api;
 
   const info_obj = {
-    href: '/new-games',
-    name_info: 'Новинки',
+    href: '/popularity',
+    name_info: 'Самое обсуждаемое',
     color_scheme: 'rgba(232,22,22,0.27)',
     color_name: 'rgb(232,22,22)'
   }
@@ -21,22 +21,6 @@
       cards.value = response.data;
       cards.value.length = 4;
     }
-  }
-
-  const card_info = {
-    name: 'Persona 4 Golden',
-    date: '2012-11-20',
-    developers: [
-        'Atlus',
-        'SEGA'
-    ],
-    picture: 'https://media.rawg.io/media/games/b2c/b2c9c6115114c8f7d461b5430e8a7d4a.jpg',
-    id: 5,
-    genres: [
-        'RPG',
-        'Action'
-    ],
-    score: 4.7
   }
 
   onMounted(async () => {

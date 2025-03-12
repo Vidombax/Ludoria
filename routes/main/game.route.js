@@ -8,5 +8,6 @@ router.post('/game-by-release-date', handler.getGamesByReleaseDate);
 router.post('/search-game', handler.searchGameByName);
 router.post('/feedback-by-game/:id', handler.getFeedbacksByGame);
 router.get('/subs-by-game/:id', handler.getSubsToGame);
+router.get('/popularity-game', handler.getGamesByPopularity);
 
 export default router;

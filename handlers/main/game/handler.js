@@ -670,6 +670,94 @@ class GameHandler {
             client.release();
         }
     }
+    async getGamesByPopularity(req, res) {
+        const client = await db.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            const games = await client.query(
+                'SELECT id_game, name, main_picture, release_date, id_from_rawg FROM games'
+            );
+
+            if (games.rows.length > 0) {
+                for (const row of games.rows) {
+                    const getGenresByGame = await client.query(
+                        'SELECT genres.name FROM genres ' +
+                        'INNER JOIN public.genre_to_game gtg ' +
+                        'ON genres.id_genre = gtg.id_genre ' +
+                        'WHERE gtg.id_game = $1',
+                        [row.id_game]
+                    );
+
+                    const getGameScore = await client.query(
+                        'SELECT AVG(score) as game_score FROM scores ' +
+                        'WHERE id_game = $1',
+                        [row.id_game]
+                    );
+
+                    const getDevelopersByGame = await client.query(
+                        'SELECT developers.name FROM developers ' +
+                        'INNER JOIN public.developers_to_game dtg ' +
+                        'ON developers.id_developer = dtg.id_developer ' +
+                        'WHERE dtg.id_game = $1',
+                        [row.id_game]
+                    );
+
+                    const getCountFeedbacks = await client.query(
+                        'SELECT COUNT(*) AS count_feedbacks FROM feedbacks ' +
+                        'WHERE id_game = $1',
+                        [row.id_game]
+                    );
+
+                    const getCountPosts = await client.query(
+                        'SELECT COUNT(*) AS count_posts FROM posts ' +
+                        'WHERE id_game = $1',
+                        [row.id_game]
+                    );
+
+                    const getCountScores = await client.query(
+                        'SELECT COUNT(*) AS count_scores FROM scores ' +
+                        'WHERE id_game = $1',
+                        [row.id_game]
+                    );
+
+                    row.genres = getGenresByGame.rows;
+                    row.score = getGameScore.rows[0].game_score;
+                    row.developers = getDevelopersByGame.rows;
+                    row.count_feedbacks = getCountFeedbacks.rows[0].count_feedbacks;
+                    row.count_posts = getCountPosts.rows[0].count_posts;
+                    row.count_scores = getCountScores.rows[0].count_scores;
+                }
+            }
+
+            games.rows.sort((a, b) => {
+                if (b.count_feedbacks !== a.count_feedbacks) {
+                    return b.count_feedbacks - a.count_feedbacks;
+                }
+
+                if (b.count_posts !== a.count_posts) {
+                    return b.count_posts - a.count_posts;
+                }
+
+                if (b.count_scores !== a.count_scores) {
+                    return b.count_scores - a.count_scores;
+                }
+            });
+
+            res.status(200).json({ message: 'Игры по популярности', data: games.rows});
+
+            await client.query('COMMIT');
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error('Ошибка получения трендовых игр:', e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
 }
 
 export default new GameHandler();
