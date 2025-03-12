@@ -25,7 +25,7 @@
       </div>
     </template>
     <router-link :to="urlToGame">
-      <el-image :src="picture"></el-image>
+      <el-image :src="picture" fit="cover"></el-image>
     </router-link>
     <template #footer>
       <div class="info_game">
@@ -102,6 +102,8 @@
     all: initial !important;
   }
   .el-image {
+    width: 100%;
+    height: 200px;
     border-radius: 8px;
     border: 2px solid #fff;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);

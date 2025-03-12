@@ -1,11 +1,12 @@
 <script setup>
   import {ref, onMounted} from 'vue'
+
   import api from '@/api/api.js'
 
-  import Info from "@/components/Info.vue";
-  import Card from "@/components/Card.vue";
+  import Info from '@/components/Info.vue'
+  import Card from '@/components/Card.vue'
 
-  const { getNewReleaseGames } = api;
+  const { getPopularGame } = api;
 
   const info_obj = {
     href: '/popularity',
@@ -16,7 +17,7 @@
 
   const cards = ref([]);
   const getGames = async () => {
-    const response = await getNewReleaseGames(1);
+    const response = await getPopularGame();
     if (response) {
       cards.value = response.data;
       cards.value.length = 4;
@@ -29,25 +30,27 @@
 </script>
 
 <template>
-  <div class="info_div">
-    <Info
-        :href="info_obj.href"
-        :name-info="info_obj.name_info"
-        :color-scheme="info_obj.color_scheme"
-        :color-name="info_obj.color_name"
-    />
-    <div class="cards">
-      <Card
-          v-for="item in cards"
-          :key="item.id_game"
-          :name="item.name"
-          :date="item.release_date"
-          :developers="item.developers"
-          :picture="item.main_picture"
-          :id="item.id_game"
-          :genres="item.genres"
-          :score="Number(item.score).toFixed(2)"
+  <div>
+    <div class="info_div" v-memo>
+      <Info
+          :href="info_obj.href"
+          :name-info="info_obj.name_info"
+          :color-scheme="info_obj.color_scheme"
+          :color-name="info_obj.color_name"
       />
+      <div class="cards">
+        <Card
+            v-for="item in cards"
+            :key="item.id_game"
+            :name="item.name"
+            :date="item.release_date"
+            :developers="item.developers"
+            :picture="item.main_picture"
+            :id="item.id_game"
+            :genres="item.genres"
+            :score="Number(item.score).toFixed(2)"
+        />
+      </div>
     </div>
   </div>
 </template>

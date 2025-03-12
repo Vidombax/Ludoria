@@ -23,11 +23,14 @@ async function getGameByName(name) {
     }
     return (await axios.post(`/api/search-game`, data)).data;
 }
-
+async function getPopularGame() {
+    return (await axios.get(`/api/popularity-game`)).data;
+}
 export default {
     getNewReleaseGames,
     getGameInfo,
     getFeedbacksByGame,
     getSubscribes,
-    getGameByName
+    getGameByName,
+    getPopularGame
 }

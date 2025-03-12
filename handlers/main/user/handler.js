@@ -621,6 +621,7 @@ class UserHandler {
                     );
 
                     await deleteRedisValue(`feedback-to-game:${idGame}`);
+                    await deleteRedisValue(`user-feedback:${idUser}`);
                     res.status(200).json({ message: 'Отзыв обновлен', data: updateFeedback.rows[0] });
                 }
                 else {
@@ -653,6 +654,7 @@ class UserHandler {
                 }
 
                 await deleteRedisValue(`feedback-to-game:${idGame}`);
+                await deleteRedisValue(`user-feedback:${idUser}`);
                 res.status(200).json({ message: 'Отзыв создан', data: data });
             }
 
@@ -685,7 +687,7 @@ class UserHandler {
             if (getScore.rows.length > 0) {
 
                 const { rows } = await client.query(
-                    'SELECT id_game FROM feedbacks ' +
+                    'SELECT id_game, feedbacks.id_user FROM feedbacks ' +
                     'INNER JOIN public.feedback_score fs ' +
                     'ON feedbacks.id_feedback = fs.id_feedback ' +
                     'WHERE feedbacks.id_feedback = $1',
@@ -700,6 +702,7 @@ class UserHandler {
                     );
 
                     await deleteRedisValue(`feedback-to-game:${rows[0].id_game}`);
+                    await deleteRedisValue(`user-feedback:${rows[0].id_user}`);
                     res.status(200).json({ message: 'Обновили оценку' });
                 }
                 else {
@@ -716,7 +719,7 @@ class UserHandler {
                 );
 
                 const { rows } = await client.query(
-                    'SELECT id_game FROM feedbacks ' +
+                    'SELECT id_game, feedbacks.id_user FROM feedbacks ' +
                     'INNER JOIN public.feedback_score fs ' +
                     'ON feedbacks.id_feedback = fs.id_feedback ' +
                     'WHERE feedbacks.id_feedback = $1',
@@ -724,6 +727,7 @@ class UserHandler {
                 );
 
                 await deleteRedisValue(`feedback-to-game:${rows[0].id_game}`);
+                await deleteRedisValue(`user-feedback:${rows[0].id_user}`);
 
                 res.status(200).json({ message: 'Поставили оценку' });
             }
