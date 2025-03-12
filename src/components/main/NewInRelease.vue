@@ -1,42 +1,28 @@
 <script setup>
-  import {ref, onMounted} from 'vue'
-
-  import api from '@/api/api.js'
-
   import Info from '@/components/Info.vue'
   import Card from '@/components/Card.vue'
 
-  const { getPopularGame } = api;
+  const props = defineProps({
+    cards: Array,
+  })
 
   const info_obj = {
-    href: '/popularity',
-    name_info: 'Самое обсуждаемое',
-    color_scheme: 'rgba(232,22,22,0.27)',
-    color_name: 'rgb(232,22,22)'
+    href: '',
+    name_info: '',
+    color_scheme: '',
+    color_name: ''
   }
 
-  const cards = ref([]);
-  const getGames = async () => {
-    const response = await getPopularGame();
-    if (response) {
-      cards.value = response.data;
-      cards.value.length = 4;
-    }
-  }
-
-  onMounted(async () => {
-    await getGames();
-  });
 </script>
 
 <template>
   <div>
     <div class="info_div" v-memo>
       <Info
-          :href="info_obj.href"
-          :name-info="info_obj.name_info"
-          :color-scheme="info_obj.color_scheme"
-          :color-name="info_obj.color_name"
+          href="/popularity"
+          name-info="Самое обсуждаемое"
+          color-scheme="rgba(232,22,22,0.27)"
+          color-name="rgb(232,22,22)"
       />
       <div class="cards">
         <Card

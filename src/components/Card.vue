@@ -67,16 +67,16 @@
 </template>
 
 <style scoped>
-.game-name {
-  font-size: 20px;
-  font-weight: 600;
-  color: #2c3e50;
-  transition: color 0.3s ease;
-}
+  .game-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2c3e50;
+    transition: color 0.3s ease;
+  }
 
-.game-name:hover {
-  color: #57a5b5;
-}
+  .game-name:hover {
+    color: #57a5b5;
+  }
   .developer {
     margin: 2px;
   }
@@ -109,7 +109,6 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
-
   .el-image:hover {
     transform: scale(1.05);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);

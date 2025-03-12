@@ -4,14 +4,16 @@ a {
     text-decoration: none;
     color: #344a4e;
 }
-
+.el-loading-parent--relative, .el-loading-parent--hidden {
+    position: absolute;
+    top: -100px;
+}
 .based {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
 }
-
 .positive {
     background-color: #55c51c;
     padding: 1rem;

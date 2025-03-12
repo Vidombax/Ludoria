@@ -1,11 +1,12 @@
 <script setup>
   import { ref, onMounted } from 'vue'
+  import {ElNotification} from 'element-plus'
 
   import api from '@/api/api.js'
   import { useUserStore } from '@/stores/user/store.js'
 
   import SearchGame from '@/components/SearchGame.vue'
-  import {ElNotification} from 'element-plus'
+  import SearchGameSkeleton from '@/components/skeletons/SearchGameSkeleton.vue'
 
   const { getUserInfo, getGameByName } = api;
   const userStore = useUserStore();
@@ -66,6 +67,8 @@
 
   const searchHandler = async () => {
     try {
+      isLoading.value = false;
+
       if (search.value.trim() === '') {
         search_data.value = [];
         return;
@@ -75,9 +78,11 @@
       if (response.data.length > 0) {
         search_data.value = response.data;
         isLoading.value = true;
-      } else {
+      }
+      else {
         search_data.value = [];
-        isLoading.value = true;
+        isLoading.value = false;
+        search.value = '';
 
         ElNotification({
           message: 'Ничего не найдено',
@@ -91,6 +96,7 @@
         message: e.response.data.message,
         type: 'error',
       });
+      isLoading.value = false;
     }
   }
 
@@ -116,28 +122,29 @@
           clearable
       />
       <div class="search_items" v-if="search !== ''">
-        <SearchGame
-            v-if="isLoading"
-            v-for="item in search_data"
-            :key="item.id"
-            :id="item.id"
-            :name="item.name"
-            :picture="item.main_picture"
-        />
+        <template v-if="isLoading">
+          <SearchGame
+              v-for="item in search_data"
+              :key="item.id"
+              :id="item.id"
+              :name="item.name"
+              :picture="item.main_picture"
+          />
+        </template>
         <div class="loading" v-else>
-          <p>Загрузка...</p>
+          <SearchGameSkeleton v-for="item in 8" />
         </div>
       </div>
     </div>
     <div>
       <router-link to="/login" class="a_user_non_auth" v-if="idUser === 0">Вход</router-link>
       <div v-else class="user_info">
-        <router-link :to="userUrl">
+        <router-link :to="userUrl" v-if="userData.photo">
           <img
               :src="userData.photo"
               alt="user logo"
               class="img_user"
-              v-if="userData.photo !== null"
+              v-if="true"
           />
         </router-link>
         <router-link :to="userUrl"  class="a_user">{{ userStore.name }}</router-link>
@@ -159,22 +166,18 @@
     background: linear-gradient(135deg, #0f2027, #203a43);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   }
-
   .logo {
     transition: transform 0.3s ease;
   }
-
   .logo:hover {
     transform: scale(1.05);
   }
-
   .user_info {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 6px;
   }
-
   .img_user {
     object-fit: cover;
     width: 50px;
@@ -183,7 +186,6 @@
     border-radius: 50%;
     border: 2px solid #ffd700;
   }
-
   .a_user {
     display: block;
     color: #fff;
@@ -191,11 +193,9 @@
     text-decoration: none;
     transition: color 0.3s ease;
   }
-
   .a_user:hover {
     color: #ffd700;
   }
-
   .a_user_non_auth {
     display: block;
     color: #fff;
@@ -203,15 +203,12 @@
     text-decoration: none;
     transition: color 0.3s ease;
   }
-
   .a_user_non_auth:hover {
     color: #ffd700;
   }
-
   .search {
     width: 500px;
   }
-
   .search_items {
     background-color: rgba(39, 68, 80);
     color: #fff;
@@ -228,18 +225,23 @@
     gap: 12px;
     padding: 1rem;
   }
-
   .selector {
     width: 150px;
+  }
+  .loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
   }
 
   @media screen and (max-width: 1050px) {
     .search {
-      width: 150px;
+      width: 250px;
     }
     .search_items {
       width: 400px;
-      margin-left: -130px;
+      margin-left: -90px;
     }
   }
 
@@ -254,7 +256,7 @@
       display: none;
     }
     .search_items {
-      margin-left: -110px;
+      margin-left: -60px;
     }
   }
 </style>
