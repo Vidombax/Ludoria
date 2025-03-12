@@ -1,16 +1,19 @@
 <script setup>
-  import { useRoute } from 'vue-router'
-  import { onMounted, ref, provide } from 'vue'
+import {useRoute} from 'vue-router'
+import {defineAsyncComponent, onMounted, provide, ref} from 'vue'
 
-  import api from '@/api/api.js'
-  import { useUserStore } from '@/stores/user/store.js'
-  import { useGameStore } from '@/stores/game/store.js'
-  import { ElNotification } from 'element-plus'
-  import { genders, chartOptions } from '../../services/constants.js'
+import api from '@/api/api.js'
+import {useUserStore} from '@/stores/user/store.js'
+import {useGameStore} from '@/stores/game/store.js'
+import {ElNotification} from 'element-plus'
+import {chartOptions, genders} from '../../services/constants.js'
 
-  import Friend from '@/components/user/Friend.vue'
-  import DoughnutChart from '@/components/DoughnutChart.vue'
-  import Feedbacks from '@/components/user/Feedbacks.vue'
+import Friend from '@/components/user/Friend.vue'
+import DoughnutChart from '@/components/DoughnutChart.vue'
+
+const FeedbacksModal = defineAsyncComponent(
+      () => import('@/components/user/Feedbacks.vue')
+  );
 
   const { getUserInfo, updateUser, updateUserPhoto } = api;
   const userStore = useUserStore();
@@ -43,9 +46,7 @@
         userData.value.gender = response.data.gender;
 
         gameStore.chartGameData.datasets[0].data = [];
-        const numbers = Object.values(response.following);
-
-        gameStore.chartGameData.datasets[0].data = numbers;
+        gameStore.chartGameData.datasets[0].data = Object.values(response.following);
 
         userDataForSettings.value = { ...userData.value };
 
@@ -320,7 +321,12 @@
         </div>
       </div>
       <div class="games-list">
-        <router-link :to="url + '/list'"><p class="h">Список игр</p></router-link>
+        <router-link :to="url + '/list'">
+          <el-tooltip placement="top">
+            <template #content>Открыть</template>
+            <p class="h" style="width: 140px;">Список игр</p>
+          </el-tooltip>
+        </router-link>
         <div>
           <DoughnutChart
               :chart-data="gameStore.chartGameData"
@@ -338,7 +344,7 @@
         <div v-if="isModalFeedbacksOpen" class="overlay"></div>
       </transition>
       <transition name="fade">
-        <Feedbacks
+        <feedbacks-modal
             v-if="isModalFeedbacksOpen"
             :feedbacks="feedbacks"
             :name="userData.name"
@@ -418,6 +424,7 @@
     font-size: 24px;
     font-weight: 700;
     color: #2c3e50;
+    width: auto;
     transition: color 0.3s ease;
   }
   .h:hover {
