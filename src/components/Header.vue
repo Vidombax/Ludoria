@@ -104,9 +104,9 @@
 <template>
   <header>
     <div>
-      <a href="/" class="logo">
+      <router-link to="/" class="logo">
         <el-image src="./src/assets/bosinn.gif" alt="Logo" class="logo" style="height: 25px; width: 100px;" />
-      </a>
+      </router-link>
     </div>
     <div class="search">
       <el-input
@@ -130,17 +130,17 @@
       </div>
     </div>
     <div>
-      <a href="/login" class="a_user_non_auth" v-if="idUser === 0">Вход</a>
+      <router-link to="/login" class="a_user_non_auth" v-if="idUser === 0">Вход</router-link>
       <div v-else class="user_info">
-        <a :href="userUrl">
+        <router-link :to="userUrl">
           <img
               :src="userData.photo"
               alt="user logo"
               class="img_user"
               v-if="userData.photo !== null"
           />
-        </a>
-        <a :href="userUrl"  class="a_user">{{ userStore.name }}</a>
+        </router-link>
+        <router-link :to="userUrl"  class="a_user">{{ userStore.name }}</router-link>
       </div>
     </div>
   </header>

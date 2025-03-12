@@ -10,7 +10,7 @@
 
 <template>
   <div class="item">
-    <a :href="url"><p>{{ name }}</p></a>
+    <router-link :to="url"><p>{{ name }}</p></router-link>
     <p v-if="score !== null" class="score">{{ score }}</p>
     <p v-else class="score" >-</p>
   </div>

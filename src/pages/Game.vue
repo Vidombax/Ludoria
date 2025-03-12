@@ -386,7 +386,7 @@
     <div class="feedbacks">
       <div class="header">
         <p class="h">Отзывы<sup v-if="feedbacks.count">{{ feedbacks.count }}</sup></p>
-        <a href="" v-if="feedbacks.count"><p class="show_more h">Смотреть все</p></a>
+        <router-link to="/" v-if="feedbacks.count"><p class="show_more h">Смотреть все</p></router-link>
       </div>
       <div class="items">
         <Feedback

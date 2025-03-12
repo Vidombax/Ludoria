@@ -21,12 +21,12 @@
   <el-card>
     <template #header>
       <div class="card-header">
-        <a :href="urlToGame" class="text-xl game-name">{{ name }}</a>
+        <router-link :to="urlToGame" class="text-xl game-name">{{ name }}</router-link>
       </div>
     </template>
-    <a :href="urlToGame">
+    <router-link :to="urlToGame">
       <el-image :src="picture"></el-image>
-    </a>
+    </router-link>
     <template #footer>
       <div class="info_game">
         <div>

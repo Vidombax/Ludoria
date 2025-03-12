@@ -7,7 +7,7 @@
 <template>
   <div class="item">
     <img src="https://media.rawg.io/media/games/b2c/b2c9c6115114c8f7d461b5430e8a7d4a.jpg" alt="friend logo">
-    <a href="/user">friend</a>
+    <router-link to="/user">friend</router-link>
   </div>
 </template>
 

@@ -59,7 +59,7 @@
     <div class="header">
       <div>
         <img :src="photo" alt="author logo">
-        <a :href="urlUser"><p class="h name">{{ name }}</p></a>
+        <router-link :to="urlUser"><p class="h name">{{ name }}</p></router-link>
       </div>
       <div>
         <div class="positive" v-if="refScore > 0">{{ refScore }}</div>

@@ -62,7 +62,6 @@
         delete userDataForSettings.value.photo;
 
         feedbacks.value = response.feedbacks;
-        console.log(feedbacks.value)
 
         if (userStore.id === Number(id.value)) {
           isUser.value = true;
@@ -321,7 +320,7 @@
         </div>
       </div>
       <div class="games-list">
-        <a :href="url + '/list'"><p class="h">Список игр</p></a>
+        <router-link :to="url + '/list'"><p class="h">Список игр</p></router-link>
         <div>
           <DoughnutChart
               :chart-data="gameStore.chartGameData"

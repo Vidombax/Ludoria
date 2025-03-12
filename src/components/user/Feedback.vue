@@ -14,10 +14,10 @@
 <template>
   <div class="item">
     <div class="game_info">
-      <a :href="url">
+      <router-link :to="url">
         <img :src="props.photo" class="item_photo" alt="Game Logo">
         <p class="h">{{ props.name }}</p>
-      </a>
+      </router-link>
     </div>
     <p class="legend_mobile">Отзыв</p>
     <p>{{ props.description }}</p>

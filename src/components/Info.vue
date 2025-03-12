@@ -11,9 +11,9 @@
 
 <template>
   <div class="info" :style="{ backgroundColor: colorScheme }">
-    <a v-if="href" :href="href" :style="{ color: colorName }"><p>{{ nameInfo }}</p></a>
+    <router-link v-if="href" :to="href" :style="{ color: colorName }"><p>{{ nameInfo }}</p></router-link>
     <p v-else :style="{ color: colorName }">{{ nameInfo }}</p>
-    <a :href="href"><p><ArrowRight :color="colorName"/></p></a>
+    <router-link :to="href"><p><ArrowRight :color="colorName"/></p></router-link>
   </div>
 </template>
 
