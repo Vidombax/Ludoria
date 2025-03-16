@@ -18,8 +18,6 @@ router.post('/rate-game', authenticateToken, handler.rateGame);
 router.get('/get-rate/:iduser/:idgame', authenticateToken, handler.getUserScore);
 router.post('/feedback', authenticateToken, handler.createFeedback);
 router.post('/rate-feedback', authenticateToken, handler.rateFeedback);
-router.post('/post', authenticateToken, handler.createPost);
-router.post('/rate-post', authenticateToken, handler.ratePost);
 router.post('/comment', authenticateToken, handler.createComment);
 router.post('/rate-comment', authenticateToken, handler.rateComment);
 router.delete('/delete-comment/:idcomment', authenticateToken, handler.deleteComment);

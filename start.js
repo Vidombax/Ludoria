@@ -6,6 +6,7 @@ import { redisClient } from "./redis.js";
 
 import userMainRouter from './routes/main/user.route.js'
 import gameMainRouter from './routes/main/game.route.js'
+import postMainRouter from './routes/main/post.route.js'
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 
 app.use('/', userMainRouter);
 app.use('/', gameMainRouter);
+app.use('/', postMainRouter);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, async () => {
