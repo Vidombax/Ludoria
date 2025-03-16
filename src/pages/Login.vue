@@ -25,6 +25,7 @@
       if (response) {
         localStorage.setItem('token', response.token);
         localStorage.setItem('idUser', response.id);
+        localStorage.setItem('userRole', response.userRole);
 
         await router.push('/');
         location.reload();

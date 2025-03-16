@@ -26,8 +26,8 @@ class UserHandler {
 
                 //Создаем новый аккаунт
                 const createUser = await client.query(
-                    'INSERT INTO users (name, email_user, password_user) ' +
-                    'VALUES ($1, $2, $3)' +
+                    'INSERT INTO users (name, email_user, password_user, user_role) ' +
+                    'VALUES ($1, $2, $3, 0)' +
                     'RETURNING *',
                     [name.trim(), email, hashedPassword]
                 );
@@ -187,7 +187,7 @@ class UserHandler {
                         { expiresIn: '24h' }
                     );
 
-                    res.json({ token, message: 'Пользователь был найден', id: getUser.rows[0].id_user });
+                    res.json({ token, message: 'Пользователь был найден', id: getUser.rows[0].id_user, userRole: getUser.rows[0].user_role });
                 }
                 else {
                     res.status(403).json({ message: 'Неправильный пароль' });
