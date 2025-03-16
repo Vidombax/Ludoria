@@ -149,7 +149,9 @@ class PostHandler {
             await client.query('BEGIN');
 
             const posts = await client.query(
-                'SELECT * FROM posts ' +
+                'SELECT posts.id_post, posts.id_game, g.name, g.main_picture, posts.header, posts.description, posts.create_data ' +
+                'FROM posts ' +
+                'INNER JOIN public.games g ON g.id_game = posts.id_game ' +
                 'ORDER BY create_data ASC'
             );
 
