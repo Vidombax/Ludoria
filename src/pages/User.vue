@@ -33,6 +33,7 @@ const FeedbacksModal = defineAsyncComponent(
   const userDataForSettings = ref({});
   const isUser = ref(false); //Проверяем зашел ли пользователь на свою страницу
   const feedbacks = ref([]);
+  const isUserLoad = ref(false);
 
   const getUser = async () => {
     try {
@@ -67,6 +68,8 @@ const FeedbacksModal = defineAsyncComponent(
         if (userStore.id === Number(id.value)) {
           isUser.value = true;
         }
+
+        isUserLoad.value = true;
       }
     }
     catch (e) {
@@ -302,7 +305,8 @@ const FeedbacksModal = defineAsyncComponent(
   </div>
   <div class="user">
     <div class="user_photo">
-      <img :src="userData.photo" alt="user photo" class="img_user">
+      <img :src="userData.photo" alt="user photo" class="img_user" v-if="isUserLoad">
+      <el-skeleton-item variant="image" v-else class="img_user"></el-skeleton-item>
     </div>
     <div class="user_info">
       <div class="bio">
