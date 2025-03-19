@@ -6,18 +6,20 @@
 
   import SubGame from '@/components/user_list/SubGame.vue'
   import InfoSkeleton from '@/components/skeletons/InfoSkeleton.vue'
+  import ArrowLeft from '@/assets/svg/ArrowLeft.vue'
 
   const { getSubscribesGamesByUser } = api;
   const route = useRoute();
 
   const id = ref(route.params.id);
+  const url = `/user/${id.value}`;
   const token = localStorage.getItem('token');
   const data = {
     id: id.value,
     token: token,
   };
-  const isLoading = ref(false);
 
+  const isLoading = ref(false);
   const info = ref({});
   const getUserGames = async () => {
     const response = await getSubscribesGamesByUser(data);
@@ -56,6 +58,12 @@
 <template>
   <div class="container">
     <div class="games">
+      <router-link :to="url">
+        <div class="back_to_profile">
+          <ArrowLeft />
+          <p>Назад</p>
+        </div>
+      </router-link>
       <div class="playing">
         <div class="header">
           <p class="h">Играю</p>
@@ -220,6 +228,19 @@
     gap: 16px;
     padding: 0 0.4rem;
     border-bottom: 2px solid #e0e0e0;
+  }
+  .back_to_profile {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .back_to_profile p {
+    font-weight: 800;
+  }
+  .back_to_profile p:hover {
+    text-decoration: underline;
   }
   .collapse-enter-from {
     opacity: 0;
