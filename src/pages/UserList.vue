@@ -3,7 +3,9 @@
   import { useRoute } from 'vue-router'
 
   import api from '../api/api.js'
-  import SubGame from "@/components/user_list/SubGame.vue";
+
+  import SubGame from '@/components/user_list/SubGame.vue'
+  import InfoSkeleton from '@/components/skeletons/InfoSkeleton.vue'
 
   const { getSubscribesGamesByUser } = api;
   const route = useRoute();
@@ -14,11 +16,13 @@
     id: id.value,
     token: token,
   };
+  const isLoading = ref(false);
 
   const info = ref({});
   const getUserGames = async () => {
     const response = await getSubscribesGamesByUser(data);
     info.value = response.data;
+    isLoading.value = true;
   }
 
   const isCollapse = ref({
@@ -65,11 +69,17 @@
         <transition name="collapse">
           <div class="items" v-if="isCollapse.playing">
             <SubGame
+                v-if="isLoading"
                 v-for="item in info.playing"
                 :key="item.id"
                 :name="item.name"
                 :id="item.id_game"
                 :score="item.score"
+            />
+            <InfoSkeleton
+                v-else
+                v-for="item in 5"
+                :key="item.key"
             />
           </div>
         </transition>
@@ -87,11 +97,17 @@
         <transition name="collapse">
           <div class="items" v-if="isCollapse.planned">
             <SubGame
+                v-if="isLoading"
                 v-for="item in info.planned"
                 :key="item.id"
                 :name="item.name"
                 :id="item.id_game"
                 :score="item.score"
+            />
+            <InfoSkeleton
+                v-else
+                v-for="item in 5"
+                :key="item.key"
             />
           </div>
         </transition>
@@ -109,11 +125,17 @@
         <transition name="collapse">
           <div class="items" v-if="isCollapse.complete">
             <SubGame
+                v-if="isLoading"
                 v-for="item in info.complete"
                 :key="item.id"
                 :name="item.name"
                 :id="item.id_game"
                 :score="item.score"
+            />
+            <InfoSkeleton
+                v-else
+                v-for="item in 5"
+                :key="item.key"
             />
           </div>
         </transition>
@@ -131,11 +153,17 @@
         <transition name="collapse">
           <div class="items" v-if="isCollapse.dropped">
             <SubGame
+                v-if="isLoading"
                 v-for="item in info.dropped"
                 :key="item.id"
                 :name="item.name"
                 :id="item.id_game"
                 :score="item.score"
+            />
+            <InfoSkeleton
+                v-else
+                v-for="item in 5"
+                :key="item.key"
             />
           </div>
         </transition>
