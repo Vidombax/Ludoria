@@ -3,12 +3,13 @@
   import { useRoute } from 'vue-router'
 
   import api from '../api/api.js'
+  import { ElNotification } from 'element-plus'
 
   import SubGame from '@/components/user_list/SubGame.vue'
   import InfoSkeleton from '@/components/skeletons/InfoSkeleton.vue'
   import ArrowLeft from '@/assets/svg/ArrowLeft.vue'
 
-  const { getSubscribesGamesByUser } = api;
+  const { getSubscribesGamesByUser, getUserInfo } = api;
   const route = useRoute();
 
   const id = ref(route.params.id);
@@ -50,8 +51,31 @@
     }
   }
 
+  const userData = ref({});
+  const getUser = async () => {
+    try {
+      const response = await getUserInfo(data);
+      if (response) {
+        userData.value = response;
+      }
+    }
+    catch (e) {
+      if (e.response.data.message !== 'Invalid or expired token.') {
+        console.error('Ошибка при выполнении запроса:', e);
+        ElNotification({
+          message: e.response.data.message,
+          type: 'error',
+        });
+      }
+      else {
+        localStorage.clear();
+      }
+    }
+  }
+
   onMounted(async () => {
     await getUserGames();
+    await getUser();
   });
 </script>
 
@@ -61,7 +85,7 @@
       <router-link :to="url">
         <div class="back_to_profile">
           <ArrowLeft />
-          <p>Назад</p>
+          <p v-if="userData.data">Назад к профилю <span class="h">{{ userData.data.name }}</span></p>
         </div>
       </router-link>
       <div class="playing">
@@ -178,7 +202,44 @@
       </div>
     </div>
     <div class="info">
+      <div class="photo_user based">
+        <router-link :to="url">
+          <img v-if="userData.data && userData.data.photo" :src="userData.data.photo" alt="user logo" class="img_user">
+          <img v-else src="../assets/images/default_profile_photo.png" alt="user logo" class="img_user">
+        </router-link>
+      </div>
+      <div class="scores">
+        <div class="header">
+          <p class="h">Оценки</p>
+        </div>
+        <div class="items">
 
+        </div>
+      </div>
+      <div class="genres">
+        <div class="header">
+          <p class="h">Жанры</p>
+        </div>
+        <div class="items">
+
+        </div>
+      </div>
+      <div class="studios">
+        <div class="header">
+          <p class="h">Разработчики</p>
+        </div>
+        <div class="items">
+
+        </div>
+      </div>
+      <div class="years">
+        <div class="header">
+          <p class="h">Годы</p>
+        </div>
+        <div class="items">
+
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -253,6 +314,18 @@
   }
   .collapse-enter-active {
     transition: 0.15s ease;
+  }
+  .photo_user {
+    margin-bottom: 40px;
+  }
+  .img_user {
+    object-fit: cover;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
 
   @media screen and (max-width: 768px) {

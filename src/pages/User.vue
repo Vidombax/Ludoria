@@ -311,15 +311,15 @@ const FeedbacksModal = defineAsyncComponent(
   </div>
   <div class="user">
     <div class="user_photo">
-      <img :src="userData.photo" alt="user photo" class="img_user" v-if="isUserLoad">
-      <el-skeleton-item variant="image" v-else class="img_user"></el-skeleton-item>
+      <img :src="userData.photo" alt="user photo" class="img_user" v-if="isUserLoad && userData.photo">
+      <img src="../assets/images/default_profile_photo.png" class="img_user" alt="user photo" v-else>
     </div>
     <div class="user_info">
       <div class="bio">
         <p class="h">{{ userData.name }}</p>
         <div class="bio_text">
           <span v-if="userData.gender !== ''">{{ userData.gender }} /</span>
-          <span>{{ userData.age }} лет /</span>
+          <span v-if="userData.age">{{ userData.age }} лет /</span>
           <div v-if="isUser">
             <el-button v-if="isModalSettingsClosed" @click="activitySettingsModal">Ред.</el-button>
             <el-button v-else @click="activitySettingsModal">Закрыть</el-button>
