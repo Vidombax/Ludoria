@@ -172,8 +172,8 @@
             <div>
               <router-link :to="userUrl + '/list'" @click="userMenuHandler">Мои игры</router-link>
             </div>
-            <div>
-              <router-link :to="userUrl" @click="userMenuHandler" v-if="userRole !== '0'">Мои посты</router-link>
+            <div v-if="userRole !== '0'">
+              <router-link :to="userUrl" @click="userMenuHandler">Мои посты</router-link>
             </div>
             <div>
               <router-link :to="userUrl" @click="userMenuHandler">Мои комментарии</router-link>
