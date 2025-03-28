@@ -99,6 +99,16 @@
       isLoading.value = false;
     }
   }
+  
+  const isUserMenuOpened = ref(false);
+  const userMenuHandler = () => {
+    isUserMenuOpened.value = isUserMenuOpened.value !== true;
+  }
+
+  const exitFromAccount = () => {
+    localStorage.clear();
+    location.replace('/');
+  }
 
   onMounted(async () => {
     if (idUser !== 0) {
@@ -139,15 +149,38 @@
     <div>
       <router-link to="/login" class="a_user_non_auth" v-if="idUser === 0">Вход</router-link>
       <div v-else class="user_info">
-        <router-link :to="userUrl" v-if="userData.photo">
-          <img
-              :src="userData.photo"
-              alt="user logo"
-              class="img_user"
-              v-if="true"
-          />
-        </router-link>
-        <router-link :to="userUrl"  class="a_user">{{ userStore.name }}</router-link>
+        <img
+            :src="userData.photo"
+            alt="user logo"
+            class="img_user"
+            v-if="userData.photo"
+            @click="userMenuHandler"
+        />
+        <transition name="user_menu">
+          <div class="user-menu based" v-if="isUserMenuOpened">
+            <div>
+              <router-link :to="userUrl" @click="userMenuHandler">Профиль</router-link>
+            </div>
+            <div>
+              <router-link :to="userUrl + '/list'" @click="userMenuHandler">Мои игры</router-link>
+            </div>
+            <div>
+              <router-link :to="userUrl" @click="userMenuHandler">Мои посты</router-link>
+            </div>
+            <div>
+              <router-link :to="userUrl" @click="userMenuHandler">Мои комментарии</router-link>
+            </div>
+            <div>
+              <router-link :to="userUrl" @click="userMenuHandler">Подписки</router-link>
+            </div>
+            <div>
+              <router-link :to="userUrl" @click="userMenuHandler">Настройки</router-link>
+            </div>
+            <div class="exit-div">
+              <p @click="exitFromAccount">Выйти из аккаунта</p>
+            </div>
+          </div>
+        </transition>
       </div>
     </div>
   </header>
@@ -185,16 +218,48 @@
     max-width: 100%;
     border-radius: 50%;
     border: 2px solid #ffd700;
+    cursor: pointer;
   }
-  .a_user {
-    display: block;
-    color: #fff;
-    font-weight: 500;
-    text-decoration: none;
-    transition: color 0.3s ease;
+  .user-menu {
+    position: absolute;
+    right: 8%;
+    top: 100%;
+    background: rgba(255, 255, 255);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    gap: 12px;
+    z-index: 1000;
   }
-  .a_user:hover {
-    color: #ffd700;
+  .user-menu div a,
+  .exit-div p {
+    transition: .1s linear;
+    font-size: large;
+  }
+  .user-menu div a:hover,
+  .exit-div p:hover {
+    color: #ccb23a;
+  }
+  .exit-div {
+    border-top: 2px solid #5e5e5e;
+    padding-top: 8px;
+    cursor: pointer;
+  }
+  .user_menu-enter-from {
+    opacity: 0;
+    top: 0;
+  }
+  .user_menu-enter-to {
+    opacity: 1;
+    top: 100%;
+  }
+  .user_menu-leave-to {
+    opacity: 0;
+    top: 0;
+  }
+  .user_menu-enter-active,
+  .user_menu-leave-active {
+    transition: .2s linear;
   }
   .a_user_non_auth {
     display: block;
@@ -257,6 +322,9 @@
     }
     .search_items {
       margin-left: -60px;
+    }
+    .user-menu {
+      right: 0;
     }
   }
 </style>

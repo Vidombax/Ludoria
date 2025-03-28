@@ -13,7 +13,7 @@ import DoughnutChart from '@/components/DoughnutChart.vue'
 
 const FeedbacksModal = defineAsyncComponent(
       () => import('@/components/user/Feedbacks.vue')
-  );
+);
 
   const { getUserInfo, updateUser, updateUserPhoto } = api;
   const userStore = useUserStore();
@@ -231,6 +231,12 @@ const FeedbacksModal = defineAsyncComponent(
   onMounted(async () => {
     await getUser();
     settingsDiv = document.getElementsByClassName('settings')[0];
+
+    const param = route.query.settingModal;
+    if (param === 'true') {
+      isModalSettingsClosed.value = true;
+      activitySettingsModal();
+    }
   });
 </script>
 

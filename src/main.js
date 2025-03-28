@@ -18,11 +18,11 @@ const pinia = createPinia();
 const app = createApp(App);
 
 const routes = [
-    { path: '/', name: 'Index', component: Index},
-    { path: '/login', name: 'Login', component: Login},
-    { path: '/user/:id', name: 'User', component: User},
-    { path: '/game/:id', name: 'Game', component: Game},
-    { path: '/user/:id/list', name: 'UserList', component: UserList},
+    { path: '/', name: 'Index', component: Index },
+    { path: '/login', name: 'Login', component: Login },
+    { path: '/user/:id', name: 'User', component: User, query: { settingModal: 'settingModal' } },
+    { path: '/game/:id', name: 'Game', component: Game },
+    { path: '/user/:id/list', name: 'UserList', component: UserList },
 ];
 
 const router = createRouter({
