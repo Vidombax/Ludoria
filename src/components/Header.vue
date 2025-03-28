@@ -13,6 +13,7 @@
 
   const idUser = Number(localStorage.getItem('idUser'));
   const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('userRole');
 
   const userUrl = `/user/${idUser}`;
 
@@ -156,6 +157,13 @@
             v-if="userData.photo"
             @click="userMenuHandler"
         />
+        <img
+            v-else
+            src="../assets/images/default_profile_photo.png"
+            class="img_user"
+            alt="user logo"
+            @click="userMenuHandler"
+        >
         <transition name="user_menu">
           <div class="user-menu based" v-if="isUserMenuOpened">
             <div>
@@ -165,7 +173,7 @@
               <router-link :to="userUrl + '/list'" @click="userMenuHandler">Мои игры</router-link>
             </div>
             <div>
-              <router-link :to="userUrl" @click="userMenuHandler">Мои посты</router-link>
+              <router-link :to="userUrl" @click="userMenuHandler" v-if="userRole !== '0'">Мои посты</router-link>
             </div>
             <div>
               <router-link :to="userUrl" @click="userMenuHandler">Мои комментарии</router-link>
@@ -222,7 +230,7 @@
   }
   .user-menu {
     position: absolute;
-    right: 8%;
+    right: 5%;
     top: 100%;
     background: rgba(255, 255, 255);
     border-radius: 12px;
