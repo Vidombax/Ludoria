@@ -115,3 +115,10 @@ export const chartOptions = ref({
         },
     },
 },);
+
+export const paramsForFilters = ref({
+    scores: [4, 3, 2, 1, 0],
+    genres: [],
+    developers: [],
+    years: []
+});

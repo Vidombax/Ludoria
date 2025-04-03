@@ -1,9 +1,10 @@
 <script setup>
-  import { ref, onMounted } from 'vue'
+  import { ref, onMounted, watch } from 'vue'
   import { useRoute } from 'vue-router'
 
   import api from '../api/api.js'
   import { ElNotification } from 'element-plus'
+  import { paramsForFilters } from '../../services/constants.js'
 
   import SubGame from '@/components/user_list/SubGame.vue'
   import InfoSkeleton from '@/components/skeletons/InfoSkeleton.vue'
@@ -73,9 +74,36 @@
     }
   }
 
+  const screenWidth = ref(window.innerWidth);
+  const updateScreenWidth = () => {
+    screenWidth.value = window.innerWidth;
+  };
+
+  const isMenuOpen = ref(false);
+  const handlerMenuClick = () => {
+    isMenuOpen.value = !isMenuOpen.value;
+    if (isMenuOpen.value === true) {
+      document.getElementById('info').classList.add('info_mobile');
+      document.body.classList.add('hidden_scroll');
+    }
+    else {
+      document.getElementById('info').classList.remove('info_mobile');
+      document.body.classList.remove('hidden_scroll');
+    }
+  }
+
+  watch(screenWidth, (newWidth) => {
+    if (newWidth > 800) {
+      document.getElementById('info').classList.remove('info_mobile');
+      document.body.classList.remove('hidden_scroll');
+    }
+  });
+
   onMounted(async () => {
     await getUserGames();
     await getUser();
+
+    window.addEventListener('resize', updateScreenWidth);
   });
 </script>
 
@@ -84,8 +112,8 @@
     <div class="games">
       <router-link :to="url">
         <div class="back_to_profile">
-          <ArrowLeft />
-          <p v-if="userData.data">Назад к профилю <span class="h">{{ userData.data.name }}</span></p>
+          <ArrowLeft style="transform: rotate(90deg)"/>
+          <p v-if="userData.data">К профилю <span class="h">{{ userData.data.name }}</span></p>
         </div>
       </router-link>
       <div class="playing">
@@ -201,7 +229,11 @@
         </transition>
       </div>
     </div>
-    <div class="info">
+    <div class="menu_btn" @click="handlerMenuClick">
+      <p>Меню</p>
+    </div>
+    <div class="info" id="info">
+      <div class="menu_close_btn" @click="handlerMenuClick">X</div>
       <div class="photo_user based">
         <router-link :to="url">
           <img v-if="userData.data && userData.data.photo" :src="userData.data.photo" alt="user logo" class="img_user">
@@ -213,7 +245,7 @@
           <p class="h">Оценки</p>
         </div>
         <div class="items">
-
+          <el-checkbox :label="item + 1" v-for="item in paramsForFilters.scores" :key="item.id" />
         </div>
       </div>
       <div class="genres">
@@ -221,7 +253,7 @@
           <p class="h">Жанры</p>
         </div>
         <div class="items">
-
+          <el-checkbox label="RPG" v-for="item in 4" />
         </div>
       </div>
       <div class="studios">
@@ -229,7 +261,7 @@
           <p class="h">Разработчики</p>
         </div>
         <div class="items">
-
+          <el-checkbox label="Atlus" v-for="item in 4" />
         </div>
       </div>
       <div class="years">
@@ -237,7 +269,7 @@
           <p class="h">Годы</p>
         </div>
         <div class="items">
-
+          <el-checkbox label="2025" v-for="item in 4" />
         </div>
       </div>
     </div>
@@ -256,6 +288,26 @@
     width: 100%;
     gap: 16px;
     padding: 24px;
+  }
+  .menu_btn {
+    display: none;
+    position: fixed;
+    right: -10px;
+    top: 20%;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    padding: 8px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    transform: rotate(-90deg);
+    cursor: pointer;
+  }
+  .menu_close_btn {
+    display: none;
+    cursor: pointer;
+    font-size: x-large;
+    font-weight: bolder;
   }
   .header {
     border: 0;
@@ -327,10 +379,37 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
+  .info_mobile {
+    display: flex !important;
+    position: fixed !important;
+    flex-direction: column;
+    left: 0;
+    right: 0;
+    padding: 14px;
+    background-color: #ffffff;
+    height: 94vh;
+    overflow-y: scroll;
+  }
 
   @media screen and (max-width: 768px) {
     .container {
-      grid-template-columns: 1fr 0.05fr;
+      grid-template-columns: 1fr;
+    }
+    .info {
+      display: none;
+    }
+    .menu_btn {
+      display: block;
+    }
+    .menu_close_btn {
+      display: block;
+    }
+  }
+
+  @media screen and (max-width: 400px) {
+    .info_mobile {
+      height: 90vh;
+      top: 0;
     }
   }
 </style>

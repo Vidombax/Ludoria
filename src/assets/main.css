@@ -75,3 +75,7 @@ a {
 .loading p {
     font-size: x-large;
 }
+
+.hidden_scroll {
+    overflow: hidden;
+}
