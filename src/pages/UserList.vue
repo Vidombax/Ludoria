@@ -1,5 +1,5 @@
 <script setup>
-  import { ref, onMounted, watch } from 'vue'
+  import { ref, onMounted, watch, computed } from 'vue'
   import { useRoute } from 'vue-router'
 
   import api from '../api/api.js'
@@ -10,7 +10,7 @@
   import InfoSkeleton from '@/components/skeletons/InfoSkeleton.vue'
   import ArrowLeft from '@/assets/svg/ArrowLeft.vue'
 
-  const { getSubscribesGamesByUser, getUserInfo } = api;
+  const { getSubscribesGamesByUser, getUserInfo, getSubscribesGamesByQueries } = api;
   const route = useRoute();
 
   const id = ref(route.params.id);
@@ -23,9 +23,46 @@
 
   const isLoading = ref(false);
   const info = ref({});
+
+  const userFilters = ref();
+
+  const isNeedCollapseGenres = ref(false);
+  const showAllGenres = ref(false);
+
+  const isNeedCollapseDevelopers = ref(false);
+  const showAllDevelopers = ref(false);
+
+  const visibleGenres = computed(() => {
+    if (!userFilters.value.genres) return [];
+    return showAllGenres.value
+        ? userFilters.value.genres
+        : userFilters.value.genres.slice(0, 5);
+  });
+
+  const visibleDevelopers = computed(() => {
+    if (!userFilters.value.developers) return [];
+    return showAllDevelopers.value
+        ? userFilters.value.developers
+        : userFilters.value.developers.slice(0, 5);
+  });
+
+  const toggleGenresCollapse = () => {
+    showAllGenres.value = !showAllGenres.value;
+  };
+
+  const toggleDevelopersCollapse = () => {
+    showAllDevelopers.value = !showAllDevelopers.value;
+  };
+
   const getUserGames = async () => {
     const response = await getSubscribesGamesByUser(data);
     info.value = response.data;
+
+    userFilters.value = response.filters;
+    
+    isNeedCollapseGenres.value = userFilters.value.genres.length > 5;
+    isNeedCollapseDevelopers.value = userFilters.value.developers.length > 5;
+
     isLoading.value = true;
   }
 
@@ -90,6 +127,16 @@
       document.getElementById('info').classList.remove('info_mobile');
       document.body.classList.remove('hidden_scroll');
     }
+  }
+
+  const activeGenresCheckboxes = ref([]);
+  const handlerCheckBoxGenres = (id) => {
+    activeGenresCheckboxes.value.push(id);
+  }
+
+  const activeDeveloperCheckboxes = ref([]);
+  const handlerCheckBoxDeveloper = (id) => {
+    activeDeveloperCheckboxes.value.push(id);
   }
 
   watch(screenWidth, (newWidth) => {
@@ -245,23 +292,43 @@
           <p class="h">Оценки</p>
         </div>
         <div class="items">
-          <el-checkbox :label="item + 1" v-for="item in paramsForFilters.scores" :key="item.id" />
+          <el-checkbox
+              v-for="item in paramsForFilters.scores"
+              :label="item + 1"
+              :key="item.id"
+          />
         </div>
       </div>
       <div class="genres">
         <div class="header">
           <p class="h">Жанры</p>
         </div>
-        <div class="items">
-          <el-checkbox label="RPG" v-for="item in 4" />
+        <div class="items" v-if="userFilters">
+          <el-checkbox
+              v-for="item in visibleGenres"
+              :key="item.id"
+              :label="item.name"
+              @click="handlerCheckBoxGenres(item.id_genre)"
+          />
+          <div v-if="isNeedCollapseGenres" class="show_more">
+            <p @click="toggleGenresCollapse">{{ showAllGenres ? 'Скрыть' : 'Показать все' }}</p>
+          </div>
         </div>
       </div>
       <div class="studios">
         <div class="header">
           <p class="h">Разработчики</p>
         </div>
-        <div class="items">
-          <el-checkbox label="Atlus" v-for="item in 4" />
+        <div class="items" v-if="userFilters">
+          <el-checkbox
+              v-for="item in visibleDevelopers"
+              :key="item.id"
+              :label="item.name"
+              @click="handlerCheckBoxDeveloper(item.id_developer)"
+          />
+          <div v-if="isNeedCollapseDevelopers" class="show_more">
+            <p @click="toggleDevelopersCollapse">{{ showAllDevelopers ? 'Скрыть' : 'Показать все' }}</p>
+          </div>
         </div>
       </div>
       <div class="years">
@@ -404,6 +471,15 @@
     .menu_close_btn {
       display: block;
     }
+  }
+  .show_more {
+    position: relative;
+    left: 0;
+    right: 0;
+    cursor: pointer;
+  }
+  .show_more p:hover {
+    text-decoration: underline;
   }
 
   @media screen and (max-width: 400px) {

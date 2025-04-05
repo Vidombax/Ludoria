@@ -115,6 +115,15 @@ async function getSubscribesGamesByUser(data) {
 
     return (await axios.post(`/api/user-following/${data.id}`, null, config)).data;
 }
+async function getSubscribesGamesByQueries(data) {
+    const config = {
+        headers: {
+            Authorization: `${data.token}`
+        }
+    };
+
+    return (await axios.post(`/api/user-following/${data.id}`, null, config)).data;
+}
 
 export default {
     loginUser,
@@ -129,5 +138,6 @@ export default {
     unSubToGame,
     rateFeedback,
     createFeedback,
-    getSubscribesGamesByUser
+    getSubscribesGamesByUser,
+    getSubscribesGamesByQueries
 }

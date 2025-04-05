@@ -890,9 +890,32 @@ class UserHandler {
         const client = await db.connect();
 
         try {
+            const getGenresByFollowsGames = await client.query('SELECT DISTINCT genres.id_genre, genres.name\n' +
+                'FROM genres\n' +
+                '         INNER JOIN public.genre_to_game gtg ON genres.id_genre = gtg.id_genre\n' +
+                '         JOIN public.games g ON g.id_game = gtg.id_game\n' +
+                '         JOIN public.following_to_game ftg ON g.id_game = ftg.id_following\n' +
+                'WHERE ftg.id_follower = $1\n' +
+                'ORDER BY genres.id_genre', [id]
+            );
+
+            const getDevelopersByFollowsGames = await client.query('SELECT DISTINCT d.id_developer, d.name\n' +
+                'FROM public.developers d\n' +
+                '         JOIN public.developers_to_game dtg ON d.id_developer = dtg.id_developer\n' +
+                '         JOIN public.games g ON g.id_game = dtg.id_game\n' +
+                '         JOIN public.following_to_game ftg ON g.id_game = ftg.id_following\n' +
+                'WHERE ftg.id_follower = $1\n' +
+                'ORDER BY d.id_developer', [id]
+            );
+
+            const filters = {
+                genres: getGenresByFollowsGames.rows,
+                developers: getDevelopersByFollowsGames.rows
+            }
+
             let followingInfo = await getRedisValue(`sub-game-by-user:${id}`);
             if (followingInfo !== null) {
-                res.status(200).json({ message: 'Получили список игр', data: JSON.parse(followingInfo) });
+                res.status(200).json({ message: 'Получили список игр', data: JSON.parse(followingInfo), filters: filters });
             }
             else {
                 await client.query('BEGIN');
@@ -920,7 +943,7 @@ class UserHandler {
                 }
 
                 await setRedisValue(`sub-game-by-user:${id}`, JSON.stringify(dataFollowing));
-                res.status(200).json({ message: 'Получили список игр', data: dataFollowing });
+                res.status(200).json({ message: 'Получили список игр', data: dataFollowing, filters: filters});
 
                 await client.query('COMMIT');
             }
@@ -928,6 +951,23 @@ class UserHandler {
         catch (e) {
             await client.query('ROLLBACK');
             logger.error('Ошибка получения списка игр пользователя:', e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
+    async getFollowingGamesByQueries(req, res) {
+        const client = await db.connect();
+    
+        try {
+            await client.query('BEGIN');
+    
+            await client.query('COMMIT');
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error('Ошибка получения игр по фильтрам:', e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {

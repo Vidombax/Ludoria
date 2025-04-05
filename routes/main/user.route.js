@@ -21,5 +21,6 @@ router.post('/rate-feedback', authenticateToken, handler.rateFeedback);
 router.post('/comment', authenticateToken, handler.createComment);
 router.post('/rate-comment', authenticateToken, handler.rateComment);
 router.delete('/delete-comment/:idcomment', authenticateToken, handler.deleteComment);
+router.post('/user-following-query/:id', authenticateToken, handler.getFollowingGamesByQueries);
 
 export default router;
