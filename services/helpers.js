@@ -10,3 +10,8 @@ export const openLoading = async (isLoading) => {
         loading.close();
     }
 }
+
+export const exitFromAccount = (url) => {
+    localStorage.clear();
+    location.replace(url);
+}

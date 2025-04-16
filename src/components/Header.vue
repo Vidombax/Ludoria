@@ -1,12 +1,14 @@
 <script setup>
   import { ref, onMounted } from 'vue'
-  import {ElNotification} from 'element-plus'
+  import { ElNotification } from 'element-plus'
 
   import api from '@/api/api.js'
   import { useUserStore } from '@/stores/user/store.js'
+  import { exitFromAccount } from '../../services/helpers.js'
 
   import SearchGame from '@/components/SearchGame.vue'
   import SearchGameSkeleton from '@/components/skeletons/SearchGameSkeleton.vue'
+  import ModalDefault from '@/components/ModalDefault.vue'
 
   const { getUserInfo, getGameByName } = api;
   const userStore = useUserStore();
@@ -14,6 +16,7 @@
   const idUser = Number(localStorage.getItem('idUser'));
   const token = localStorage.getItem('token');
   const userRole = localStorage.getItem('userRole');
+  const isTokenFalse = ref(false);
 
   const userUrl = `/user/${idUser}`;
 
@@ -36,6 +39,7 @@
       }
     }
     catch (e) {
+      console.log('test')
       if (e.response.data.message !== 'Invalid or expired token.') {
         console.error('Ошибка при выполнении запроса:', e);
         ElNotification({
@@ -44,8 +48,7 @@
         });
       }
       else {
-        localStorage.clear();
-        location.reload();
+        isTokenFalse.value = true;
       }
     }
   }
@@ -106,11 +109,6 @@
     isUserMenuOpened.value = isUserMenuOpened.value !== true;
   }
 
-  const exitFromAccount = () => {
-    localStorage.clear();
-    location.replace('/');
-  }
-
   onMounted(async () => {
     if (idUser !== 0) {
       await getUser();
@@ -119,6 +117,11 @@
 </script>
 
 <template>
+  <ModalDefault
+      v-if="isTokenFalse"
+      :info="'У вас нет прав доступа к этой странице'"
+      @click="exitFromAccount('/login')"
+  />
   <header>
     <div>
       <router-link to="/" class="logo">
@@ -185,7 +188,7 @@
               <router-link :to="userUrl" @click="userMenuHandler">Настройки</router-link>
             </div>
             <div class="exit-div">
-              <p @click="exitFromAccount">Выйти из аккаунта</p>
+              <p @click="exitFromAccount('/')">Выйти из аккаунта</p>
             </div>
           </div>
         </transition>
