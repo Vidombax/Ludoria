@@ -958,10 +958,24 @@ class UserHandler {
         }
     }
     async getFollowingGamesByQueries(req, res) {
+        const id = req.params.id;
+        const developers = req.query.developers ? req.query.developers.split(',') : [];
+        const genres = req.query.genres ? req.query.genres.split(',') : [];
+
         const client = await db.connect();
     
         try {
             await client.query('BEGIN');
+
+            //AND id_developer = ANY (ARRAY[2, 3, 4, 7]) AND id_genre = ANY (ARRAY[3, 9]) todo фильтры написать код который будет добавлять этот текст если есть параметры в запросе
+
+            let query = 'SELECT DISTINCT games.id_game, games.name, s.score, ftg.follow_type\n' +
+                'FROM following_to_game ftg\n' +
+                '         JOIN games ON games.id_game = ftg.id_following\n' +
+                '         LEFT JOIN scores s ON games.id_game = s.id_game AND s.id_user = $1\n' +
+                '         LEFT JOIN developers_to_game dtg ON games.id_game = dtg.id_game\n' +
+                '         LEFT JOIN genre_to_game gtg ON games.id_game = gtg.id_game\n' +
+                'WHERE ftg.id_follower = $1';
     
             await client.query('COMMIT');
         }

@@ -122,7 +122,7 @@ async function getSubscribesGamesByQueries(data) {
         }
     };
 
-    return (await axios.post(`/api/user-following/${data.id}`, null, config)).data;
+    return (await axios.post(`/api/user-following/${data.id}`, data, config)).data;
 }
 
 export default {
