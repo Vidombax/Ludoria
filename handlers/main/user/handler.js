@@ -961,13 +961,12 @@ class UserHandler {
         const id = req.params.id;
         const developers = req.query.developers ? req.query.developers.split(',') : [];
         const genres = req.query.genres ? req.query.genres.split(',') : [];
+        const scores = req.query.scores ? req.query.scores.split(',') : [];
 
         const client = await db.connect();
     
         try {
             await client.query('BEGIN');
-
-            //AND id_developer = ANY (ARRAY[2, 3, 4, 7]) AND id_genre = ANY (ARRAY[3, 9]) todo фильтры написать код который будет добавлять этот текст если есть параметры в запросе
 
             let query = 'SELECT DISTINCT games.id_game, games.name, s.score, ftg.follow_type\n' +
                 'FROM following_to_game ftg\n' +
@@ -975,7 +974,57 @@ class UserHandler {
                 '         LEFT JOIN scores s ON games.id_game = s.id_game AND s.id_user = $1\n' +
                 '         LEFT JOIN developers_to_game dtg ON games.id_game = dtg.id_game\n' +
                 '         LEFT JOIN genre_to_game gtg ON games.id_game = gtg.id_game\n' +
-                'WHERE ftg.id_follower = $1';
+                'WHERE ftg.id_follower = $1'
+            ;
+
+            if (scores.length > 0) {
+                query += ` AND s.score = ANY (ARRAY[${scores}])`;
+            }
+
+            if (genres.length > 0) {
+                query += ` AND id_genre = ANY (ARRAY[${genres}])`;
+            }
+
+            if (developers.length > 0) {
+                query += ` AND id_developer = ANY (ARRAY[${developers}])`;
+            }
+
+            let dataFollowing;
+
+            dataFollowing = {
+                complete: [],
+                playing: [],
+                dropped: [],
+                planned: [],
+            };
+
+            const games = await client.query(query, [id]);
+
+            games.rows.forEach(game => {
+                switch (game.follow_type) {
+                    case 0:
+                        dataFollowing.complete.push(game);
+                        break;
+                    case 1:
+                        dataFollowing.playing.push(game);
+                        break;
+                    case 2:
+                        dataFollowing.dropped.push(game);
+                        break;
+                    case 3:
+                        dataFollowing.planned.push(game);
+                        break;
+                    default:
+                        console.warn(`Unknown follow_type: ${game.follow_type}`);
+                }
+            });
+
+            if (games.rows.length > 0) {
+                res.status(200).json({ message: 'Получили список игр', data: dataFollowing });
+            }
+            else {
+                res.status(200).json({ message: 'Список игр по фильтрам пустой' });
+            }
     
             await client.query('COMMIT');
         }

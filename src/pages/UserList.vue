@@ -16,9 +16,12 @@
   const id = ref(route.params.id);
   const url = `/user/${id.value}`;
   const token = localStorage.getItem('token');
-  const data = {
+  let data = {
     id: id.value,
     token: token,
+    scores: "",
+    developers: "",
+    genres: ""
   };
 
   const isLoading = ref(false);
@@ -129,14 +132,79 @@
     }
   }
 
+  const activeScoresCheckboxes = ref([]);
+  const handlerCheckBoxScores = async (id) => {
+    try {
+      if (activeScoresCheckboxes.value.includes(id)) {
+        activeScoresCheckboxes.value = activeScoresCheckboxes.value.filter(item => item !== id);
+      }
+      else {
+        activeScoresCheckboxes.value.push(id);
+      }
+
+      data.scores = activeScoresCheckboxes.value.join(',');
+
+      const response = await getSubscribesGamesByQueries(data);
+      if (response.data) {
+        info.value = response.data;
+      }
+      else {
+        info.value = {};
+      }
+    }
+    catch (e) {
+      console.log(e);
+    }
+  }
+
   const activeGenresCheckboxes = ref([]);
-  const handlerCheckBoxGenres = (id) => {
-    activeGenresCheckboxes.value.push(id);
+  const handlerCheckBoxGenres = async (id) => {
+    try {
+      if (activeGenresCheckboxes.value.includes(id)) {
+        activeGenresCheckboxes.value = activeGenresCheckboxes.value.filter(item => item !== id);
+      }
+      else {
+        activeGenresCheckboxes.value.push(id);
+      }
+
+      data.genres = activeGenresCheckboxes.value.join(',');
+
+      const response = await getSubscribesGamesByQueries(data);
+      if (response.data) {
+        info.value = response.data;
+      }
+      else {
+        info.value = {};
+      }
+    }
+    catch (e) {
+      console.log(e);
+    }
   }
 
   const activeDeveloperCheckboxes = ref([]);
-  const handlerCheckBoxDeveloper = (id) => {
-    activeDeveloperCheckboxes.value.push(id);
+  const handlerCheckBoxDeveloper = async (id) => {
+    try {
+      if (activeDeveloperCheckboxes.value.includes(id)) {
+        activeDeveloperCheckboxes.value = activeDeveloperCheckboxes.value.filter(item => item !== id);
+      }
+      else {
+        activeDeveloperCheckboxes.value.push(id);
+      }
+
+      data.developers = activeDeveloperCheckboxes.value.join(',');
+
+      const response = await getSubscribesGamesByQueries(data);
+      if (response.data) {
+        info.value = response.data;
+      }
+      else {
+        info.value = {};
+      }
+    }
+    catch (e) {
+      console.log(e)
+    }
   }
 
   watch(screenWidth, (newWidth) => {
@@ -296,6 +364,7 @@
               v-for="item in paramsForFilters.scores"
               :label="item + 1"
               :key="item.id"
+              @click="handlerCheckBoxScores(item + 1)"
           />
         </div>
       </div>
@@ -456,6 +525,12 @@
     background-color: #ffffff;
     height: 94vh;
     overflow-y: scroll;
+  }
+  .playing,
+  .planned,
+  .complete,
+  .dropped {
+    margin-top: -180px;
   }
 
   @media screen and (max-width: 768px) {
