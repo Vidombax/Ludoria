@@ -234,7 +234,7 @@ class UserHandler {
                     const getFeedbackByUser = await client.query(
                         'SELECT feedbacks.id_feedback, s.id_user, g.main_picture, g.name, feedbacks.description, s.score, g.id_game ' +
                         'FROM feedbacks INNER JOIN public.games g ON g.id_game = feedbacks.id_game ' +
-                        'LEFT JOIN public.scores s ON g.id_game = s.id_game ' +
+                        'LEFT JOIN scores s ON g.id_game = s.id_game AND s.id_user = $1 ' +
                         'WHERE feedbacks.id_user = $1',
                         [id]
                     );
@@ -532,6 +532,7 @@ class UserHandler {
                     );
 
                     await deleteRedisValue(`sub-game-by-user:${idUser}`);
+                    await deleteRedisValue(`user-following:${idUser}`);
                     await deleteRedisValue(`game-info:${idGame}`);
                     await deleteRedisValue('page-released-date:1');
                     res.status(200).json({ message: 'Оценка обновлена' });
@@ -549,6 +550,7 @@ class UserHandler {
                 );
 
                 await deleteRedisValue(`sub-game-by-user:${idUser}`);
+                await deleteRedisValue(`user-following:${idUser}`);
                 await deleteRedisValue(`game-info:${idGame}`);
                 await deleteRedisValue('page-released-date:1');
                 res.status(200).json({ message: 'Оценка поставлена' });
@@ -933,7 +935,7 @@ class UserHandler {
                 for (let [type] of Object.entries(dataFollowing)) {
                     const sub = await client.query('SELECT games.id_game, games.name, s.score, ftg.follow_type FROM games ' +
                         'INNER JOIN public.following_to_game ftg on games.id_game = ftg.id_following ' +
-                        'LEFT JOIN public.scores s on games.id_game = s.id_game ' +
+                        'LEFT JOIN scores s ON games.id_game = s.id_game AND s.id_user = $1 ' +
                         'WHERE ftg.id_follower = $1 AND ftg.follow_type = $2', [id, index]
                     );
 

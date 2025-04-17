@@ -400,14 +400,14 @@
           </div>
         </div>
       </div>
-      <div class="years">
-        <div class="header">
-          <p class="h">Годы</p>
-        </div>
-        <div class="items">
-          <el-checkbox label="2025" v-for="item in 4" />
-        </div>
-      </div>
+<!--      <div class="years">-->
+<!--        <div class="header">-->
+<!--          <p class="h">Годы</p>-->
+<!--        </div>-->
+<!--        <div class="items">-->
+<!--          <el-checkbox label="2025" v-for="item in 4" />-->
+<!--        </div>-->
+<!--      </div>-->
     </div>
   </div>
 </template>
@@ -530,7 +530,7 @@
   .planned,
   .complete,
   .dropped {
-    margin-top: -180px;
+    margin-top: -100px;
   }
 
   @media screen and (max-width: 768px) {
