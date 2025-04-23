@@ -38,8 +38,8 @@
       }
     }
     catch (e) {
-      if (e.response.data.message !== 'Invalid or expired token.') {
-        console.error('Ошибка при выполнении запроса:', e);
+      console.error('Ошибка при выполнении запроса:', e);
+      if (e.status !== 403) {
         ElNotification({
           message: e.response.data.message,
           type: 'error',

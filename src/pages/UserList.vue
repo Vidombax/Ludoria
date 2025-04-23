@@ -3,6 +3,7 @@
   import { useRoute } from 'vue-router'
 
   import api from '../api/api.js'
+  import { useUserStore } from '@/stores/user/store.js'
   import { ElNotification } from 'element-plus'
   import { paramsForFilters } from '../../services/constants.js'
 
@@ -23,6 +24,8 @@
     developers: "",
     genres: ""
   };
+
+  const userStore = useUserStore();
 
   const isLoading = ref(false);
   const info = ref({});
@@ -101,15 +104,15 @@
       }
     }
     catch (e) {
-      if (e.response.data.message !== 'Invalid or expired token.') {
-        console.error('Ошибка при выполнении запроса:', e);
+      console.error('Ошибка при выполнении запроса:', e);
+      if (e.status !== 403) {
         ElNotification({
           message: e.response.data.message,
           type: 'error',
         });
       }
       else {
-        localStorage.clear();
+        userStore.isTokenInvalid = true;
       }
     }
   }

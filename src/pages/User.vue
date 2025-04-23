@@ -1,19 +1,19 @@
 <script setup>
-import {useRoute} from 'vue-router'
-import {defineAsyncComponent, onMounted, provide, ref} from 'vue'
+  import {useRoute} from 'vue-router'
+  import {defineAsyncComponent, onMounted, provide, ref} from 'vue'
 
-import api from '@/api/api.js'
-import {useUserStore} from '@/stores/user/store.js'
-import {useGameStore} from '@/stores/game/store.js'
-import {ElNotification} from 'element-plus'
-import {chartOptions, genders} from '../../services/constants.js'
+  import api from '@/api/api.js'
+  import {useUserStore} from '@/stores/user/store.js'
+  import {useGameStore} from '@/stores/game/store.js'
+  import {ElNotification} from 'element-plus'
+  import {chartOptions, genders} from '../../services/constants.js'
 
-import Friend from '@/components/user/Friend.vue'
-import DoughnutChart from '@/components/DoughnutChart.vue'
+  import Friend from '@/components/user/Friend.vue'
+  import DoughnutChart from '@/components/DoughnutChart.vue'
 
-const FeedbacksModal = defineAsyncComponent(
-      () => import('@/components/user/Feedbacks.vue')
-);
+  const FeedbacksModal = defineAsyncComponent(
+        () => import('@/components/user/Feedbacks.vue')
+  );
 
   const { getUserInfo, updateUser, updateUserPhoto } = api;
   const userStore = useUserStore();
@@ -73,15 +73,15 @@ const FeedbacksModal = defineAsyncComponent(
       }
     }
     catch (e) {
-      if (e.response.data.message !== 'Invalid or expired token.') {
-        console.error('Ошибка при выполнении запроса:', e);
+      console.error('Ошибка при выполнении запроса:', e);
+      if (e.status !== 403) {
         ElNotification({
           message: e.response.data.message,
           type: 'error',
         });
       }
       else {
-        localStorage.clear();
+        userStore.isTokenInvalid = true;
       }
     }
   }

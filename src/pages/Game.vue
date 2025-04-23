@@ -142,14 +142,14 @@
     }
     catch (e) {
       console.error('Ошибка при выполнении запроса:', e);
-      if (e.response.data.message === 'Invalid or expired token.') {
-        userStore.isTokenInvalid = true;
-      }
-      else {
+      if (e.status !== 403) {
         ElNotification({
           message: e.response.data.message,
           type: 'error',
         });
+      }
+      else {
+        userStore.isTokenInvalid = true;
       }
     }
   }
@@ -203,15 +203,15 @@
       userStore.setStatusGame(nowStatusGame.value);
     }
     catch (e) {
-      if (e.response.data.message === 'Invalid or expired token.') {
-        userStore.isTokenInvalid = true;
-      }
-      else {
-        console.error('Ошибка при выполнении запроса:', e);
+      console.error('Ошибка при выполнении запроса:', e);
+      if (e.status !== 403) {
         ElNotification({
           message: e.response.data.message,
           type: 'error',
         });
+      }
+      else {
+        userStore.isTokenInvalid = true;
       }
     }
   }
