@@ -5,6 +5,7 @@ export const useUserStore = defineStore('user', {
         id: 0,
         name: '',
         previousStatusGame: '',
+        isTokenInvalid: false
     }),
     actions: {
         setName(newName) {

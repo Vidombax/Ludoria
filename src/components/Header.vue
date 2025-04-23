@@ -16,7 +16,6 @@
   const idUser = Number(localStorage.getItem('idUser'));
   const token = localStorage.getItem('token');
   const userRole = localStorage.getItem('userRole');
-  const isTokenFalse = ref(false);
 
   const userUrl = `/user/${idUser}`;
 
@@ -39,7 +38,6 @@
       }
     }
     catch (e) {
-      console.log('test')
       if (e.response.data.message !== 'Invalid or expired token.') {
         console.error('Ошибка при выполнении запроса:', e);
         ElNotification({
@@ -48,7 +46,7 @@
         });
       }
       else {
-        isTokenFalse.value = true;
+        userStore.isTokenInvalid = true;
       }
     }
   }
@@ -118,9 +116,8 @@
 
 <template>
   <ModalDefault
-      v-if="isTokenFalse"
+      v-if="userStore.isTokenInvalid"
       :info="'У вас нет прав доступа к этой странице'"
-      @click="exitFromAccount('/login')"
   />
   <header>
     <div>

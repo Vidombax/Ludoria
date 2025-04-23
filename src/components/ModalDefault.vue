@@ -1,7 +1,8 @@
 <script setup>
+  import { exitFromAccount } from '../../services/helpers.js'
+
   const props = defineProps({
     info: String,
-    handlerButton: Function
   });
 </script>
 
@@ -19,7 +20,7 @@
           <p>{{ info }}</p>
         </div>
         <div class="buttons">
-          <el-button @click="handlerButton">OK</el-button>
+          <el-button @click="exitFromAccount('/login')">OK</el-button>
         </div>
       </div>
     </div>
