@@ -15,6 +15,7 @@
   import FranchiseGame from '@/components/game/FranchiseGame.vue'
   import DoughnutChart from '@/components/DoughnutChart.vue'
   import CreateFeedback from '@/components/game/CreateFeedback.vue'
+  import Report from "@/components/game/Report.vue";
 
   const route = useRoute();
   const routes = useRouter();
@@ -292,9 +293,15 @@
     isModalFeedbackOpen.value = isModalFeedbackOpen.value !== true;
   }
 
+  const isModalReportActive = ref(false);
+  const reportModalHandler = () => {
+    isModalReportActive.value = isModalReportActive.value !== true;
+  }
+
   provide('game', {
     handleFeedbackModal,
-    isFoundUserFeedback
+    isFoundUserFeedback,
+    reportModalHandler
   });
 
   onMounted(async () => {
@@ -313,7 +320,7 @@
 <template>
   <div class="game" v-if="loading">
     <transition name="overlay">
-      <div v-if="isModalFeedbackOpen" class="overlay" @click="handleFeedbackModal"></div>
+      <div v-if="isModalFeedbackOpen || isModalReportActive" class="overlay"></div>
     </transition>
     <transition name="fade">
       <CreateFeedback
@@ -327,6 +334,9 @@
           :set-rate="setRate"
           @feedback="emitFeedback"
       />
+    </transition>
+    <transition name="fade">
+      <Report v-if="isModalReportActive" />
     </transition>
     <div class="left_block">
       <div class="fixed_block based">

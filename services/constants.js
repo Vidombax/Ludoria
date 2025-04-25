@@ -122,3 +122,30 @@ export const paramsForFilters = ref({
     developers: [],
     years: []
 });
+
+export const reports = ref([
+    {
+        value: 0,
+        label: 'Контент для взрослых'
+    },
+    {
+        value: 1,
+        label: 'Мультиаккаунт'
+    },
+    {
+        value: 2,
+        label: 'Оскорбление'
+    },
+    {
+        value: 3,
+        label: 'Реклама'
+    },
+    {
+        value: 4,
+        label: 'Спам'
+    },
+    {
+        value: 5,
+        label: 'Другое'
+    },
+])

@@ -1,8 +1,8 @@
 <script setup>
-  import { ref } from 'vue'
+import {inject, ref} from 'vue'
 
   import api from '@/api/api.js'
-  import {ElNotification} from "element-plus";
+  import { ElNotification } from 'element-plus'
 
   const { rateFeedback } = api;
 
@@ -12,8 +12,13 @@
     idUser: Number,
     id: Number,
     score: Number,
-    feedback: String
+    header: String,
+    feedback: String,
+    gameScore: Number,
+    dateFeedback: String
   });
+
+const { reportModalHandler } = inject('game');
 
   const refScore = ref(props.score)
   const urlUser = ref(`/user/${props.idUser}`);
@@ -57,7 +62,7 @@
 <template>
   <div class="item">
     <div class="header">
-      <div>
+      <div class="info_client">
         <img :src="photo" alt="author logo">
         <router-link :to="urlUser"><p class="h name">{{ name }}</p></router-link>
       </div>
@@ -71,8 +76,26 @@
         </div>
       </div>
     </div>
+    <div class="headerFeedback">
+      <p>{{ header }}</p>
+    </div>
     <div class="text">
       <p>{{ feedback }}</p>
+    </div>
+    <div class="footer">
+      <div class="date_feedback">
+        <p>{{ dateFeedback }}</p>
+      </div>
+      <div class="report_feedback">
+        <el-icon 
+            :size="25" 
+            color="#ff0000" 
+            style="cursor: pointer;"
+            @click="reportModalHandler"
+        >
+          <Warning />
+        </el-icon>
+      </div>
     </div>
   </div>
 </template>
@@ -98,8 +121,8 @@
     margin-bottom: 30px;
   }
   .header img {
-    width: 70px;
-    height: 70px;
+    width: 60px;
+    height: 60px;
     object-fit: cover;
     border-radius: 50%;
     border: 2px solid #0f2027;
@@ -136,6 +159,36 @@
   .h {
     font-weight: 700;
     font-size: larger;
+  }
+  .info_client {
+    gap: 12px !important;
+  }
+  .headerFeedback {
+    font-size: larger;
+    font-weight: bold;
+  }
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .date_feedback p {
+    color: #5e5e5e;
+  }
+  .fade-enter-from {
+    opacity: 0;
+    top: 5%;
+  }
+  .fade-enter-to, .fade-leave-from {
+    opacity: 1;
+    top: 15%;
+  }
+  .fade-leave-to {
+    opacity: 0;
+    top: 5%;
+  }
+  .fade-enter-active, .fade-leave-active {
+    transition: 0.15s ease;
   }
 
   @media screen and (max-width: 768px) {
