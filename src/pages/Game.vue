@@ -91,6 +91,7 @@
 
   const isFoundUserFeedback = ref(false);
   const userFeedback = ref('');
+  const userHeader = ref('');
   const getFeedbacks = async () => {
     try {
       const response = await getFeedbacksByGame(id.value);
@@ -154,12 +155,12 @@
     }
   }
 
-  const setRate = async () => {
+  const setRate = async (rate) => {
     try {
       if (localStorage.getItem('idUser')) {
         const data = {
           token: localStorage.getItem('token'),
-          newScore: rateScore.value,
+          newScore: rate,
           idUser: Number(localStorage.getItem('idUser')),
           idGame: id.value
         };
@@ -319,7 +320,11 @@
           :name="info.name"
           :id-game="id"
           v-if="isModalFeedbackOpen"
+          :header-text="userHeader"
           :text="userFeedback"
+          :image-game="info.main_picture"
+          :rate-score="rateScore"
+          :set-rate="setRate"
           @feedback="emitFeedback"
       />
     </transition>
@@ -355,7 +360,7 @@
         <div class="based">
           <p class="h" v-if="rateScore > 0">Ваша оценка</p>
           <p class="h" v-else>Поставить оценку</p>
-          <el-rate v-model="rateScore" @click="setRate" />
+          <el-rate v-model="rateScore" @click="setRate(rateScore)" />
         </div>
       </div>
     </div>

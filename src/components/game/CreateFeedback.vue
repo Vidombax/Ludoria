@@ -7,6 +7,10 @@
     name: String,
     idGame: Number,
     text: String,
+    headerText: String,
+    imageGame: String,
+    rateScore: Number,
+    setRate: Function
   });
 
   const emit = defineEmits(['feedback']);
@@ -14,7 +18,9 @@
   const { handleFeedbackModal, isFoundUserFeedback } = inject('game');
   const { createFeedback } = api;
 
+  const headerText = ref(props.headerText) || '';
   const text = ref(props.text) || '';
+  const score = ref(props.rateScore) || 0;
 
   const addFeed = (data) => {
     emit('feedback', data);
@@ -69,11 +75,26 @@
 
 <template>
   <div class="create_feedback based">
-    <div class="header">
-      <p class="h">Отзыв на игру {{name}}</p>
+    <div class="close-button">
       <el-button @click="handleFeedbackModal">X</el-button>
     </div>
+    <div class="header">
+      <div class="infoGame">
+        <img :src="imageGame" alt="Logo game">
+        <p class="h">{{ name }}</p>
+      </div>
+      <div>
+        <p>Моя оценка</p>
+        <el-rate v-model="score" @click="setRate(score)" />
+      </div>
+    </div>
     <div class="items">
+      <el-input
+        v-model="headerText"
+        type="text"
+        placeholder="Заголовок (опционально)"
+        style="font-size: larger;"
+      />
       <el-input
           v-model="text"
           :rows="2"
@@ -111,6 +132,28 @@
   }
   .el-textarea {
     width: 450px;
+  }
+  .infoGame {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    width: 30vh;
+  }
+  .infoGame img {
+    width: 95px;
+    height: 95px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 2px solid #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 20px;
+  }
+  .close-button {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
   }
 
   @media screen and (max-width: 1400px) {
