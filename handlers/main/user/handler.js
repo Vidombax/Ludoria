@@ -601,7 +601,6 @@ class UserHandler {
     }
     async createFeedback(req, res) {
         const { idUser, idGame, header, description } = req.body;
-        console.log(header)
 
         const client = await db.connect();
 
