@@ -125,6 +125,16 @@ async function getSubscribesGamesByQueries(data) {
     return (await axios.post(`/api/user-following-query/${data.id}?scores=${data.scores}&developers=${data.developers}&genres=${data.genres}`, data, config)).data;
 }
 
+async function sendReport(data) {
+    const config = {
+        headers: {
+            Authorization: `${data.token}`
+        }
+    };
+
+    return (await axios.post(`/api/report`, data, config)).data;
+}
+
 export default {
     loginUser,
     registrationUser,
@@ -139,5 +149,6 @@ export default {
     rateFeedback,
     createFeedback,
     getSubscribesGamesByUser,
-    getSubscribesGamesByQueries
+    getSubscribesGamesByQueries,
+    sendReport
 }

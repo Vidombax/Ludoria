@@ -32,7 +32,8 @@
     getSubToGame,
     subToGame,
     unSubToGame,
-    getSubscribes
+    getSubscribes,
+    sendReport
   } = api;
 
   const info = ref({});
@@ -104,6 +105,7 @@
           if (feedback.id_user === Number(localStorage.getItem('idUser'))) {
             isFoundUserFeedback.value = true;
             userFeedback.value = feedback.description;
+            userHeader.value = feedback.header;
           }
         }
 
@@ -294,14 +296,48 @@
   }
 
   const isModalReportActive = ref(false);
-  const reportModalHandler = () => {
+  const idFeedback = ref(0);
+  const idIntruder = ref(0);
+  const reportModalHandler = (id_feedback, id_user) => {
     isModalReportActive.value = isModalReportActive.value !== true;
+    idFeedback.value = id_feedback;
+    idIntruder.value = id_user;
+  }
+
+  const sendReportClick = async (type_report) => {
+    try {
+      const data = {
+        token: localStorage.getItem('token'),
+        id_reporter: Number(localStorage.getItem('idUser')),
+        id_intruder: idIntruder.value,
+        id_comment: idFeedback.value,
+        type_report: type_report
+      }
+
+      const response = await sendReport(data);
+      if (response) {
+        isModalReportActive.value = isModalReportActive.value !== true;
+
+        ElNotification({
+          message: response.message,
+          type: 'success',
+        });
+      }
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.response.data.message,
+        type: 'error',
+      });
+    }
   }
 
   provide('game', {
     handleFeedbackModal,
     isFoundUserFeedback,
-    reportModalHandler
+    reportModalHandler,
+    sendReportClick
   });
 
   onMounted(async () => {
@@ -335,8 +371,8 @@
           @feedback="emitFeedback"
       />
     </transition>
-    <transition name="fade">
-      <Report v-if="isModalReportActive" />
+    <transition name="report">
+        <Report v-if="isModalReportActive" />
     </transition>
     <div class="left_block">
       <div class="fixed_block based">
@@ -424,6 +460,8 @@
             :photo="item.user_photo"
             :feedback="item.description"
             :score="item.feedback_score"
+            :header="item.header"
+            :date-feedback="item.create_date"
         />
         <div v-else class="based" style="gap: 24px">
           <p class="h">Отсутствуют</p>
@@ -578,6 +616,21 @@
     top: 5%;
   }
   .fade-enter-active, .fade-leave-active {
+    transition: 0.15s ease;
+  }
+  .report-enter-from {
+    opacity: 0;
+    top: 5%;
+  }
+  .report-enter-to, .report-leave-from {
+    opacity: 1;
+    top: 40%;
+  }
+  .report-leave-to {
+    opacity: 0;
+    top: 5%;
+  }
+  .report-enter-active, .report-leave-active {
     transition: 0.15s ease;
   }
   @media screen and (max-width: 1400px) {

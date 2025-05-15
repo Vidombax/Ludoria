@@ -1,5 +1,6 @@
 <script setup>
-import {inject, ref} from 'vue'
+  import {inject, ref} from 'vue'
+  import { format, parseISO } from 'date-fns'
 
   import api from '@/api/api.js'
   import { ElNotification } from 'element-plus'
@@ -18,7 +19,7 @@ import {inject, ref} from 'vue'
     dateFeedback: String
   });
 
-const { reportModalHandler } = inject('game');
+  const { reportModalHandler } = inject('game');
 
   const refScore = ref(props.score)
   const urlUser = ref(`/user/${props.idUser}`);
@@ -76,7 +77,7 @@ const { reportModalHandler } = inject('game');
         </div>
       </div>
     </div>
-    <div class="headerFeedback">
+    <div class="headerFeedback" v-if="header">
       <p>{{ header }}</p>
     </div>
     <div class="text">
@@ -84,18 +85,20 @@ const { reportModalHandler } = inject('game');
     </div>
     <div class="footer">
       <div class="date_feedback">
-        <p>{{ dateFeedback }}</p>
+        <p>{{ format(parseISO(dateFeedback), 'dd.MM.yyyy') }}</p>
       </div>
-      <div class="report_feedback">
-        <el-icon 
-            :size="25" 
-            color="#ff0000" 
-            style="cursor: pointer;"
-            @click="reportModalHandler"
-        >
-          <Warning />
-        </el-icon>
-      </div>
+      <el-tooltip content="Пожаловаться" placement="top" effect="light">
+        <div class="report_feedback">
+          <el-icon
+              :size="25"
+              color="#ff0000"
+              style="cursor: pointer;"
+              @click="reportModalHandler(props.id, props.idUser)"
+          >
+            <Warning />
+          </el-icon>
+        </div>
+      </el-tooltip>
     </div>
   </div>
 </template>
@@ -164,8 +167,9 @@ const { reportModalHandler } = inject('game');
     gap: 12px !important;
   }
   .headerFeedback {
-    font-size: larger;
-    font-weight: bold;
+    font-size: x-large;
+    font-weight: bolder;
+    margin-bottom: 10px;
   }
   .footer {
     display: flex;

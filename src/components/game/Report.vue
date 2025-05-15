@@ -3,9 +3,9 @@
 
   import { reports } from '../../../services/constants.js'
 
-  const { reportModalHandler } = inject('game');
+  const { reportModalHandler, sendReportClick } = inject('game');
 
-  const reportReason = ref('');
+  const reportReason = ref(0);
 </script>
 
 <template>
@@ -30,7 +30,7 @@
       </div>
       <div class="buttons">
         <el-button @click="reportModalHandler">Отмена</el-button>
-        <el-button>Пожаловаться</el-button>
+        <el-button @click="sendReportClick(reportReason)">Пожаловаться</el-button>
       </div>
     </div>
   </div>

@@ -9,7 +9,6 @@
   });
 
   const { handlerFeedbackModal } = inject('user');
-  console.log(props.feedbacks)
 </script>
 
 <template>

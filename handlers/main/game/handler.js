@@ -581,7 +581,7 @@ class GameHandler {
                 await client.query('BEGIN');
 
                 const getFeedbacks = await client.query(
-                    'SELECT id_feedback, id_user, description FROM feedbacks ' +
+                    'SELECT id_feedback, id_user, description, header, create_date FROM feedbacks ' +
                     'WHERE id_game = $1',
                     [id]
                 );

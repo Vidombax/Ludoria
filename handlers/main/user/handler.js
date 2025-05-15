@@ -600,7 +600,8 @@ class UserHandler {
         }
     }
     async createFeedback(req, res) {
-        const { idUser, idGame, description } = req.body;
+        const { idUser, idGame, header, description } = req.body;
+        console.log(header)
 
         const client = await db.connect();
 
@@ -615,11 +616,11 @@ class UserHandler {
             );
 
             if (getFeedback.rows.length > 0) {
-                if (getFeedback.rows[0].description !== description.trim()) {
-                    const updateFeedback = await client.query('UPDATE feedbacks SET description = $1 ' +
-                        'WHERE id_user = $2 AND id_game = $3 ' +
+                if (getFeedback.rows[0].description !== description.trim() || getFeedback.rows[0].header !== header.trim()) {
+                    const updateFeedback = await client.query('UPDATE feedbacks SET description = $1, header = $2 ' +
+                        'WHERE id_user = $3 AND id_game = $4 ' +
                         'RETURNING *',
-                        [description.trim(), idUser, idGame]
+                        [description.trim(), header.trim(), idUser, idGame]
                     );
 
                     await deleteRedisValue(`feedback-to-game:${idGame}`);
@@ -633,10 +634,10 @@ class UserHandler {
             }
             else {
                 const createFeedback = await client.query(
-                    'INSERT INTO feedbacks (id_user, id_game, description) ' +
-                    'VALUES ($1, $2, $3) ' +
+                    'INSERT INTO feedbacks (id_user, id_game, description, header, create_date) ' +
+                    'VALUES ($1, $2, $3, $4, CURRENT_DATE) ' +
                     'RETURNING *',
-                    [idUser, idGame, description.trim()]
+                    [idUser, idGame, description.trim(), header.trim()]
                 );
 
                 const getUser = await client.query(
@@ -652,7 +653,9 @@ class UserHandler {
                     id_user: idUser,
                     user_name: getUser.rows[0].name,
                     user_photo: getUser.rows[0].photo,
-                    feedback_score: 0
+                    feedback_score: 0,
+                    header: createFeedback.rows[0].header,
+                    create_date: createFeedback.rows[0].create_date
                 }
 
                 await deleteRedisValue(`feedback-to-game:${idGame}`);
@@ -1033,6 +1036,38 @@ class UserHandler {
         catch (e) {
             await client.query('ROLLBACK');
             logger.error('Ошибка получения игр по фильтрам:', e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
+    async createReport(req, res) {
+        const { id_reporter, id_intruder, id_comment, type_report } = req.body;
+
+        const client = await db.connect();
+    
+        try {
+            await client.query('BEGIN');
+
+            const report = await client.query(
+                'INSERT INTO reports (id_reporter, id_intruder, id_comment, type_report, is_complete) ' +
+                'VALUES ($1, $2, $3, $4, false) RETURNING *',
+                [id_reporter, id_intruder, id_comment, type_report]
+            );
+
+            if (report.rows.length > 0) {
+                res.status(200).json({ message: 'Жалоба отправлена'});
+            }
+            else {
+                res.status(400).json({ message: 'Ошибка отправки жалобы' });
+            }
+    
+            await client.query('COMMIT');
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error('Ошибка создания жалобы:', e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {

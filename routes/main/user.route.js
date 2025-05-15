@@ -1,4 +1,4 @@
-import {Router} from 'express'
+import { Router } from 'express'
 import { authenticateToken } from '../../middleware/auth.js'
 import handler from '../../handlers/main/user/handler.js'
 import { uploadProfilePicture } from '../../services/files_uploader.js'
@@ -22,5 +22,6 @@ router.post('/comment', authenticateToken, handler.createComment);
 router.post('/rate-comment', authenticateToken, handler.rateComment);
 router.delete('/delete-comment/:idcomment', authenticateToken, handler.deleteComment);
 router.post('/user-following-query/:id', authenticateToken, handler.getFollowingGamesByQueries);
+router.post('/report', authenticateToken, handler.createReport);
 
 export default router;

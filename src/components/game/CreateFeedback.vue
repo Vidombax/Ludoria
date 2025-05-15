@@ -34,7 +34,8 @@
             token: localStorage.getItem('token'),
             idUser: Number(localStorage.getItem('idUser')),
             idGame: props.idGame,
-            description: text.value
+            description: text.value,
+            header: headerText.value
           }
 
           const response = await createFeedback(data);
