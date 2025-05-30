@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const db = new pg.Pool({
-    connectionString: `${process.env.POSTGRES_URL.toString()}`,
+    connectionString: `${process.env.DATABASE_URL.toString()}`,
 })
 
 export default db;

@@ -4,6 +4,8 @@ import {deleteRedisValue, getRedisValue, setRedisValue} from '../../../redis.js'
 import logger from '../../../logger.js'
 
 async function processDevelopers(gameDataForDB, idGame, client) {
+    const funcName = 'processDevelopers';
+
     let developers = [];
 
     for (let i = 0; i < gameDataForDB.developers.length; i++) {
@@ -14,7 +16,7 @@ async function processDevelopers(gameDataForDB, idGame, client) {
         );
 
         if (findDeveloperInDB.rows.length > 0) {
-            logger.info(`Разработчик ${gameDataForDB.developers[i].name} есть в БД, связываем его с игрой`);
+            logger.info(`${funcName}: Разработчик ${gameDataForDB.developers[i].name} есть в БД, связываем его с игрой`);
             const addDeveloperToGame = await client.query(
                 'INSERT INTO developers_to_game (id_game, id_developer) VALUES ($1, $2) ' +
                 'RETURNING *',
@@ -32,7 +34,7 @@ async function processDevelopers(gameDataForDB, idGame, client) {
                 developers.push(getDevelopersByGame.rows);
             }
         } else {
-            logger.info('Не нашли разработчика в БД, создаем запись');
+            logger.info(`${funcName}: Не нашли разработчика в БД, создаем запись`);
             const createDeveloper = await client.query(
                 'INSERT INTO developers (name, logo) VALUES ($1, null) ' +
                 'RETURNING *',
@@ -52,7 +54,7 @@ async function processDevelopers(gameDataForDB, idGame, client) {
                 developers.push(getDevelopersByGame.rows);
             }
 
-            logger.info(`Связываем разработчика ${gameDataForDB.developers[i].name} с игрой`);
+            logger.info(`${funcName}: Связываем разработчика ${gameDataForDB.developers[i].name} с игрой`);
             const addDeveloperToGame = await client.query(
                 'INSERT INTO developers_to_game (id_game, id_developer) VALUES ($1, $2)',
                 [idGame, createDeveloper.rows[0].id_developer]
@@ -65,6 +67,8 @@ async function processDevelopers(gameDataForDB, idGame, client) {
 
 class GameHandler {
     async getGameInfo(req, res) {
+        const funcName = 'getGameInfo';
+
         const { id } = req.params;
         let dataForRedis = {};
 
@@ -75,6 +79,7 @@ class GameHandler {
 
             if (gameInfo !== null) {
                 res.status(200).json({ message: 'Получили данные об игре', game: JSON.parse(gameInfo), status_rawg: false });
+                logger.info(`${funcName}: Получили данные с редиса`);
             }
             else {
                 await client.query('BEGIN');
@@ -101,15 +106,15 @@ class GameHandler {
                     );
 
                     if (getGameInfo.rows[0].description === null) {
-                        logger.info(`Отправляем запрос в RAWG для получение описания для игры ${getGameInfo.rows[0].name}`);
+                        logger.info(`${funcName}: Отправляем запрос в RAWG для получение описания для игры ${getGameInfo.rows[0].name}`);
                         const getInfoAboutGame = await axios.get(`https://api.rawg.io/api/games/${getGameInfo.rows[0].id_from_rawg}?key=${process.env.RAWG_API}&search_precise=true`);
 
                         let gameDataForDB = {};
                         gameDataForDB.description = getInfoAboutGame.data.description_raw;
                         gameDataForDB.developers = getInfoAboutGame.data.publishers;
 
-                        logger.info('Получили данные с RAWG и создали JSON объект');
-                        logger.info(JSON.stringify(gameDataForDB));
+                        logger.info(`${funcName}: Получили данные с RAWG и создали JSON объект`);
+                        logger.info(`${funcName}: ` + JSON.stringify(gameDataForDB));
 
                         const updateGameDescription = await client.query(
                             'UPDATE games SET description = $1 ' +
@@ -121,7 +126,7 @@ class GameHandler {
                         dataForRedis = { ...updateGameDescription.rows[0] };
 
                         if (gameDataForDB.developers.length > 0) {
-                            logger.info('Проверяем добавлены ли разработчики в нашу базу');
+                            logger.info(`${funcName}: Проверяем добавлены ли разработчики в нашу базу`);
                             let developers = [];
 
                             for (let i = 0; i < gameDataForDB.developers.length; i++) {
@@ -132,7 +137,7 @@ class GameHandler {
                                 );
 
                                 if (findDeveloperInDB.rows.length > 0) {
-                                    logger.info(`Разработчик ${gameDataForDB.developers[i].name} есть в БД связываем его с игрой`);
+                                    logger.info(`${funcName}: Разработчик ${gameDataForDB.developers[i].name} есть в БД связываем его с игрой`);
                                     const addDeveloperToGame = await client.query(
                                         'INSERT INTO developers_to_game (id_game, id_developer) VALUES ($1, $2) ' +
                                         'RETURNING *',
@@ -152,7 +157,7 @@ class GameHandler {
                                     }
                                 }
                                 else {
-                                    logger.info('Не нашли разработчика в БД создаем запись');
+                                    logger.info(`${funcName}: Не нашли разработчика в БД создаем запись`);
                                     const createDeveloper = await client.query(
                                         'INSERT INTO developers (name, logo) VALUES ($1, null) ' +
                                         'RETURNING *',
@@ -165,7 +170,7 @@ class GameHandler {
                                         dataForRedis.developers = developers;
                                     }
 
-                                    logger.info(`Связываем разработчика ${gameDataForDB.developers[i].name} с игрой`);
+                                    logger.info(`${funcName}: Связываем разработчика ${gameDataForDB.developers[i].name} с игрой`);
                                     const addDeveloperToGame = await client.query(
                                         'INSERT INTO developers_to_game (id_game, id_developer) VALUES ($1, $2)',
                                         [id, createDeveloper.rows[0].id_developer]
@@ -175,7 +180,7 @@ class GameHandler {
 
                         }
                         else {
-                            logger.info('С RAWG не получили никаких разработчиков');
+                            logger.info(`${funcName}: С RAWG не получили никаких разработчиков`);
                             dataForRedis.developers = [];
                         }
 
@@ -187,13 +192,13 @@ class GameHandler {
                             dataForRedis.score = null;
                         }
 
-                        logger.info('Собрали JSON объект для клиента');
+                        logger.info(`${funcName}: Собрали JSON объект для клиента`);
 
                         await setRedisValue(`game-info:${id}`, JSON.stringify(dataForRedis));
                         res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis, status_rawg: false });
                     }
                     else {
-                        logger.info('Все данные присутствуют отправляем');
+                        logger.info(`${funcName}: Все данные присутствуют отправляем`);
 
                         dataForRedis = { ...getGameInfo.rows[0] };
 
@@ -213,14 +218,14 @@ class GameHandler {
                             dataForRedis.score = null;
                         }
 
-                        logger.info('Собрали JSON объект для клиента');
+                        logger.info(`${funcName}: Собрали JSON объект для клиента`);
 
                         await setRedisValue(`game-info:${id}`, JSON.stringify(dataForRedis));
                         res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis, status_rawg: false });
                     }
                 }
                 else {
-                    logger.info('Не нашли игру по основному ID. Проверяем по ID RAWG');
+                    logger.info(`${funcName}: Не нашли игру по основному ID. Проверяем по ID RAWG`);
                     const getInfoAboutGame = await axios.get(`https://api.rawg.io/api/games/${id}?key=${process.env.RAWG_API}&search_precise=true`);
 
                     let gameDataForDB = {};
@@ -238,7 +243,7 @@ class GameHandler {
                         );
 
                         if (checkIdByRawg.rows.length > 0) {
-                            logger.info(`Игра есть в базе нашли по ID RAWG: ${id}`);
+                            logger.info(`${funcName}: Игра есть в базе нашли по ID RAWG: ${id}`);
                             idGame = checkIdByRawg.rows[0].id_game;
 
                             dataForRedis = { ...checkIdByRawg.rows[0] };
@@ -260,7 +265,7 @@ class GameHandler {
                             isFoundByIdRAWG = true;
                         }
                         else {
-                            logger.info('Добавляем игру в БД');
+                            logger.info(`${funcName}: Добавляем игру в БД`);
 
                             gameDataForDB.name = getInfoAboutGame.data.name_original;
                             gameDataForDB.main_picture = getInfoAboutGame.data.background_image;
@@ -290,7 +295,7 @@ class GameHandler {
 
                         if (gameDataForDB.genres.length > 0) {
                             if (isFoundByIdRAWG !== true) {
-                                logger.info('Связываем жанры с игрой');
+                                logger.info(`${funcName}: Связываем жанры с игрой`);
                                 for (let i = 0; i < gameDataForDB.genres.length; i++) {
                                     const getGenreFromDB = await client.query(
                                         'SELECT * FROM genres ' +
@@ -317,7 +322,7 @@ class GameHandler {
                         }
 
                         if (gameDataForDB.developers.length > 0) {
-                            logger.info('Проверяем добавлены ли разработчики в нашу базу');
+                            logger.info(`${funcName}: Проверяем добавлены ли разработчики в нашу базу`);
                             let developers = [];
 
                             if (isFoundByIdRAWG === true) {
@@ -343,11 +348,11 @@ class GameHandler {
                             }
                         }
                         else {
-                            logger.info('С RAWG не получили никаких разработчиков');
+                            logger.info(`${funcName}: С RAWG не получили никаких разработчиков`);
                             dataForRedis.developers = [];
                         }
 
-                        logger.info('Собрали JSON объект для клиента');
+                        logger.info(`${funcName}: Собрали JSON объект для клиента`);
 
                         await setRedisValue(`game-info:${idGame}`, JSON.stringify(dataForRedis));
                         await deleteRedisValue(`page-released-date:1`);
@@ -364,7 +369,7 @@ class GameHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка получение информации игры:', e);
+            logger.error(`${funcName}: Ошибка получение информации игры:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -372,6 +377,8 @@ class GameHandler {
         }
     }
     async getGamesByReleaseDate(req, res) {
+        const funcName = 'getGamesByReleaseDate';
+
         const { page = 1 } = req.query;
         const limit = 20
         const offset = (page - 1) * limit;
@@ -391,6 +398,7 @@ class GameHandler {
                 };
 
                 res.status(200).json(response);
+                logger.info(`${funcName}: Получили данные с редиса`);
             }
             else {
 
@@ -403,7 +411,7 @@ class GameHandler {
                 );
 
                 if (rows.length > 0) {
-                    logger.info('Добавляем ключ, что игра не из RAWG и данные для игр на главной странице');
+                    logger.info(`${funcName}: Добавляем ключ, что игра не из RAWG и данные для игр на главной странице`);
 
                     for (const row of rows) {
                         const getGenresByGame = await client.query(
@@ -435,10 +443,10 @@ class GameHandler {
                     }
                 }
                 else {
-                    logger.info('Игры из базы закончились');
+                    logger.info(`${funcName}: Игры из базы закончились`);
                 }
 
-                logger.info('Теперь получаем игры с RAWG');
+                logger.info(`${funcName}: Теперь получаем игры с RAWG`);
                 const getGames = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&ordering=released&search_precise=true&page=${page}&page_size=${limit}`);
 
                 let rowsFromRAWG = [];
@@ -495,7 +503,7 @@ class GameHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка получения страницы:', e);
+            logger.error(`${funcName}: Ошибка получения страницы:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -503,6 +511,8 @@ class GameHandler {
         }
     }
     async searchGameByName(req, res) {
+        const funcName = 'searchGameByName';
+
         const { name } = req.body;
 
         const client = await db.connect();
@@ -521,7 +531,7 @@ class GameHandler {
             }
 
             if (getGamesByName.rows.length < 15) {
-                logger.info('Данных по поиску с нашей базы не хватило добавляем еще из RAWG');
+                logger.info(`${funcName}: Данных по поиску с нашей базы не хватило добавляем еще из RAWG`);
                 const pageSize = 15 - getGamesByName.rows.length;
                 let rowsFromRAWG = [];
                 const getGamesBySearch = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&search=${name}&search_precise=true&page_size=${pageSize}`);
@@ -561,7 +571,7 @@ class GameHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка поиска игры:', e);
+            logger.error(`${funcName}: Ошибка поиска игры:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -569,6 +579,8 @@ class GameHandler {
         }
     }
     async getFeedbacksByGame(req, res) {
+        const funcName = 'getFeedbacksByGame';
+
         const { id } = req.params;
         const client = await db.connect();
 
@@ -576,6 +588,7 @@ class GameHandler {
             const getFeedbackByRedis = await getRedisValue(`feedback-to-game:${id}`);
             if (getFeedbackByRedis !== null) {
                 res.status(200).json({ message: 'Получили отзывы по игре', data: JSON.parse(getFeedbackByRedis), count: JSON.parse(getFeedbackByRedis).length });
+                logger.info(`${funcName}: Получили данные с редиса`);
             }
             else {
                 await client.query('BEGIN');
@@ -623,7 +636,7 @@ class GameHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка получения отзывов об игре:', e);
+            logger.error(`${funcName}: Ошибка получения отзывов об игре:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -631,6 +644,8 @@ class GameHandler {
         }
     }
     async getSubsToGame(req, res) {
+        const funcName = 'getSubsToGame';
+
         const { id } = req.params;
 
         const client = await db.connect();
@@ -663,7 +678,7 @@ class GameHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка получения подписок на игру:', e);
+            logger.error(`${funcName}: Ошибка получения подписок на игру:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -671,6 +686,8 @@ class GameHandler {
         }
     }
     async getGamesByPopularity(req, res) {
+        const funcName = 'getGamesByPopularity';
+
         const client = await db.connect();
 
         try {
@@ -751,7 +768,7 @@ class GameHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка получения трендовых игр:', e);
+            logger.error(`${funcName}: Ошибка получения трендовых игр:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {

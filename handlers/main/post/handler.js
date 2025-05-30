@@ -3,6 +3,8 @@ import logger from '../../../logger.js'
 
 class PostHandler {
     async createPost(req, res) {
+        const funcName = 'createPost';
+
         const { id_game, id_user, header, description } = req.body;
 
         const client = await db.connect();
@@ -23,7 +25,7 @@ class PostHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка создания поста:', e);
+            logger.error(`${funcName}: Ошибка создания поста:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -31,6 +33,8 @@ class PostHandler {
         }
     }
     async updatePost(req, res) {
+        const funcName = 'updatePost';
+
         const dataPost = req.body;
 
         const client = await db.connect();
@@ -55,7 +59,7 @@ class PostHandler {
                 }
 
                 if (Object.keys(needChangeInfo).length > 0) {
-                    logger.info('Данные которые нужно обновить', needChangeInfo);
+                    logger.info(`${funcName}: Данные которые нужно обновить`, needChangeInfo);
 
                     const setClause = Object.keys(needChangeInfo)
                         .map((key, index) => `${key} = $${index + 2}`)
@@ -74,7 +78,7 @@ class PostHandler {
                     res.status(200).json({ message: 'Данные обновлены' });
                 }
                 else {
-                    logger.info(`Данные поста ${dataPost.id} такие же не обновляем`);
+                    logger.info(`${funcName}: Данные поста ${dataPost.id} такие же не обновляем`);
                     res.status(200).json({ message: 'Данные обновлены' });
                 }
             }
@@ -86,7 +90,7 @@ class PostHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка обновления поста:', e);
+            logger.error(`${funcName}: Ошибка обновления поста:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -94,6 +98,8 @@ class PostHandler {
         }
     }
     async ratePost(req, res) {
+        const funcName = 'ratePost';
+
         const { idPost, idUser, score } = req.body;
 
         const client = await db.connect();
@@ -118,7 +124,7 @@ class PostHandler {
                     res.status(200).json({ message: 'Оценка обновлена' });
                 }
                 else {
-                    logger.info('Оценка такая же не обновляем');
+                    logger.info(`${funcName}: Оценка такая же не обновляем`);
                     res.status(200).json({ message: 'Оценка обновлена' });
                 }
             }
@@ -135,7 +141,7 @@ class PostHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка оценки поста:', e);
+            logger.error(`${funcName}: Ошибка оценки поста:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -143,6 +149,8 @@ class PostHandler {
         }
     }
     async getNewestPost(req, res) {
+        const funcName = 'getNewestPost';
+
         const client = await db.connect();
 
         try {
@@ -166,7 +174,7 @@ class PostHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка получения статей:', e);
+            logger.error(`${funcName}: Ошибка получения статей:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {

@@ -4,6 +4,8 @@ import logger from '../../../logger.js'
 
 class AdminUserHandler {
     async completeReport(req, res) {
+        const funcName = 'completeReport';
+
         const { is_complete, id_report } = req.body;
 
         const client = await db.connect();
@@ -28,7 +30,7 @@ class AdminUserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка исполнения жалобы:', e);
+            logger.error(`${funcName}: Ошибка исполнения жалобы:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {

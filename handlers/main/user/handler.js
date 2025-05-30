@@ -7,6 +7,8 @@ import logger from '../../../logger.js'
 
 class UserHandler {
     async createUser(req, res) {
+        const funcName = 'createUser';
+
         const { name, email, password } = req.body;
 
         const client = await db.connect();
@@ -47,7 +49,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка создания пользователя:', e);
+            logger.error(`${funcName}: Ошибка создания пользователя:`, e);
             res.status(500).json({ message: 'Ошибка создания пользователя' });
         }
         finally {
@@ -55,6 +57,8 @@ class UserHandler {
         }
     }
     async updateUser(req, res) {
+        const funcName = 'updateUser';
+
         const data = req.body;
 
         const client = await db.connect();
@@ -89,7 +93,7 @@ class UserHandler {
                 }
 
                 if (Object.keys(needChangeInfo).length > 0) {
-                    logger.info('Данные которые нужно обновить', needChangeInfo);
+                    logger.info(`${funcName}: Данные которые нужно обновить`, needChangeInfo);
 
                     const setClause = Object.keys(needChangeInfo)
                         .map((key, index) => `${key} = $${index + 2}`)
@@ -110,7 +114,7 @@ class UserHandler {
                     res.status(200).json({ message: 'Данные обновлены' });
                 }
                 else {
-                    logger.info(`Данные пользователя ${data.id} такие же, не обновляем`);
+                    logger.info(`${funcName}: Данные пользователя ${data.id} такие же, не обновляем`);
                     res.status(200).json({ message: 'Данные обновлены' });
                 }
             }
@@ -122,7 +126,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка обновления пользователя:', e);
+            logger.error(`${funcName}: Ошибка обновления пользователя:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -130,6 +134,8 @@ class UserHandler {
         }
     }
     async updateUserPhoto(req, res) {
+        const funcName = 'updateUserPhoto';
+
         if (!req.file) {
             return res.status(400).json({ message: 'Файл не был загружен' });
         }
@@ -157,7 +163,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка обновления фотографии:', e);
+            logger.error(`${funcName}: Ошибка обновления фотографии:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -165,6 +171,8 @@ class UserHandler {
         }
     }
     async authorizationUser(req, res) {
+        const funcName = 'authorizationUser';
+
         const { email, password } = req.body;
 
         const client = await db.connect();
@@ -201,7 +209,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка авторизации пользователя:', e);
+            logger.error(`${funcName}: Ошибка авторизации пользователя:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -209,6 +217,8 @@ class UserHandler {
         }
     }
     async getUser(req, res) {
+        const funcName = 'getUser';
+
         const { id } = req.params;
         const client = await db.connect();
 
@@ -219,6 +229,7 @@ class UserHandler {
 
             if (userInfo !== null && followingInfo !== null && feedbackInfo !== null) {
                 res.status(200).json({ message: 'Пользователь найден', data: JSON.parse(userInfo), following: JSON.parse(followingInfo), feedbacks: JSON.parse(feedbackInfo) });
+                logger.info(`${funcName}: Получили данные с редиса`);
             }
             else {
                 await client.query('BEGIN');
@@ -300,7 +311,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка по получению данных пользователя:', e);
+            logger.error(`${funcName}: Ошибка по получению данных пользователя:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -308,6 +319,8 @@ class UserHandler {
         }
     }
     async getSubscribeToGameByUser(req, res) {
+        const funcName = 'getSubscribeToGameByUser';
+
         const {iduser, idgame} = req.params;
 
         const client = await db.connect();
@@ -332,7 +345,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка получения статуса подписки на игру:', e);
+            logger.error(`${funcName}: Ошибка получения статуса подписки на игру:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -340,6 +353,8 @@ class UserHandler {
         }
     }
     async subscribeToGame(req, res) {
+        const funcName = 'subscribeToGame';
+
         const { idUser, idGame, followType, nameGame } = req.body;
 
         const client = await db.connect();
@@ -382,12 +397,12 @@ class UserHandler {
                 }
             }
             else {
-                logger.info('Игры нету в нашей базе отправляем запрос в RAWG');
+                logger.info(`${funcName}: Игры нету в нашей базе отправляем запрос в RAWG`);
 
                 const getGameFromRAWG = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&search=${encodeURIComponent(nameGame)}&search_precise=true`);
 
                 if (getGameFromRAWG.data.results.length > 0) {
-                    logger.info('Получили данные с RAWG создаем JSON объект для передачи в БД');
+                    logger.info(`${funcName}: Получили данные с RAWG создаем JSON объект для передачи в БД`);
 
                     let gameDataForDB = {};
                     let gameInfo = getGameFromRAWG.data.results[0];
@@ -399,10 +414,10 @@ class UserHandler {
                     gameDataForDB.release_date = gameInfo.released ?? null;
                     gameDataForDB.id_from_rawg = gameInfo.id;
 
-                    logger.info(`Сгенерировали JSON объект с данными игры`);
-                    logger.info(JSON.stringify(gameDataForDB));
+                    logger.info(`${funcName}: Сгенерировали JSON объект с данными игры`);
+                    logger.info(`${funcName}: ` + JSON.stringify(gameDataForDB));
 
-                    logger.info(`Сгенерировали JSON объект с жанрами`);
+                    logger.info(`${funcName}: Сгенерировали JSON объект с жанрами`);
                     logger.info(JSON.stringify(genreInfo));
 
                     const addGameToDB = await client.query(
@@ -418,7 +433,7 @@ class UserHandler {
                         ]
                     );
 
-                    logger.info('Игра была добавлена в БД');
+                    logger.info(`${funcName}: Игра была добавлена в БД`);
 
                     for (let i = 0; i < genreInfo.length; i++) {
                         const getGenresFromDB = await client.query(
@@ -428,21 +443,21 @@ class UserHandler {
                         );
 
                         if (getGenresFromDB.rows.length > 0) {
-                            logger.info(`Жанр ${genreInfo[i].name} уже есть в базе привязываем жанр к игре`);
+                            logger.info(`${funcName}: Жанр ${genreInfo[i].name} уже есть в базе привязываем жанр к игре`);
                             const addGenreToGame = await client.query(
                                 'INSERT INTO genre_to_game (id_game, id_genre) VALUES ($1, $2)',
                                 [addGameToDB.rows[0].id_game, getGenresFromDB.rows[0].id_genre]
                             );
                         }
                         else {
-                            logger.info(`Жанра ${genreInfo[i].name} нет в базе добавляем`);
+                            logger.info(`${funcName}: Жанра ${genreInfo[i].name} нет в базе добавляем`);
                             const addGenreToDB = await client.query(
                                 'INSERT INTO genres (name) VALUES ($1) ' +
                                 'RETURNING *',
                                 [genreInfo[i].name]
                             );
 
-                            logger.info(`Привязываем жанр ${genreInfo[i].name} к игре`);
+                            logger.info(`${funcName}: Привязываем жанр ${genreInfo[i].name} к игре`);
 
                             const addGenreToGame = await client.query(
                                 'INSERT INTO genre_to_game (id_game, id_genre) VALUES ($1, $2)',
@@ -451,7 +466,7 @@ class UserHandler {
                         }
                     }
 
-                    logger.info('Выполнили подготовку к подписанию на игру, подписываем пользователя на игру');
+                    logger.info(`${funcName}: Выполнили подготовку к подписанию на игру, подписываем пользователя на игру`);
 
                     const sub = await client.query(
                         'INSERT INTO following_to_game (id_follower, id_following, follow_type)' +
@@ -464,7 +479,7 @@ class UserHandler {
                     res.status(200).json({ message: 'Подписка была оформлена' });
                 }
                 else {
-                    logger.info(`В RAWG не нашли информацию по названию: ${nameGame}`);
+                    logger.info(`${funcName}: В RAWG не нашли информацию по названию: ${nameGame}`);
                     res.status(404).json({ message: 'Не нашли информацию по игре'});
                 }
             }
@@ -473,7 +488,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка подписки на игру:', e);
+            logger.error(`${funcName}: Ошибка подписки на игру:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -481,6 +496,8 @@ class UserHandler {
         }
     }
     async unsubscribeToGame(req, res) {
+        const funcName = 'unsubscribeToGame';
+
         const { idUser, idGame } = req.body;
 
         const client = await db.connect();
@@ -501,7 +518,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка отписки от игры:', e);
+            logger.error(`${funcName}: Ошибка отписки от игры:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -509,6 +526,8 @@ class UserHandler {
         }
     }
     async rateGame(req, res) {
+        const funcName = 'rateGame';
+
         const { newScore, idUser, idGame } = req.body;
 
         const client = await db.connect();
@@ -538,7 +557,7 @@ class UserHandler {
                     res.status(200).json({ message: 'Оценка обновлена' });
                 }
                 else {
-                    logger.info('Оценка точно такая же не обновляем');
+                    logger.info(`${funcName}: Оценка точно такая же не обновляем`);
                     res.status(200).json({ message: 'Оценка обновлена' });
                 }
             }
@@ -560,7 +579,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка оценки игры:', e);
+            logger.error(`${funcName}: Ошибка оценки игры:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -568,6 +587,8 @@ class UserHandler {
         }
     }
     async getUserScore(req, res) {
+        const funcName = 'getUserScrore';
+
         const { iduser, idgame } = req.params;
 
         const client = await db.connect();
@@ -592,7 +613,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка получение оценки игры от пользователя:', e);
+            logger.error(`${funcName}: Ошибка получение оценки игры от пользователя:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -600,6 +621,7 @@ class UserHandler {
         }
     }
     async createFeedback(req, res) {
+        const funcName = 'createFeedback';
         const { idUser, idGame, header, description } = req.body;
 
         const client = await db.connect();
@@ -627,7 +649,7 @@ class UserHandler {
                     res.status(200).json({ message: 'Отзыв обновлен', data: updateFeedback.rows[0] });
                 }
                 else {
-                    logger.info('Отзыв точно такой же не обновляем');
+                    logger.info(`${funcName}: Отзыв точно такой же не обновляем`);
                     res.status(200).json({ message: 'Отзыв обновлен' });
                 }
             }
@@ -666,7 +688,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка создания отзыва:', e);
+            logger.error(`${funcName}: Ошибка создания отзыва:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -674,6 +696,8 @@ class UserHandler {
         }
     }
     async rateFeedback(req, res) {
+        const funcName = 'rateFeedback';
+
         const { idUser, idFeedback, score } = req.body;
 
         const client = await db.connect();
@@ -710,7 +734,7 @@ class UserHandler {
                     res.status(200).json({ message: 'Обновили оценку' });
                 }
                 else {
-                    logger.info('Оценка точно такая же не обновляем');
+                    logger.info(`${funcName}: Оценка точно такая же не обновляем`);
                     res.status(200).json({ message: 'Не обновляем' });
                 }
             }
@@ -740,7 +764,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка оценки отзыва:', e);
+            logger.error(`${funcName}: Ошибка оценки отзыва:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -748,6 +772,8 @@ class UserHandler {
         }
     }
     async createComment(req, res) {
+        const funcName = 'createComment';
+
         const { idPost, idUser, comment } = req.body;
 
         const client = await db.connect();
@@ -773,7 +799,7 @@ class UserHandler {
                     res.status(200).json({ message: 'Комментарий обновлен' });
                 }
                 else {
-                    logger.info('Комментарий такой же не меняем');
+                    logger.info(`${funcName}: Комментарий такой же не меняем`);
                     res.status(200).json({ message: 'Комментарий обновлен' });
                 }
             }
@@ -790,7 +816,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка создания комментария:', e);
+            logger.error(`${funcName}: Ошибка создания комментария:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -798,6 +824,8 @@ class UserHandler {
         }
     }
     async rateComment(req, res) {
+        const funcName = 'rateComment';
+
         const { idComment, idUser, score } = req.body;
 
         const client = await db.connect();
@@ -821,7 +849,7 @@ class UserHandler {
                     res.status(200).json({ message: 'Оценка обновлена' });
                 }
                 else {
-                    logger.info('Оценка такая же не обновляем');
+                    logger.info(`${funcName}: Оценка такая же не обновляем`);
                     res.status(200).json({ message: 'Оценка обновлена' });
                 }
             }
@@ -838,7 +866,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка оценки комментария:', e);
+            logger.error(`${funcName}: Ошибка оценки комментария:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -846,6 +874,8 @@ class UserHandler {
         }
     }
     async deleteComment(req, res) {
+        const funcName = 'deleteComment';
+
         const { idcomment } = req.params;
 
         const client = await db.connect();
@@ -866,7 +896,7 @@ class UserHandler {
                     'WHERE id_comment = $1',
                     [idcomment]
                 );
-                logger.info('Удалили оценки на комментарий');
+                logger.info(`${funcName}: Удалили оценки на комментарий`);
             }
 
             const deleteComment = await client.query(
@@ -881,7 +911,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка удаления комментария:', e);
+            logger.error(`${funcName}: Ошибка удаления комментария:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -889,6 +919,7 @@ class UserHandler {
         }
     }
     async getFollowingGameByUser(req, res) {
+        const funcName = 'getFollowingGameByUser';
         const { id } = req.params;
 
         const client = await db.connect();
@@ -920,6 +951,7 @@ class UserHandler {
             let followingInfo = await getRedisValue(`sub-game-by-user:${id}`);
             if (followingInfo !== null) {
                 res.status(200).json({ message: 'Получили список игр', data: JSON.parse(followingInfo), filters: filters });
+                logger.info(`${funcName}: Получили данные с редиса`);
             }
             else {
                 await client.query('BEGIN');
@@ -954,7 +986,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка получения списка игр пользователя:', e);
+            logger.error(`${funcName}: Ошибка получения списка игр пользователя:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -962,6 +994,8 @@ class UserHandler {
         }
     }
     async getFollowingGamesByQueries(req, res) {
+        const funcName = 'getFollowingGamesByQueries';
+
         const id = req.params.id;
         const developers = req.query.developers ? req.query.developers.split(',') : [];
         const genres = req.query.genres ? req.query.genres.split(',') : [];
@@ -1019,7 +1053,7 @@ class UserHandler {
                         dataFollowing.planned.push(game);
                         break;
                     default:
-                        console.warn(`Unknown follow_type: ${game.follow_type}`);
+                        console.warn(`${funcName}: Unknown follow_type: ${game.follow_type}`);
                 }
             });
 
@@ -1034,7 +1068,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка получения игр по фильтрам:', e);
+            logger.error(`${funcName}: Ошибка получения игр по фильтрам:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -1042,6 +1076,8 @@ class UserHandler {
         }
     }
     async createReport(req, res) {
+        const funcName = 'createReport';
+
         const { id_reporter, id_intruder, id_comment, type_report } = req.body;
 
         const client = await db.connect();
@@ -1066,7 +1102,7 @@ class UserHandler {
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error('Ошибка создания жалобы:', e);
+            logger.error(`${funcName}: Ошибка создания жалобы:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
