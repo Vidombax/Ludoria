@@ -775,6 +775,57 @@ class GameHandler {
             client.release();
         }
     }
+    async getGamesOnGamesPage(req, res) {
+        const funcName = 'getGamesOnGamesPage';
+
+        const developers = req.query.developers ? req.query.developers.split(',') : [];
+        const genres = req.query.genres ? req.query.genres.split(',') : [];
+        const scores = req.query.scores ? req.query.scores.split(',') : [];
+        const following = req.query.following ? req.query.following.split(',') : [];
+
+        const client = await db.connect();
+    
+        try {
+            await client.query('BEGIN');
+
+            let query = '';
+
+            if (scores.length > 0) {
+                query += ` AND s.score = ANY (ARRAY[${scores}])`;
+            }
+
+            if (genres.length > 0) {
+                query += ` AND id_genre = ANY (ARRAY[${genres}])`;
+            }
+
+            if (developers.length > 0) {
+                query += ` AND id_developer = ANY (ARRAY[${developers}])`;
+            }
+
+            if (following.length > 0) {
+                query += ` AND fo = ANY (ARRAY[${following}])`;
+            }
+
+            const games = await client.query(query);
+
+            if (games.rows.length > 0) {
+                res.status(200).json({ message: 'Получили список игр', data: games.rows });
+            }
+            else {
+                res.status(200).json({ message: 'Список игр по фильтрам пустой' });
+            }
+    
+            await client.query('COMMIT');
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error(`${funcName}: Ошибка получения игр:`, e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
 }
 
 export default new GameHandler();

@@ -1,7 +1,7 @@
 <script setup>
   import {inject} from 'vue'
 
-  import Feedback from '@/components/user/Feedback.vue'
+  import Feedback from '@/components/user/FeedbackCard.vue'
 
   const props = defineProps({
     feedbacks: Array,
