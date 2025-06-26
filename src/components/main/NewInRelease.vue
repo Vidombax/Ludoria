@@ -19,7 +19,7 @@
   <div>
     <div class="info_div" v-memo>
       <Info
-          href="/popularity"
+          href="/games"
           name-info="Самое обсуждаемое"
           color-scheme="rgba(232,22,22,0.27)"
           color-name="rgb(232,22,22)"

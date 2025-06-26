@@ -14,6 +14,7 @@ import Login from '@/pages/Login.vue'
 import User from '@/pages/User.vue'
 import Game from '@/pages/Game.vue'
 import UserList from '@/pages/UserList.vue'
+import Games from '@/pages/Games.vue'
 
 const pinia = createPinia();
 const app = createApp(App);
@@ -24,6 +25,7 @@ const routes = [
     { path: '/user/:id', name: 'User', component: User, query: { settingModal: 'settingModal' } },
     { path: '/game/:id', name: 'Game', component: Game },
     { path: '/user/:id/list', name: 'UserList', component: UserList },
+    { path: '/games', name: 'Games', component: Games },
 ];
 
 const router = createRouter({
