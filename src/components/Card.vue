@@ -52,15 +52,17 @@
             </span>
           </div>
         </div>
-        <div class="div_score">
-          <p>Оценка:</p>
-          <el-rate
-              v-model="score"
-              disabled
-              show-score
-              text-color="#ff9900"
-          />
-        </div>
+        <el-tooltip placement="top">
+          <template #content>{{ score }}</template>
+          <div class="div_score">
+              <p>Оценка:</p>
+            <el-rate
+                v-model="score"
+                disabled
+                text-color="#ff9900"
+            />
+          </div>
+        </el-tooltip>
       </div>
     </template>
   </el-card>
@@ -73,7 +75,6 @@
     color: #2c3e50;
     transition: color 0.3s ease;
   }
-
   .game-name:hover {
     color: #57a5b5;
   }

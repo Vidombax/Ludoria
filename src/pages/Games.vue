@@ -1,13 +1,47 @@
 <script setup>
-  import GameCard from '@/components/games/GameCard.vue'
+  import { ref, onMounted } from 'vue'
 
-  const testData = {
-    id: 5,
-    name: 'persona',
-    date: '2018-10-26',
-    photo: 'https://media.rawg.io/media/games/b2c/b2c9c6115114c8f7d461b5430e8a7d4a.jpg',
-    developer: 'Atlus'
+  import api from '@/api/api.js'
+  import { ElNotification } from 'element-plus'
+
+  import Card from '@/components/Card.vue'
+  import CardSkeleton from '@/components/skeletons/CardSkeleton.vue'
+
+  const { getPopularGame } = api;
+
+  const typeSort = ref(0);
+  const games = ref([]);
+
+  const getGames = async () => {
+    try {
+      const response = ref();
+
+      switch (typeSort.value) {
+        case 0:
+          response.value = await getPopularGame();
+          if (response.value) {
+            games.value = response.value.data
+          }
+          break;
+        case 1:
+          break;
+        case 2:
+          break;
+      }
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.response.data.message,
+        type: 'error',
+      });
+    }
   }
+
+  onMounted(async () => {
+    await getGames();
+  });
+
 </script>
 
 <template>
@@ -21,7 +55,21 @@
         </div>
       </div>
       <div class="items">
-        <GameCard v-for="item in 8" :photo="testData.photo" :name="testData.name" :id="testData.id" :date="testData.date" :developer="testData.developer"/>
+        <Card
+            v-if="games.length"
+            v-for="item in games"
+            :key="item.id_game"
+            :name="item.name"
+            :date="item.release_date"
+            :developers="item.developers"
+            :picture="item.main_picture"
+            :id="item.id_game"
+            :genres="item.genres"
+            :score="Number(item.score).toFixed(2)"
+        />
+        <div class="skeleton_container" v-else>
+          <CardSkeleton class="card_skeleton" v-for="item in 4" :key="item.id" />
+        </div>
       </div>
     </div>
     <div class="filters">
@@ -45,22 +93,42 @@
     grid-template-columns: repeat(4, 1fr);
     width: 100%;
     gap: 16px;
-    padding: 24px;
+    padding-top: 12px;
+  }
+  .skeleton_container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .card_skeleton {
+    grid-row-start: 2;
   }
 
   @media screen and (max-width: 1400px) {
     .items {
       grid-template-columns: repeat(3, 1fr);
     }
+    .skeleton_container {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .card_skeleton {
+      grid-row-start: unset;
+    }
   }
   @media screen and (max-width: 1050px) {
     .items {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .skeleton_container {
       grid-template-columns: repeat(2, 1fr);
     }
   }
   @media screen and (max-width: 768px) {
     .items {
       grid-template-columns: repeat(1, 1fr);
+    }
+    .skeleton_container {
+      grid-template-columns: 1fr;
     }
   }
 </style>
