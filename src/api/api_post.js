@@ -30,10 +30,20 @@ async function ratePost(data) {
 
     return (await axios.post(`/api/rate-post`, data, config)).data;
 }
+async function deletePost(data) {
+    const config = {
+        headers: {
+            Authorization: `${data.token}`
+        }
+    };
+
+    return (await axios.delete(`/api/delete-post/${data.id}`, null, config)).data;
+}
 
 export default {
     getNewestPosts,
     createPost,
     updatePost,
-    ratePost
+    ratePost,
+    deletePost
 }

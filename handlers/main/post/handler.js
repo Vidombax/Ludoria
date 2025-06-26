@@ -160,7 +160,7 @@ class PostHandler {
                 'SELECT posts.id_post, posts.id_game, g.name, g.main_picture, posts.header, posts.description, posts.create_data ' +
                 'FROM posts ' +
                 'INNER JOIN public.games g ON g.id_game = posts.id_game ' +
-                'ORDER BY create_data ASC'
+                'ORDER BY create_data DESC'
             );
 
             if (posts.rows.length > 0) {
@@ -175,6 +175,39 @@ class PostHandler {
         catch (e) {
             await client.query('ROLLBACK');
             logger.error(`${funcName}: Ошибка получения статей:`, e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
+    async deletePost(req, res) {
+        const funcName = 'deletePost';
+
+        const { id } = req.params;
+
+        const client = await db.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            const delete_post = client.query(
+                `DELETE FROM posts WHERE id_post = $1`,
+                [id]
+            );
+
+            if (delete_post) {
+                res.status(200).json({ message: 'Пост успешно удален' });
+            }
+            else {
+                res.status(400).json({ message: 'Ошибка удаления поста' });
+            }
+
+            await client.query('COMMIT');
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error(`${funcName}: Ошибка удаления поста:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {

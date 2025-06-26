@@ -8,5 +8,6 @@ router.post('/post', authenticateToken, handler.createPost);
 router.post('/update-post', authenticateToken, handler.updatePost);
 router.post('/rate-post', authenticateToken, handler.ratePost);
 router.get('/new-post', handler.getNewestPost);
+router.delete('/delete-post/:id', authenticateToken, handler.deletePost);
 
 export default router;

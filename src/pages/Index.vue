@@ -1,9 +1,9 @@
 <script setup>
-  import {ref, onMounted, defineAsyncComponent} from 'vue'
+  import { ref, onMounted, defineAsyncComponent } from 'vue'
 
   import api from '@/api/api.js'
-  import CardSkeleton from "@/components/skeletons/CardSkeleton.vue";
-  import InfoSkeleton from "@/components/skeletons/InfoSkeleton.vue";
+  import CardSkeleton from '@/components/skeletons/CardSkeleton.vue'
+  import InfoSkeleton from '@/components/skeletons/InfoSkeleton.vue'
 
   const NewInRelease = defineAsyncComponent(() =>
       import('@/components/main/NewInRelease.vue')
@@ -13,7 +13,7 @@
       import('@/components/main/Posts.vue')
   );
 
-  const { getPopularGame } = api;
+  const { getPopularGame, getNewestPosts } = api;
 
   const cards = ref([]);
   const getGames = async () => {
@@ -24,8 +24,19 @@
     }
   }
 
+  const newPosts = ref([]);
+  const getPosts = async () => {
+    const response = await getNewestPosts();
+    if (response) {
+      newPosts.value = response.data;
+      newPosts.value.length = 4;
+    }
+  }
+
   onMounted(async () => {
     await getGames();
+    await getPosts();
+    console.log(newPosts.value)
   });
 </script>
 
@@ -36,7 +47,11 @@
       <InfoSkeleton class="info_skeleton"/>
       <CardSkeleton class="card_skeleton" v-for="item in 4" :key="item.id" />
     </div>
-    <Posts />
+    <Posts :new_post="newPosts" v-if="newPosts.length" />
+    <div class="skeleton_container" v-else>
+      <InfoSkeleton class="info_skeleton"/>
+      <CardSkeleton class="card_skeleton" v-for="item in 4" :key="item.id" />
+    </div>
   </div>
 </template>
 
@@ -44,18 +59,16 @@
 .container {
   display: flex;
   flex-direction: column;
+  padding: 12px;
 }
-
 .skeleton_container {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
-
 .info_skeleton {
   grid-column: span 4 / span 4;
 }
-
 .card_skeleton {
   grid-row-start: 2;
 }
