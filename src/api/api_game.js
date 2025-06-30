@@ -23,8 +23,16 @@ async function getGameByName(name) {
     }
     return (await axios.post(`/api/search-game`, data)).data;
 }
-async function getPopularGame() {
-    return (await axios.get(`/api/popularity-game`)).data;
+async function getPopularGame(page) {
+    if (page === 1) {
+        return (await axios.get(`/api/popularity-game`)).data;
+    }
+    else {
+        return (await axios.get(`/api/popularity-game?page=${page}`)).data;
+    }
+}
+async function getAllGames() {
+    return (await axios.get(`/api/games`)).data;
 }
 export default {
     getNewReleaseGames,
@@ -32,5 +40,6 @@ export default {
     getFeedbacksByGame,
     getSubscribes,
     getGameByName,
-    getPopularGame
+    getPopularGame,
+    getAllGames
 }

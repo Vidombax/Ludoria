@@ -10,6 +10,7 @@
   import SubGame from '@/components/user_list/SubGame.vue'
   import InfoSkeleton from '@/components/skeletons/InfoSkeleton.vue'
   import ArrowLeft from '@/assets/svg/ArrowLeft.vue'
+  import MenuButton from '@/components/MenuButton.vue'
 
   const { getSubscribesGamesByUser, getUserInfo, getSubscribesGamesByQueries } = api;
   const route = useRoute();
@@ -121,19 +122,6 @@
   const updateScreenWidth = () => {
     screenWidth.value = window.innerWidth;
   };
-
-  const isMenuOpen = ref(false);
-  const handlerMenuClick = () => {
-    isMenuOpen.value = !isMenuOpen.value;
-    if (isMenuOpen.value === true) {
-      document.getElementById('info').classList.add('info_mobile');
-      document.body.classList.add('hidden_scroll');
-    }
-    else {
-      document.getElementById('info').classList.remove('info_mobile');
-      document.body.classList.remove('hidden_scroll');
-    }
-  }
 
   const activeScoresCheckboxes = ref([]);
   const handlerCheckBoxScores = async (id) => {
@@ -347,11 +335,9 @@
         </transition>
       </div>
     </div>
-    <div class="menu_btn" @click="handlerMenuClick">
-      <p>Меню</p>
-    </div>
+    <MenuButton />
     <div class="info" id="info">
-      <div class="menu_close_btn" @click="handlerMenuClick">X</div>
+      <div class="menu_close_btn" @click="userStore.setStatusMenu()">X</div>
       <div class="photo_user based">
         <router-link :to="url">
           <img v-if="userData.data && userData.data.photo" :src="userData.data.photo" alt="user logo" class="img_user">
@@ -427,20 +413,6 @@
     width: 100%;
     gap: 16px;
     padding: 24px;
-  }
-  .menu_btn {
-    display: none;
-    position: fixed;
-    right: -10px;
-    top: 20%;
-    background-color: #ffffff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    padding: 8px;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    transform: rotate(-90deg);
-    cursor: pointer;
   }
   .menu_close_btn {
     display: none;
@@ -518,23 +490,6 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
-  .info_mobile {
-    display: flex !important;
-    position: fixed !important;
-    flex-direction: column;
-    left: 0;
-    right: 0;
-    padding: 14px;
-    background-color: #ffffff;
-    height: 94vh;
-    overflow-y: scroll;
-  }
-  .playing,
-  .planned,
-  .complete,
-  .dropped {
-    margin-top: -100px;
-  }
 
   @media screen and (max-width: 768px) {
     .container {
@@ -542,9 +497,6 @@
     }
     .info {
       display: none;
-    }
-    .menu_btn {
-      display: block;
     }
     .menu_close_btn {
       display: block;
@@ -558,12 +510,5 @@
   }
   .show_more p:hover {
     text-decoration: underline;
-  }
-
-  @media screen and (max-width: 400px) {
-    .info_mobile {
-      height: 90vh;
-      top: 0;
-    }
   }
 </style>

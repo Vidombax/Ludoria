@@ -1,4 +1,4 @@
-import {Router} from "express";
+import { Router } from 'express'
 import handler from '../../handlers/main/game/handler.js'
 
 const router = new Router();
@@ -9,5 +9,6 @@ router.post('/search-game', handler.searchGameByName);
 router.post('/feedback-by-game/:id', handler.getFeedbacksByGame);
 router.get('/subs-by-game/:id', handler.getSubsToGame);
 router.get('/popularity-game', handler.getGamesByPopularity);
+router.get('/game', handler.getGamesOnGamesPage);
 
 export default router;

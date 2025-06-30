@@ -688,17 +688,27 @@ class GameHandler {
     async getGamesByPopularity(req, res) {
         const funcName = 'getGamesByPopularity';
 
+        const { page = 1 } = req.query;
+        const limit = 20
+        const offset = (page - 1) * limit;
+
         const client = await db.connect();
 
         try {
             await client.query('BEGIN');
 
-            const games = await client.query(
-                'SELECT id_game, name, main_picture, release_date, id_from_rawg FROM games'
+            const countGames = await client.query(
+                'SELECT COUNT(*) as count from games'
             );
 
-            if (games.rows.length > 0) {
-                for (const row of games.rows) {
+            const { rows } = await client.query(
+                'SELECT id_game, name, main_picture, release_date, id_from_rawg FROM games ' +
+                'LIMIT $1 OFFSET $2',
+                [limit, offset]
+            );
+
+            if (rows.length > 0) {
+                for (const row of rows) {
                     const getGenresByGame = await client.query(
                         'SELECT genres.name FROM genres ' +
                         'INNER JOIN public.genre_to_game gtg ' +
@@ -746,9 +756,10 @@ class GameHandler {
                     row.count_posts = getCountPosts.rows[0].count_posts;
                     row.count_scores = getCountScores.rows[0].count_scores;
                 }
+                rows.count = countGames.rows[0].count;
             }
 
-            games.rows.sort((a, b) => {
+            rows.sort((a, b) => {
                 if (b.count_feedbacks !== a.count_feedbacks) {
                     return b.count_feedbacks - a.count_feedbacks;
                 }
@@ -762,13 +773,27 @@ class GameHandler {
                 }
             });
 
-            res.status(200).json({ message: 'Игры по популярности', data: games.rows});
+            const totalCount = rows.count;
+            const totalPages = Math.ceil(totalCount / limit);
+
+            let pages = JSON.stringify({
+                message: 'Получили данные',
+                data: rows,
+                pagination: {
+                    total: parseInt(totalCount),
+                    totalPages,
+                    currentPage: parseInt(page),
+                    limit: parseInt(limit)
+                }
+            });
+
+            res.status(200).json({ message: 'Игры по популярности', data: JSON.parse(pages)});
 
             await client.query('COMMIT');
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error(`${funcName}: Ошибка получения трендовых игр:`, e);
+            logger.error(`${funcName}: Ошибка получения популярных игр:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {

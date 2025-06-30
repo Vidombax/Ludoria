@@ -5,7 +5,8 @@ export const useUserStore = defineStore('user', {
         id: 0,
         name: '',
         previousStatusGame: '',
-        isTokenInvalid: false
+        isTokenInvalid: false,
+        isMenuOpen: false
     }),
     actions: {
         setName(newName) {
@@ -13,6 +14,17 @@ export const useUserStore = defineStore('user', {
         },
         setStatusGame(newStatus) {
             this.previousStatusGame = newStatus;
+        },
+        setStatusMenu() {
+            this.isMenuOpen = !this.isMenuOpen;
+            if (this.isMenuOpen === true) {
+                document.getElementById('info').classList.add('info_mobile');
+                document.body.classList.add('hidden_scroll');
+            }
+            else {
+                document.getElementById('info').classList.remove('info_mobile');
+                document.body.classList.remove('hidden_scroll');
+            }
         }
     },
     getters: {

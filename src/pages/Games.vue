@@ -3,30 +3,24 @@
 
   import api from '@/api/api.js'
   import { ElNotification } from 'element-plus'
+  import { paramsForFilters } from '../../services/constants.js'
 
   import Card from '@/components/Card.vue'
   import CardSkeleton from '@/components/skeletons/CardSkeleton.vue'
+  import MenuButton from '@/components/MenuButton.vue'
 
-  const { getPopularGame } = api;
+  const { getPopularGame, getAllGames } = api;
 
-  const typeSort = ref(0);
   const games = ref([]);
+  const pageNumber = ref(1);
+  const pagination = ref();
 
   const getGames = async () => {
     try {
-      const response = ref();
-
-      switch (typeSort.value) {
-        case 0:
-          response.value = await getPopularGame();
-          if (response.value) {
-            games.value = response.value.data
-          }
-          break;
-        case 1:
-          break;
-        case 2:
-          break;
+      const response = await getPopularGame(pageNumber.value);
+      if (response) {
+        games.value = response.data.data;
+        pagination.value = response.data.pagination;
       }
     }
     catch (e) {
@@ -72,16 +66,75 @@
         </div>
       </div>
     </div>
-    <div class="filters">
+    <MenuButton />
+    <div class="filters" id="info">
+      <div class="genres">
+        <div class="header">
+          <p class="h">Жанры</p>
+        </div>
+        <div class="items">
 
+        </div>
+      </div>
+      <div class="user_list">
+        <div class="header">
+          <p class="h">Список</p>
+        </div>
+        <div class="items">
+
+        </div>
+      </div>
+      <div class="sort">
+        <div class="header">
+          <p class="h">Сортировка</p>
+        </div>
+        <div class="items">
+
+        </div>
+      </div>
+      <div class="scores">
+        <div class="header">
+          <p class="h">Оценки</p>
+        </div>
+        <div class="items">
+
+        </div>
+      </div>
+      <div class="genres">
+        <div class="header">
+          <p class="h">Жанры</p>
+        </div>
+        <div class="items">
+
+        </div>
+      </div>
+      <div class="developers">
+        <div class="header">
+          <p class="h">Разработчики</p>
+        </div>
+        <div class="items">
+<!--          инпут с запросом на разраба-->
+        </div>
+      </div>
+      <div class="years">
+        <div class="header">
+          <p class="h">Годы</p>
+        </div>
+        <div class="items">
+
+        </div>
+      </div>
     </div>
+  </div>
+  <div class="pagination">
+
   </div>
 </template>
 
 <style scoped>
   .container {
     display: grid;
-    grid-template-columns: 1fr 0.3fr;
+    grid-template-columns: 1fr 0.2fr;
     width: 100%;
   }
   .games {
@@ -102,6 +155,20 @@
   }
   .card_skeleton {
     grid-row-start: 2;
+  }
+  .filters {
+    margin-top: 100px;
+  }
+  .header {
+    border: 0;
+    background: rgba(255, 255, 255);
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  .h {
+    font-weight: 800;
+    font-size: larger;
   }
 
   @media screen and (max-width: 1400px) {

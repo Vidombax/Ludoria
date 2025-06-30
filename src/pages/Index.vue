@@ -17,9 +17,9 @@
 
   const cards = ref([]);
   const getGames = async () => {
-    const response = await getPopularGame();
+    const response = await getPopularGame(1);
     if (response) {
-      cards.value = response.data;
+      cards.value = response.data.data;
       cards.value.length = 4;
     }
   }

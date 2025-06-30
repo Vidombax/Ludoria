@@ -26,11 +26,11 @@
     <template #footer>
       <div class="info_game">
         <div>
-          <p>Игра:</p>
+          <p class="h">Игра:</p>
           <p>{{ name }}</p>
         </div>
         <div>
-          <p>Дата статьи:</p>
+          <p class="h">Дата статьи:</p>
           <p>{{ format(parseISO(date), 'dd-MM-yyyy') }}</p>
         </div>
       </div>
@@ -40,7 +40,7 @@
 
 <style scoped>
   .game-name {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     color: #2c3e50;
     transition: color 0.3s ease;
@@ -69,5 +69,8 @@
   .el-image:hover {
     transform: scale(1.05);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+  .h {
+    font-weight: 800;
   }
 </style>

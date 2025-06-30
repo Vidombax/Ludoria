@@ -15,6 +15,13 @@
   const urlToGame = ref(`/game/${props.id}`);
   const score = ref(props.score);
 
+  for (const developer of props.developers) {
+    if (developer.name.length > 14) {
+      developer.name = developer.name.slice(0, 13);
+      developer.name += '...';
+    }
+  }
+
 </script>
 
 <template>
@@ -30,7 +37,7 @@
     <template #footer>
       <div class="info_game">
         <div>
-          <p>Разработчики:</p>
+          <p class="h">Разработчики:</p>
           <div class="list_developers">
             <span class="developer"
                   v-for="item in developers"
@@ -41,21 +48,21 @@
           </div>
         </div>
         <div>
-          <p>Дата выхода:</p>
-          <p>{{ format(parseISO(date), 'dd-MM-yyyy') }}</p>
+          <p class="h">Дата выхода:</p>
+          <span>{{ format(parseISO(date), 'dd-MM-yyyy') }}</span>
         </div>
         <div>
-          <p>Жанры:</p>
-          <div class="list_developers">
+          <p class="h">Жанры:</p>
+          <div class="list_genres">
             <span class="genre" v-for="item in genres" :key="item.id">
               {{ item.name }}
             </span>
           </div>
         </div>
-        <el-tooltip placement="top">
+        <el-tooltip placement="bottom">
           <template #content>{{ score }}</template>
           <div class="div_score">
-              <p>Оценка:</p>
+              <p class="h">Оценка:</p>
             <el-rate
                 v-model="score"
                 disabled
@@ -95,9 +102,19 @@
     display: grid !important;
     grid-template-columns: repeat(2, auto);
     justify-items: center;
+    gap: 4px;
+  }
+  .list_genres {
+    display: grid !important;
+    justify-items: center;
+    grid-template-columns: auto;
+    gap: 2px;
+  }
+  .h {
+    font-weight: 800;
   }
   .genre {
-    margin: 4px;
+    margin: 1px;
   }
   .el-rate {
     all: initial !important;
@@ -113,6 +130,9 @@
   .el-image:hover {
     transform: scale(1.05);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+  span {
+    font-size: 14px;
   }
   @media screen and (max-width: 768px) {
     .genre {
