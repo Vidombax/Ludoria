@@ -8,6 +8,7 @@
   import Card from '@/components/Card.vue'
   import CardSkeleton from '@/components/skeletons/CardSkeleton.vue'
   import MenuButton from '@/components/MenuButton.vue'
+  import PaginationBar from '@/components/PaginationBar.vue'
 
   const { getPopularGame, getAllGames } = api;
 
@@ -15,12 +16,14 @@
   const pageNumber = ref(1);
   const pagination = ref();
 
-  const getGames = async () => {
+  const getGames = async (number) => {
     try {
-      const response = await getPopularGame(pageNumber.value);
+      games.value = [];
+      const response = await getPopularGame(number);
       if (response) {
         games.value = response.data;
         pagination.value = response.pagination;
+        console.log('test', pageNumber.value)
       }
     }
     catch (e) {
@@ -33,7 +36,7 @@
   }
 
   onMounted(async () => {
-    await getGames();
+    await getGames(1);
   });
 
 </script>
@@ -44,9 +47,11 @@
       <div class="info">
         <h2>Игры</h2>
         <p>На данной странице отображены игры, отсортированные по рейтингу</p>
-        <div class="pagination">
-
-        </div>
+        <PaginationBar
+            :pagination="pagination"
+            :page-number="pageNumber"
+            :get-data="getGames"
+        />
       </div>
       <div class="items">
         <Card
@@ -65,6 +70,11 @@
           <CardSkeleton class="card_skeleton" v-for="item in 4" :key="item.id" />
         </div>
       </div>
+      <PaginationBar
+          :pagination="pagination"
+          :page-number="pageNumber"
+          :get-data="getGames"
+      />
     </div>
     <MenuButton />
     <div class="filters" id="info">
@@ -125,9 +135,6 @@
         </div>
       </div>
     </div>
-  </div>
-  <div class="pagination">
-
   </div>
 </template>
 

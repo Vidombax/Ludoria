@@ -752,7 +752,7 @@ class GameHandler {
                         rawgJSON.isRAWG = true;
                         rawgJSON.genres = value.genres.map(genre => genre.name);
                         rawgJSON.developers = [];
-                        rawgJSON.popularity_score = value.rating;
+                        rawgJSON.game_score = 0;
 
                         rowsFromRAWG.push(rawgJSON);
                     }

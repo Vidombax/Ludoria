@@ -49,7 +49,7 @@
         </div>
         <div>
           <p class="h">Дата выхода:</p>
-          <span>{{ format(parseISO(date), 'dd-MM-yyyy') }}</span>
+          <span>{{ date ? format(parseISO(date), 'dd-MM-yyyy') : 'Не объявлена' }}</span>
         </div>
         <div>
           <p class="h">Жанры:</p>

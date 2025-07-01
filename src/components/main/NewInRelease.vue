@@ -4,14 +4,7 @@
 
   const props = defineProps({
     cards: Array,
-  })
-
-  const info_obj = {
-    href: '',
-    name_info: '',
-    color_scheme: '',
-    color_name: ''
-  }
+  });
 
 </script>
 
