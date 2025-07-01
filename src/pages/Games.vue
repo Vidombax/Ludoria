@@ -122,6 +122,14 @@
 
         </div>
       </div>
+      <div class="platforms">
+        <div class="header">
+          <p class="h">Платформы</p>
+        </div>
+        <div class="items">
+
+        </div>
+      </div>
       <div class="developers">
         <div class="header">
           <p class="h">Разработчики</p>

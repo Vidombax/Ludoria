@@ -737,7 +737,7 @@ class GameHandler {
             else {
                 logger.info(`${funcName}: Получили ${rows.length} игр к RAWG обращаемся`);
 
-                const getGames = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&ordering=-rating&search_precise=true&page=${page}&page_size=${limit}`);
+                const getGames = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&search_precise=true&page=${page}&page_size=${limit}`);
 
                 let rowsFromRAWG = [];
 

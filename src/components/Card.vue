@@ -36,7 +36,7 @@
     </router-link>
     <template #footer>
       <div class="info_game">
-        <div>
+        <div v-if="developers.length > 0">
           <p class="h">Разработчики:</p>
           <div class="list_developers">
             <span class="developer"
@@ -54,7 +54,7 @@
         <div>
           <p class="h">Жанры:</p>
           <div class="list_genres">
-            <span class="genre" v-for="item in genres" :key="item.id">
+            <span class="genre" v-for="item in genres.slice(0, 2)" :key="item.id">
               {{ item }}
             </span>
           </div>
@@ -107,7 +107,7 @@
   .list_genres {
     display: grid !important;
     justify-items: center;
-    grid-template-columns: auto;
+    grid-template-columns: repeat(2, auto);
     gap: 2px;
   }
   .h {
