@@ -346,8 +346,8 @@
       await Promise.all([
         getFeedbacks(),
         getSubsByGame(),
-        userStore.isAuthenticated ? getUserRate() : Promise.resolve(),
-        userStore.isAuthenticated ? getFollowingStatus() : Promise.resolve(),
+        Number(localStorage.getItem('idUser')) !== 0 ? getUserRate() : Promise.resolve(),
+        Number(localStorage.getItem('idUser')) !== 0 ? getFollowingStatus() : Promise.resolve(),
       ]);
     }
   });

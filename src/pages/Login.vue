@@ -31,10 +31,7 @@
         localStorage.setItem('idUser', response.id);
         localStorage.setItem('userRole', response.userRole);
 
-        userStore.isAuthenticated = true;
-
-        await router.push('/');
-        location.reload();
+        location.replace('/');
       }
     }
     catch (e) {
