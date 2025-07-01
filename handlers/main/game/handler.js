@@ -725,38 +725,44 @@ class GameHandler {
                 [limit, offset]
             );
 
+            let countResult,
+                totalCount;
+
             if (rows.length === 20) {
                 logger.info(`${funcName}: Получили ${rows.length} игр к RAWG не обращаемся`);
+
+                countResult = 888844;
+                totalCount = countResult;
             }
             else {
                 logger.info(`${funcName}: Получили ${rows.length} игр к RAWG обращаемся`);
-            }
 
-            const getGames = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&ordering=-rating&search_precise=true&page=${page}&page_size=${limit}`);
+                const getGames = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&ordering=-rating&search_precise=true&page=${page}&page_size=${limit}`);
 
-            let rowsFromRAWG = [];
+                let rowsFromRAWG = [];
 
-            for (const value of getGames.data.results) {
-                const isNameUnique = rows.every(row => row.name !== value.name);
-                if (isNameUnique) {
-                    let rawgJSON = {};
-                    rawgJSON.name = value.name;
-                    rawgJSON.main_picture = value.background_image;
-                    rawgJSON.release_date = value.released;
-                    rawgJSON.id_game = value.id;
-                    rawgJSON.isRAWG = true;
-                    rawgJSON.genres = value.genres.map(genre => genre.name);
-                    rawgJSON.developers = [];
-                    rawgJSON.popularity_score = value.rating;
+                for (const value of getGames.data.results) {
+                    const isNameUnique = rows.every(row => row.name !== value.name);
+                    if (isNameUnique) {
+                        let rawgJSON = {};
+                        rawgJSON.name = value.name;
+                        rawgJSON.main_picture = value.background_image;
+                        rawgJSON.release_date = value.released;
+                        rawgJSON.id_game = value.id;
+                        rawgJSON.isRAWG = true;
+                        rawgJSON.genres = value.genres.map(genre => genre.name);
+                        rawgJSON.developers = [];
+                        rawgJSON.popularity_score = value.rating;
 
-                    rowsFromRAWG.push(rawgJSON);
+                        rowsFromRAWG.push(rawgJSON);
+                    }
                 }
+
+                rows.push(...rowsFromRAWG);
+
+                countResult = getGames.data.count;
+                totalCount = countResult;
             }
-
-            rows.push(...rowsFromRAWG);
-
-            const countResult = getGames.data.count;
-            const totalCount = countResult;
 
             const totalPages = Math.ceil(totalCount / limit);
 
