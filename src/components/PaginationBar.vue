@@ -1,5 +1,5 @@
 <script setup>
-  import { ref } from 'vue'
+  import { ref, watch } from 'vue'
 
   const props = defineProps({
     pagination: Object,
@@ -7,7 +7,22 @@
     getData: Function
   });
 
+  const emit = defineEmits(['pagination']);
+
+  const setPageNumber = (number) => {
+    emit('pagination', number);
+  }
+
   const number = ref(props.pageNumber);
+
+  const handleClickPagination = () => {
+    props.getData(number.value);
+    setPageNumber(number.value);
+  }
+
+  watch(() => props.pageNumber, (newValue) => {
+    number.value = newValue;
+  });
 </script>
 
 <template>
@@ -17,7 +32,7 @@
         layout="prev, pager, next"
         :total="pagination.totalPages"
         v-model:current-page="number"
-        @click="getData(number)"
+        @click="handleClickPagination"
         :current-page="number"
     />
   </div>

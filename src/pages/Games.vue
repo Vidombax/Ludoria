@@ -23,7 +23,6 @@
       if (response) {
         games.value = response.data;
         pagination.value = response.pagination;
-        console.log('test', pageNumber.value)
       }
     }
     catch (e) {
@@ -35,10 +34,13 @@
     }
   }
 
+  const emitPagination = (number) => {
+    pageNumber.value = number;
+  }
+
   onMounted(async () => {
     await getGames(1);
   });
-
 </script>
 
 <template>
@@ -51,6 +53,7 @@
             :pagination="pagination"
             :page-number="pageNumber"
             :get-data="getGames"
+            @pagination="emitPagination"
         />
       </div>
       <div class="items">
@@ -74,6 +77,7 @@
           :pagination="pagination"
           :page-number="pageNumber"
           :get-data="getGames"
+          @pagination="emitPagination"
       />
     </div>
     <MenuButton />
