@@ -725,8 +725,38 @@ class GameHandler {
                 [limit, offset]
             );
 
-            const countResult = await client.query('SELECT COUNT(*)::int AS total_count FROM games');
-            const totalCount = countResult.rows[0].total_count;
+            if (rows.length === 20) {
+                logger.info(`${funcName}: Получили ${rows.length} игр к RAWG не обращаемся`);
+            }
+            else {
+                logger.info(`${funcName}: Получили ${rows.length} игр к RAWG обращаемся`);
+            }
+
+            const getGames = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&ordering=-rating&search_precise=true&page=${page}&page_size=${limit}`);
+
+            let rowsFromRAWG = [];
+
+            for (const value of getGames.data.results) {
+                const isNameUnique = rows.every(row => row.name !== value.name);
+                if (isNameUnique) {
+                    let rawgJSON = {};
+                    rawgJSON.name = value.name;
+                    rawgJSON.main_picture = value.background_image;
+                    rawgJSON.release_date = value.released;
+                    rawgJSON.id_game = value.id;
+                    rawgJSON.isRAWG = true;
+                    rawgJSON.genres = value.genres.map(genre => genre.name);
+                    rawgJSON.developers = [];
+                    rawgJSON.popularity_score = value.rating;
+
+                    rowsFromRAWG.push(rawgJSON);
+                }
+            }
+
+            rows.push(...rowsFromRAWG);
+
+            const countResult = getGames.data.count;
+            const totalCount = countResult;
 
             const totalPages = Math.ceil(totalCount / limit);
 
@@ -739,8 +769,8 @@ class GameHandler {
                     release_date: row.release_date,
                     id_from_rawg: row.id_from_rawg,
                     score: row.game_score,
-                    genres: row.genres.filter(Boolean),
-                    developers: row.developers.filter(Boolean),
+                    genres: row.genres ? row.genres.filter(Boolean) : [],
+                    developers: row.developers ? row.developers.filter(Boolean) : [],
                     count_feedbacks: row.count_feedbacks,
                     count_posts: row.count_posts,
                     count_scores: row.count_scores,
