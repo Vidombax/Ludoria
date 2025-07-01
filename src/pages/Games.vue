@@ -9,6 +9,7 @@
   import CardSkeleton from '@/components/skeletons/CardSkeleton.vue'
   import MenuButton from '@/components/MenuButton.vue'
   import PaginationBar from '@/components/PaginationBar.vue'
+  import FiltersMenu from '@/components/games/FiltersMenu.vue'
 
   const { getPopularGame, getAllGames } = api;
 
@@ -70,7 +71,18 @@
             :score="Number(item.score).toFixed(2)"
         />
         <div class="skeleton_container" v-else>
-          <CardSkeleton class="card_skeleton" v-for="item in 4" :key="item.id" />
+          <div>
+            <CardSkeleton class="card_skeleton" v-for="item in 3" :key="item.id" />
+          </div>
+          <div>
+            <CardSkeleton class="card_skeleton" v-for="item in 3" :key="item.id" />
+          </div>
+          <div>
+            <CardSkeleton class="card_skeleton" v-for="item in 3" :key="item.id" />
+          </div>
+          <div>
+            <CardSkeleton class="card_skeleton" v-for="item in 3" :key="item.id" />
+          </div>
         </div>
       </div>
       <PaginationBar
@@ -81,72 +93,9 @@
       />
     </div>
     <MenuButton />
-    <div class="filters" id="info">
-      <div class="genres">
-        <div class="header">
-          <p class="h">Жанры</p>
-        </div>
-        <div class="items">
-
-        </div>
-      </div>
-      <div class="user_list">
-        <div class="header">
-          <p class="h">Список</p>
-        </div>
-        <div class="items">
-
-        </div>
-      </div>
-      <div class="sort">
-        <div class="header">
-          <p class="h">Сортировка</p>
-        </div>
-        <div class="items">
-
-        </div>
-      </div>
-      <div class="scores">
-        <div class="header">
-          <p class="h">Оценки</p>
-        </div>
-        <div class="items">
-
-        </div>
-      </div>
-      <div class="genres">
-        <div class="header">
-          <p class="h">Жанры</p>
-        </div>
-        <div class="items">
-
-        </div>
-      </div>
-      <div class="platforms">
-        <div class="header">
-          <p class="h">Платформы</p>
-        </div>
-        <div class="items">
-
-        </div>
-      </div>
-      <div class="developers">
-        <div class="header">
-          <p class="h">Разработчики</p>
-        </div>
-        <div class="items">
-<!--          инпут с запросом на разраба-->
-        </div>
-      </div>
-      <div class="years">
-        <div class="header">
-          <p class="h">Годы</p>
-        </div>
-        <div class="items">
-
-        </div>
-      </div>
-    </div>
+    <FiltersMenu
+        v-memo
+    />
   </div>
 </template>
 
@@ -174,20 +123,6 @@
   }
   .card_skeleton {
     grid-row-start: 2;
-  }
-  .filters {
-    margin-top: 100px;
-  }
-  .header {
-    border: 0;
-    background: rgba(255, 255, 255);
-    border-radius: 12px;
-    padding: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-  .h {
-    font-weight: 800;
-    font-size: larger;
   }
 
   @media screen and (max-width: 1400px) {
