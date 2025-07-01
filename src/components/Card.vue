@@ -15,10 +15,10 @@
   const urlToGame = ref(`/game/${props.id}`);
   const score = ref(props.score);
 
-  for (const developer of props.developers) {
-    if (developer.name.length > 14) {
-      developer.name = developer.name.slice(0, 13);
-      developer.name += '...';
+  for (let developer of props.developers) {
+    if (developer.length > 14) {
+      developer = developer.slice(0, 13);
+      developer += '...';
     }
   }
 
@@ -43,7 +43,7 @@
                   v-for="item in developers"
                   :key="item.id"
             >
-              {{ item.name }}
+              {{ item }}
             </span>
           </div>
         </div>
@@ -55,7 +55,7 @@
           <p class="h">Жанры:</p>
           <div class="list_genres">
             <span class="genre" v-for="item in genres" :key="item.id">
-              {{ item.name }}
+              {{ item }}
             </span>
           </div>
         </div>

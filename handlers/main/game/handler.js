@@ -695,104 +695,66 @@ class GameHandler {
         const client = await db.connect();
 
         try {
-            await client.query('BEGIN');
+            if (page < 1) {
+                return res.status(400).json({ message: 'Номер страницы должен быть положительным числом' });
+            }
 
-            const countGames = await client.query(
-                'SELECT COUNT(*) as count from games'
-            );
-
-            const { rows } = await client.query(
-                'SELECT id_game, name, main_picture, release_date, id_from_rawg FROM games ' +
-                'LIMIT $1 OFFSET $2',
+            const { rows } = await client.query(`
+                SELECT
+                    g.id_game,
+                    g.name,
+                    g.main_picture,
+                    g.release_date,
+                    g.id_from_rawg,
+                    COALESCE(AVG(s.score)::float, 0) AS game_score,
+                    (COUNT(f.id_game)::int + COUNT(p.id_game)::int + COUNT(s.id_game)::int) AS popularity_score,
+                    COALESCE(ARRAY_AGG(DISTINCT gen.name) FILTER (WHERE gen.name IS NOT NULL), '{}') AS genres,
+                    COALESCE(ARRAY_AGG(DISTINCT dev.name) FILTER (WHERE dev.name IS NOT NULL), '{}') AS developers
+                FROM games g
+                         LEFT JOIN genre_to_game gtg ON g.id_game = gtg.id_game
+                         LEFT JOIN genres gen ON gtg.id_genre = gen.id_genre
+                         LEFT JOIN developers_to_game dtg ON g.id_game = dtg.id_game
+                         LEFT JOIN developers dev ON dtg.id_developer = dev.id_developer
+                         LEFT JOIN scores s ON g.id_game = s.id_game
+                         LEFT JOIN feedbacks f ON g.id_game = f.id_game
+                         LEFT JOIN posts p ON g.id_game = p.id_game
+                GROUP BY g.id_game, g.name, g.main_picture, g.release_date, g.id_from_rawg
+                ORDER BY
+                    popularity_score DESC
+                LIMIT $1 OFFSET $2`,
                 [limit, offset]
             );
 
-            if (rows.length > 0) {
-                for (const row of rows) {
-                    const getGenresByGame = await client.query(
-                        'SELECT genres.name FROM genres ' +
-                        'INNER JOIN public.genre_to_game gtg ' +
-                        'ON genres.id_genre = gtg.id_genre ' +
-                        'WHERE gtg.id_game = $1',
-                        [row.id_game]
-                    );
+            const countResult = await client.query('SELECT COUNT(*)::int AS total_count FROM games');
+            const totalCount = countResult.rows[0].total_count;
 
-                    const getGameScore = await client.query(
-                        'SELECT AVG(score) as game_score FROM scores ' +
-                        'WHERE id_game = $1',
-                        [row.id_game]
-                    );
-
-                    const getDevelopersByGame = await client.query(
-                        'SELECT developers.name FROM developers ' +
-                        'INNER JOIN public.developers_to_game dtg ' +
-                        'ON developers.id_developer = dtg.id_developer ' +
-                        'WHERE dtg.id_game = $1',
-                        [row.id_game]
-                    );
-
-                    const getCountFeedbacks = await client.query(
-                        'SELECT COUNT(*) AS count_feedbacks FROM feedbacks ' +
-                        'WHERE id_game = $1',
-                        [row.id_game]
-                    );
-
-                    const getCountPosts = await client.query(
-                        'SELECT COUNT(*) AS count_posts FROM posts ' +
-                        'WHERE id_game = $1',
-                        [row.id_game]
-                    );
-
-                    const getCountScores = await client.query(
-                        'SELECT COUNT(*) AS count_scores FROM scores ' +
-                        'WHERE id_game = $1',
-                        [row.id_game]
-                    );
-
-                    row.genres = getGenresByGame.rows;
-                    row.score = getGameScore.rows[0].game_score;
-                    row.developers = getDevelopersByGame.rows;
-                    row.count_feedbacks = getCountFeedbacks.rows[0].count_feedbacks;
-                    row.count_posts = getCountPosts.rows[0].count_posts;
-                    row.count_scores = getCountScores.rows[0].count_scores;
-                }
-                rows.count = countGames.rows[0].count;
-            }
-
-            rows.sort((a, b) => {
-                if (b.count_feedbacks !== a.count_feedbacks) {
-                    return b.count_feedbacks - a.count_feedbacks;
-                }
-
-                if (b.count_posts !== a.count_posts) {
-                    return b.count_posts - a.count_posts;
-                }
-
-                if (b.count_scores !== a.count_scores) {
-                    return b.count_scores - a.count_scores;
-                }
-            });
-
-            const totalCount = rows.count;
             const totalPages = Math.ceil(totalCount / limit);
 
-            let pages = JSON.stringify({
-                message: 'Получили данные',
-                data: rows,
+            res.status(200).json({
+                message: 'Игры по популярности',
+                data: rows.map(row => ({
+                    id_game: row.id_game,
+                    name: row.name,
+                    main_picture: row.main_picture,
+                    release_date: row.release_date,
+                    id_from_rawg: row.id_from_rawg,
+                    score: row.game_score,
+                    genres: row.genres.filter(Boolean),
+                    developers: row.developers.filter(Boolean),
+                    count_feedbacks: row.count_feedbacks,
+                    count_posts: row.count_posts,
+                    count_scores: row.count_scores,
+                    popularity_score: row.popularity_score
+                })),
                 pagination: {
-                    total: parseInt(totalCount),
+                    totalItems: totalCount,
                     totalPages,
-                    currentPage: parseInt(page),
-                    limit: parseInt(limit)
+                    currentPage: page,
+                    limit
                 }
             });
-
-            res.status(200).json({ message: 'Игры по популярности', data: JSON.parse(pages)});
-
-            await client.query('COMMIT');
         }
         catch (e) {
-            await client.query('ROLLBACK');
             logger.error(`${funcName}: Ошибка получения популярных игр:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }

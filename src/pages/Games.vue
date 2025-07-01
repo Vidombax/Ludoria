@@ -19,8 +19,8 @@
     try {
       const response = await getPopularGame(pageNumber.value);
       if (response) {
-        games.value = response.data.data;
-        pagination.value = response.data.pagination;
+        games.value = response.data;
+        pagination.value = response.pagination;
       }
     }
     catch (e) {
