@@ -36,7 +36,6 @@
   onMounted(async () => {
     await getGames();
     await getPosts();
-    console.log(newPosts.value)
   });
 </script>
 
