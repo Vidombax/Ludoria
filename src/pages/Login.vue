@@ -1,11 +1,15 @@
 <script setup>
   import { ref } from 'vue'
   import { useRouter } from "vue-router";
+
   import { ElNotification } from 'element-plus'
   import api from '@/api/api.js'
+  import { useUserStore } from '@/stores/user/store.js'
 
   const router = useRouter();
   const { loginUser, registrationUser } = api;
+  const userStore = useUserStore();
+
 
   const isLogin = ref(true);
   const name = ref('');
@@ -26,6 +30,8 @@
         localStorage.setItem('token', response.token);
         localStorage.setItem('idUser', response.id);
         localStorage.setItem('userRole', response.userRole);
+
+        userStore.isAuthenticated = true;
 
         await router.push('/');
         location.reload();

@@ -15,7 +15,7 @@
   import FranchiseGame from '@/components/game/FranchiseGame.vue'
   import DoughnutChart from '@/components/DoughnutChart.vue'
   import CreateFeedback from '@/components/game/CreateFeedback.vue'
-  import Report from "@/components/game/Report.vue";
+  import Report from '@/components/game/Report.vue'
 
   const route = useRoute();
   const routes = useRouter();
@@ -343,12 +343,12 @@
   onMounted(async () => {
     await getGame();
     if (loading.value) {
-      await getFeedbacks();
-      await getSubsByGame();
-      if (localStorage.getItem('idUser')) {
-        await getUserRate();
-        await getFollowingStatus();
-      }
+      await Promise.all([
+        getFeedbacks(),
+        getSubsByGame(),
+        userStore.isAuthenticated ? getUserRate() : Promise.resolve(),
+        userStore.isAuthenticated ? getFollowingStatus() : Promise.resolve(),
+      ]);
     }
   });
 </script>
