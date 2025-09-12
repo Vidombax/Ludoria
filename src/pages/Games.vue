@@ -3,7 +3,6 @@
 
   import api from '@/api/api.js'
   import { ElNotification } from 'element-plus'
-  import { paramsForFilters } from '../../services/constants.js'
 
   import Card from '@/components/Card.vue'
   import CardSkeleton from '@/components/skeletons/CardSkeleton.vue'
@@ -11,7 +10,7 @@
   import PaginationBar from '@/components/PaginationBar.vue'
   import FiltersMenu from '@/components/games/FiltersMenu.vue'
 
-  const { getPopularGame, getAllGames } = api;
+  const { getPopularGame } = api;
 
   const games = ref([]);
   const pageNumber = ref(1);
@@ -37,6 +36,10 @@
 
   const emitPagination = (number) => {
     pageNumber.value = number;
+  }
+
+  const emitFilters = (data) => {
+    games.value = data;
   }
 
   onMounted(async () => {
@@ -94,7 +97,7 @@
     </div>
     <MenuButton />
     <FiltersMenu
-        v-memo
+        @filters="emitFilters"
     />
   </div>
 </template>

@@ -31,8 +31,8 @@ async function getPopularGame(page) {
         return (await axios.get(`/api/popularity-game?page=${page}`)).data;
     }
 }
-async function getAllGames() {
-    return (await axios.get(`/api/games`)).data;
+async function getGamesByQueries(params) {
+    return (await axios.get(`/api/games-by-query?developers=${params.developers}&genres=${params.genres}&scores=${params.scores}&following=${params.userList}`)).data;
 }
 export default {
     getNewReleaseGames,
@@ -41,5 +41,5 @@ export default {
     getSubscribes,
     getGameByName,
     getPopularGame,
-    getAllGames
+    getGamesByQueries
 }

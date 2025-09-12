@@ -798,8 +798,8 @@ class GameHandler {
             client.release();
         }
     }
-    async getGamesOnGamesPage(req, res) {
-        const funcName = 'getGamesOnGamesPage';
+    async getGamesByQueries(req, res) {
+        const funcName = 'getGamesByQueries';
 
         const developers = req.query.developers ? req.query.developers.split(',') : [];
         const genres = req.query.genres ? req.query.genres.split(',') : [];
@@ -814,19 +814,19 @@ class GameHandler {
             let query = '';
 
             if (scores.length > 0) {
-                query += ` AND s.score = ANY (ARRAY[${scores}])`;
+                query += ` AND s.score = ANY (ARRAY[${scores}]) `;
             }
 
             if (genres.length > 0) {
-                query += ` AND id_genre = ANY (ARRAY[${genres}])`;
+                query += ` AND g.id_genre = ANY (ARRAY[${genres}]) `;
             }
 
             if (developers.length > 0) {
-                query += ` AND id_developer = ANY (ARRAY[${developers}])`;
+                query += ` AND dev.id_developer = ANY (ARRAY[${developers}]) `;
             }
 
             if (following.length > 0) {
-                query += ` AND fo = ANY (ARRAY[${following}])`;
+                query += ` AND following = ANY (ARRAY[${following}]) `;
             }
 
             const games = await client.query(query);
