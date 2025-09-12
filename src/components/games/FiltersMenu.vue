@@ -1,5 +1,5 @@
 <script setup>
-  import { ref } from 'vue'
+  import { ref, watch } from 'vue'
   import { debounce } from 'lodash'
   import { ElNotification } from 'element-plus'
 
@@ -9,6 +9,7 @@
   const { getAllGenres, getGamesByQueries, getDeveloperByName } = api;
 
   const emit = defineEmits(['filters']);
+  let abortController = null;
 
   const gamesByQuery = (data) => {
     emit('filters', data);
@@ -114,22 +115,39 @@
 
   const searchDevelopers = debounce(
       async (queryString, callback) => {
-            try {
-              const response = await getDeveloperByName(queryString);
-              const formattedDevelopers = response.developers.map(developer => ({
-                value: developer.name,
-                id_developer: developer.id_developer,
-                isRAWG: developer.isRAWG
-              }));
-              callback(formattedDevelopers);
-            }
-            catch (e) {
-              ElNotification({
-                message: e.response.data.message,
-                type: 'error',
-              });
+
+          if (abortController) {
+            abortController.abort();
+          }
+
+          abortController = new AbortController();
+
+          try {
+            const response = await getDeveloperByName(queryString, abortController.signal);
+
+            if (developerNameSearch.value === '') {
               callback([]);
+              return;
             }
+
+            const formattedDevelopers = response.developers.map(developer => ({
+              value: developer.name,
+              id_developer: developer.id_developer,
+              isRAWG: developer.isRAWG
+            }));
+            callback(formattedDevelopers);
+          }
+          catch (e) {
+            if (e.name === 'AbortError' || e.code === 'ERR_CANCELED') {
+              // Запрос был отменен - игнорируем ошибку
+              return;
+            }
+            ElNotification({
+              message: e.response?.data?.message || 'Ошибка при поиске',
+              type: 'error',
+            });
+            callback([]);
+          }
       }, 500, {
         leading: true,
         trailing: true,
@@ -166,6 +184,16 @@
       params.value.developers = params.value.developers.slice(item, 1);
     }
   }
+
+  watch(() => developerNameSearch.value, (newValue, oldValue) => {
+    if (newValue === '' && oldValue !== '') {
+      // Отменяем текущий запрос
+      if (abortController) {
+        abortController.abort();
+        abortController = null;
+      }
+    }
+  });
 </script>
 
 <template>

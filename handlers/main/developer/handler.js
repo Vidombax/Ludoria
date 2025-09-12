@@ -5,16 +5,36 @@ import axios from 'axios'
 class DeveloperHandler {
     async searchDeveloper(req, res) {
         const funcName = 'searchDeveloper';
-
         const { name } = req.params;
+
+        if (!name || name.trim() === '') {
+            logger.info(`${funcName}: Пустой запрос, возвращаем пустой результат`);
+            return res.status(200).json({
+                message: 'Пустой запрос',
+                developers: []
+            });
+        }
+
+        const controller = req.abortController;
+        const signal = controller.signal;
 
         const client = await db.connect();
 
         try {
+            if (signal.aborted) {
+                logger.info(`${funcName}: Запрос отменен до начала выполнения`);
+                return res.status(499).json({ message: 'Запрос отменен' });
+            }
+
             const { rows } = await client.query(
                 `SELECT id_developer, name FROM developers WHERE LOWER(name) LIKE '%' || $1 || '%' LIMIT 5`,
                 [name.toLowerCase()]
             );
+
+            if (signal.aborted) {
+                logger.info(`${funcName}: Запрос отменен после запроса к БД`);
+                return res.status(499).json({ message: 'Запрос отменен' });
+            }
 
             let developers = rows;
 
@@ -42,10 +62,21 @@ class DeveloperHandler {
                 }, 12000);
 
                 while (developers.length < 5 && !isTimeout) {
+                    if (signal.aborted) {
+                        clearTimeout(timeoutId);
+                        logger.info(`${funcName}: Запрос отменен во время запросов к RAWG`);
+                        return res.status(499).json({ message: 'Запрос отменен' });
+                    }
+
                     try {
                         const rawgDevelopers = await axios.get(
-                            `https://api.rawg.io/api/developers?key=${process.env.RAWG_API}&page=${pageNumber}&page_size=250`
+                            `https://api.rawg.io/api/developers?key=${process.env.RAWG_API}&page=${pageNumber}&page_size=250`, {signal}
                         );
+
+                        if (signal.aborted) {
+                            clearTimeout(timeoutId);
+                            return res.status(499).json({ message: 'Request cancelled' });
+                        }
 
                         let addedCount = 0;
                         for (const rawgDeveloper of rawgDevelopers.data.results) {
@@ -61,6 +92,11 @@ class DeveloperHandler {
                                 addedCount++;
                                 logger.info(`${funcName}: Добавили разработчика ${rawgDeveloper.name}`);
                             }
+
+                            if (signal.aborted) {
+                                clearTimeout(timeoutId);
+                                return res.status(499).json({ message: 'Запрос отменен' });
+                            }
                         }
 
                         if (addedCount > 0) {
@@ -71,15 +107,18 @@ class DeveloperHandler {
 
                         pageNumber++;
 
-                        // Если это последняя страница, выходим
                         if (!rawgDevelopers.data.next) {
                             logger.info(`${funcName}: Достигнут конец списка разработчиков RAWG`);
                             break;
                         }
 
-                        await new Promise(resolve => setTimeout(resolve, 100));
+                        await new Promise(resolve => setTimeout(resolve, 150));
 
                     } catch (error) {
+                        if (axios.isCancel(error)) {
+                            logger.info(`${funcName}: Запрос к RAWG отменен`);
+                            break;
+                        }
                         logger.error(`${funcName}: Ошибка при запросе к RAWG:`, error);
                         break;
                     }
@@ -96,8 +135,14 @@ class DeveloperHandler {
             }
         }
         catch (e) {
+            if (axios.isCancel(e) || e.name === 'AbortError') {
+                logger.info(`${funcName}: Запрос отменен`);
+                return;
+            }
             logger.error(`${funcName}: Ошибка поиска разработчика:`, e);
-            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+            if (!res.headersSent) {
+                res.status(500).json({ message: 'Ошибка на стороне сервера' });
+            }
         }
         finally {
             client.release();
