@@ -31,8 +31,8 @@ async function getPopularGame(page) {
         return (await axios.get(`/api/popularity-game?page=${page}`)).data;
     }
 }
-async function getGamesByQueries(params) {
-    return (await axios.post(`/api/games-by-query?genres=${params.genres}&scores=${params.scores}&following=${params.userList}`, {
+async function getGamesByQueries(params, page) {
+    return (await axios.post(`/api/games-by-query?page=${page}&genres=${params.genres}&scores=${params.scores}&following=${params.userList}`, {
         developers: params.developers
     })).data;
 }

@@ -65,6 +65,96 @@ async function processDevelopers(gameDataForDB, idGame, client) {
     return developers;
 }
 
+async function processGameWithMissingDescription(client, id, getGameInfo, getGenresByGame, getGameScore, funcName) {
+    logger.info(`${funcName}: Отправляем запрос в RAWG для получение описания для игры ${getGameInfo.rows[0].name}`);
+    const getInfoAboutGame = await axios.get(`https://api.rawg.io/api/games/${getGameInfo.rows[0].id_from_rawg}?key=${process.env.RAWG_API}&search_precise=true`);
+
+    let gameDataForDB = {};
+    gameDataForDB.description = getInfoAboutGame.data.description_raw;
+    gameDataForDB.developers = getInfoAboutGame.data.publishers;
+
+    logger.info(`${funcName}: Получили данные с RAWG и создали JSON объект`);
+    logger.info(`${funcName}: ` + JSON.stringify(gameDataForDB));
+
+    const updateGameDescription = await client.query(
+        'UPDATE games SET description = $1 ' +
+        'WHERE id_game = $2 ' +
+        'RETURNING *',
+        [gameDataForDB.description, id]
+    );
+
+    let dataForRedis = { ...updateGameDescription.rows[0] };
+
+    if (gameDataForDB.developers.length > 0) {
+        logger.info(`${funcName}: Проверяем добавлены ли разработчики в нашу базу`);
+        let developers = [];
+
+        for (let i = 0; i < gameDataForDB.developers.length; i++) {
+            const findDeveloperInDB = await client.query(
+                'SELECT * FROM developers ' +
+                'WHERE name = $1',
+                [gameDataForDB.developers[i].name]
+            );
+
+            if (findDeveloperInDB.rows.length > 0) {
+                logger.info(`${funcName}: Разработчик ${gameDataForDB.developers[i].name} есть в БД связываем его с игрой`);
+                const addDeveloperToGame = await client.query(
+                    'INSERT INTO developers_to_game (id_game, id_developer) VALUES ($1, $2) ' +
+                    'RETURNING *',
+                    [id, findDeveloperInDB.rows[0].id_developer]
+                );
+
+                if (i === gameDataForDB.developers.length - 1) {
+                    const getDevelopersByGame = await client.query(
+                        'SELECT developers.name, developers.logo, developers.id_developer FROM developers ' +
+                        'INNER JOIN public.developers_to_game dtg ' +
+                        'ON developers.id_developer = dtg.id_developer ' +
+                        'WHERE dtg.id_game = $1', [id]
+                    );
+
+                    developers.push(getDevelopersByGame.rows);
+                    dataForRedis.developers = developers;
+                }
+            }
+            else {
+                logger.info(`${funcName}: Не нашли разработчика в БД создаем запись`);
+                const createDeveloper = await client.query(
+                    'INSERT INTO developers (name, logo) VALUES ($1, null) ' +
+                    'RETURNING *',
+                    [gameDataForDB.developers[i].name]
+                );
+
+                developers.push(createDeveloper.rows[0]);
+
+                if (i === gameDataForDB.developers.length - 1) {
+                    dataForRedis.developers = developers;
+                }
+
+                logger.info(`${funcName}: Связываем разработчика ${gameDataForDB.developers[i].name} с игрой`);
+                const addDeveloperToGame = await client.query(
+                    'INSERT INTO developers_to_game (id_game, id_developer) VALUES ($1, $2)',
+                    [id, createDeveloper.rows[0].id_developer]
+                );
+            }
+        }
+    }
+    else {
+        logger.info(`${funcName}: С RAWG не получили никаких разработчиков`);
+        dataForRedis.developers = [];
+    }
+
+    dataForRedis.genres = getGenresByGame.rows;
+    if (getGameScore.rows[0].game_score !== null) {
+        dataForRedis.score = parseFloat(getGameScore.rows[0].game_score).toFixed(2);
+    }
+    else {
+        dataForRedis.score = null;
+    }
+
+    await setRedisValue(`game-info:${id}`, JSON.stringify(dataForRedis));
+    return { dataForRedis, status_rawg: false };
+}
+
 class GameHandler {
     async getGameInfo(req, res) {
         const funcName = 'getGameInfo';
@@ -84,6 +174,8 @@ class GameHandler {
             else {
                 await client.query('BEGIN');
 
+                logger.info(`${funcName}: В редисе не нашли данных об игре с ID ${id}, пробуем найти в БД`);
+
                 const getGameInfo = await client.query(
                     'SELECT * FROM games ' +
                     'WHERE id_game = $1',
@@ -91,6 +183,8 @@ class GameHandler {
                 );
 
                 if (getGameInfo.rows.length > 0) {
+                    logger.info(`${funcName}: Нашли игру ${id} в БД`);
+
                     const getGenresByGame = await client.query(
                         'SELECT genres.name, genres.id_genre FROM genres ' +
                         'INNER JOIN public.genre_to_game gtg ' +
@@ -106,96 +200,10 @@ class GameHandler {
                     );
 
                     if (getGameInfo.rows[0].description === null) {
-                        logger.info(`${funcName}: Отправляем запрос в RAWG для получение описания для игры ${getGameInfo.rows[0].name}`);
-                        const getInfoAboutGame = await axios.get(`https://api.rawg.io/api/games/${getGameInfo.rows[0].id_from_rawg}?key=${process.env.RAWG_API}&search_precise=true`);
-
-                        let gameDataForDB = {};
-                        gameDataForDB.description = getInfoAboutGame.data.description_raw;
-                        gameDataForDB.developers = getInfoAboutGame.data.publishers;
-
-                        logger.info(`${funcName}: Получили данные с RAWG и создали JSON объект`);
-                        logger.info(`${funcName}: ` + JSON.stringify(gameDataForDB));
-
-                        const updateGameDescription = await client.query(
-                            'UPDATE games SET description = $1 ' +
-                            'WHERE id_game = $2 ' +
-                            'RETURNING *',
-                            [gameDataForDB.description, id]
+                        const result = await processGameWithMissingDescription(
+                            client, id, getGameInfo, getGenresByGame, getGameScore, funcName
                         );
-
-                        dataForRedis = { ...updateGameDescription.rows[0] };
-
-                        if (gameDataForDB.developers.length > 0) {
-                            logger.info(`${funcName}: Проверяем добавлены ли разработчики в нашу базу`);
-                            let developers = [];
-
-                            for (let i = 0; i < gameDataForDB.developers.length; i++) {
-                                const findDeveloperInDB = await client.query(
-                                    'SELECT * FROM developers ' +
-                                    'WHERE name = $1',
-                                    [gameDataForDB.developers[i].name]
-                                );
-
-                                if (findDeveloperInDB.rows.length > 0) {
-                                    logger.info(`${funcName}: Разработчик ${gameDataForDB.developers[i].name} есть в БД связываем его с игрой`);
-                                    const addDeveloperToGame = await client.query(
-                                        'INSERT INTO developers_to_game (id_game, id_developer) VALUES ($1, $2) ' +
-                                        'RETURNING *',
-                                        [id, findDeveloperInDB.rows[0].id_developer]
-                                    );
-
-                                    if (i === gameDataForDB.developers.length - 1) {
-                                        const getDevelopersByGame = await client.query(
-                                            'SELECT developers.name, developers.logo, developers.id_developer FROM developers ' +
-                                            'INNER JOIN public.developers_to_game dtg ' +
-                                            'ON developers.id_developer = dtg.id_developer ' +
-                                            'WHERE dtg.id_game = $1', [id]
-                                        );
-
-                                        developers.push(getDevelopersByGame.rows);
-                                        dataForRedis.developers = developers;
-                                    }
-                                }
-                                else {
-                                    logger.info(`${funcName}: Не нашли разработчика в БД создаем запись`);
-                                    const createDeveloper = await client.query(
-                                        'INSERT INTO developers (name, logo) VALUES ($1, null) ' +
-                                        'RETURNING *',
-                                        [gameDataForDB.developers[i].name]
-                                    );
-
-                                    developers.push(createDeveloper.rows[0]);
-
-                                    if (i === gameDataForDB.developers.length - 1) {
-                                        dataForRedis.developers = developers;
-                                    }
-
-                                    logger.info(`${funcName}: Связываем разработчика ${gameDataForDB.developers[i].name} с игрой`);
-                                    const addDeveloperToGame = await client.query(
-                                        'INSERT INTO developers_to_game (id_game, id_developer) VALUES ($1, $2)',
-                                        [id, createDeveloper.rows[0].id_developer]
-                                    );
-                                }
-                            }
-
-                        }
-                        else {
-                            logger.info(`${funcName}: С RAWG не получили никаких разработчиков`);
-                            dataForRedis.developers = [];
-                        }
-
-                        dataForRedis.genres = getGenresByGame.rows;
-                        if (getGameScore.rows[0].game_score !== null) {
-                            dataForRedis.score = parseFloat(getGameScore.rows[0].game_score).toFixed(2);
-                        }
-                        else {
-                            dataForRedis.score = null;
-                        }
-
-                        logger.info(`${funcName}: Собрали JSON объект для клиента`);
-
-                        await setRedisValue(`game-info:${id}`, JSON.stringify(dataForRedis));
-                        res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis, status_rawg: false });
+                        res.status(200).json({ message: 'Получили данные об игре', game: result.dataForRedis, status_rawg: result.status_rawg });
                     }
                     else {
                         logger.info(`${funcName}: Все данные присутствуют отправляем`);
@@ -218,80 +226,113 @@ class GameHandler {
                             dataForRedis.score = null;
                         }
 
-                        logger.info(`${funcName}: Собрали JSON объект для клиента`);
-
                         await setRedisValue(`game-info:${id}`, JSON.stringify(dataForRedis));
                         res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis, status_rawg: false });
                     }
                 }
                 else {
                     logger.info(`${funcName}: Не нашли игру по основному ID. Проверяем по ID RAWG`);
-                    const getInfoAboutGame = await axios.get(`https://api.rawg.io/api/games/${id}?key=${process.env.RAWG_API}&search_precise=true`);
+                    const checkIdByRawg = await client.query(
+                        'SELECT * FROM games ' +
+                        'WHERE id_from_rawg = $1',
+                        [id]
+                    );
 
-                    let gameDataForDB = {};
-                    let idGame;
-                    let isFoundByIdRAWG = false;
+                    if (checkIdByRawg.rows.length > 0) {
+                        logger.info(`${funcName}: Игра есть в базе нашли по ID RAWG: ${id}`);
+                        let idGameDB = checkIdByRawg.rows[0].id_game;
 
-                    gameDataForDB.developers = getInfoAboutGame.data.developers;
-                    gameDataForDB.genres = getInfoAboutGame.data.genres;
+                        logger.info(`${funcName}: Проверяем есть ли игра ${idGameDB} в редис`);
 
-                    if (getInfoAboutGame.data) {
-                        const checkIdByRawg = await client.query(
-                            'SELECT * FROM games ' +
-                            'WHERE id_from_rawg = $1',
-                            [getInfoAboutGame.data.id]
-                        );
+                        let checkRedis = await getRedisValue(`game-info:${idGameDB}`);
+                        if (checkRedis !== null) {
+                            logger.info(`${funcName}: Получили данные с редиса по игре ${idGameDB}`);
+                            return res.status(200).json({ message: 'Получили данные об игре', game: JSON.parse(checkRedis), status_rawg: false });
+                        }
+                        else {
+                            logger.info(`${funcName}: Игры нету в редисе идем по ее записи в БД`);
 
-                        if (checkIdByRawg.rows.length > 0) {
-                            logger.info(`${funcName}: Игра есть в базе нашли по ID RAWG: ${id}`);
-                            idGame = checkIdByRawg.rows[0].id_game;
-
-                            dataForRedis = { ...checkIdByRawg.rows[0] };
+                            const getGenresByGame = await client.query(
+                                'SELECT genres.name, genres.id_genre FROM genres ' +
+                                'INNER JOIN public.genre_to_game gtg ' +
+                                'ON genres.id_genre = gtg.id_genre ' +
+                                'WHERE gtg.id_game = $1',
+                                [idGameDB]
+                            );
 
                             const getGameScore = await client.query(
                                 'SELECT AVG(score) as game_score FROM scores ' +
                                 'WHERE id_game = $1',
-                                [idGame]
+                                [idGameDB]
                             );
 
-                            if (getGameScore.rows[0].game_score !== null) {
-                                dataForRedis.score = parseFloat(getGameScore.rows[0].game_score).toFixed(2);
+                            if (checkIdByRawg.rows[0].description === null) {
+                                const result = await processGameWithMissingDescription(
+                                    client, idGameDB, checkIdByRawg, getGenresByGame, getGameScore, funcName
+                                );
+                                res.status(200).json({ message: 'Получили данные об игре', game: result.dataForRedis, status_rawg: result.status_rawg });
                             }
                             else {
-                                dataForRedis.score = null;
+                                logger.info(`${funcName}: Все данные присутствуют отправляем`);
+
+                                dataForRedis = { ...checkIdByRawg.rows[0] };
+
+                                const getDevelopersByGame = await client.query(
+                                    'SELECT developers.name, developers.logo, developers.id_developer FROM developers ' +
+                                    'INNER JOIN public.developers_to_game dtg ' +
+                                    'ON developers.id_developer = dtg.id_developer ' +
+                                    'WHERE dtg.id_game = $1', [idGameDB]
+                                );
+
+                                dataForRedis.developers = getDevelopersByGame.rows;
+                                dataForRedis.genres = getGenresByGame.rows;
+                                if (getGameScore.rows[0].game_score !== null) {
+                                    dataForRedis.score = parseFloat(getGameScore.rows[0].game_score).toFixed(2);
+                                }
+                                else {
+                                    dataForRedis.score = null;
+                                }
+
+                                await setRedisValue(`game-info:${idGameDB}`, JSON.stringify(dataForRedis));
+                                res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis, status_rawg: false });
                             }
-
-
-                            isFoundByIdRAWG = true;
                         }
-                        else {
-                            logger.info(`${funcName}: Добавляем игру в БД`);
+                    }
+                    else {
+                        logger.info(`${funcName}: Игры нету в БД и редисе добавляем из RAWG по ID: ${id}`);
 
-                            gameDataForDB.name = getInfoAboutGame.data.name_original;
-                            gameDataForDB.main_picture = getInfoAboutGame.data.background_image;
-                            gameDataForDB.description = getInfoAboutGame.data.description;
-                            gameDataForDB.release_date = getInfoAboutGame.data.released;
-                            gameDataForDB.id_from_rawg = getInfoAboutGame.data.id;
+                        const getInfoAboutGame = await axios.get(`https://api.rawg.io/api/games/${id}?key=${process.env.RAWG_API}&search_precise=true`);
 
-                            const addGameToDB = await client.query(
-                                'INSERT INTO games (name, main_picture, description, release_date, id_from_rawg) ' +
-                                'VALUES ($1, $2, $3, $4, $5) ' +
-                                'RETURNING *',
-                                [
-                                    gameDataForDB.name,
-                                    gameDataForDB.main_picture,
-                                    gameDataForDB.description,
-                                    gameDataForDB.release_date,
-                                    gameDataForDB.id_from_rawg
-                                ]
-                            );
+                        let gameDataForDB = {};
+                        let idGame;
+                        let isFoundByIdRAWG = false;
 
-                            idGame = addGameToDB.rows[0].id_game;
+                        gameDataForDB.developers = getInfoAboutGame.data.developers;
+                        gameDataForDB.genres = getInfoAboutGame.data.genres;
+                        gameDataForDB.name = getInfoAboutGame.data.name_original;
+                        gameDataForDB.main_picture = getInfoAboutGame.data.background_image;
+                        gameDataForDB.description = getInfoAboutGame.data.description;
+                        gameDataForDB.release_date = getInfoAboutGame.data.released;
+                        gameDataForDB.id_from_rawg = getInfoAboutGame.data.id;
 
-                            dataForRedis = { ...addGameToDB.rows };
+                        const addGameToDB = await client.query(
+                            'INSERT INTO games (name, main_picture, description, release_date, id_from_rawg) ' +
+                            'VALUES ($1, $2, $3, $4, $5) ' +
+                            'RETURNING *',
+                            [
+                                gameDataForDB.name,
+                                gameDataForDB.main_picture,
+                                gameDataForDB.description,
+                                gameDataForDB.release_date,
+                                gameDataForDB.id_from_rawg
+                            ]
+                        );
 
-                            dataForRedis.score = null;
-                        }
+                        idGame = addGameToDB.rows[0].id_game;
+
+                        dataForRedis = { ...addGameToDB.rows };
+
+                        dataForRedis.score = null;
 
                         if (gameDataForDB.genres.length > 0) {
                             if (isFoundByIdRAWG !== true) {
@@ -352,18 +393,11 @@ class GameHandler {
                             dataForRedis.developers = [];
                         }
 
-                        logger.info(`${funcName}: Собрали JSON объект для клиента`);
-
                         await setRedisValue(`game-info:${idGame}`, JSON.stringify(dataForRedis));
                         await deleteRedisValue(`page-released-date:1`);
                         res.status(200).json({ message: 'Получили данные об игре', game: dataForRedis, status_rawg: true });
-
-                    }
-                    else {
-                        res.status(404).json({ message: 'Данной игры не было найдено' });
                     }
                 }
-
                 await client.query('COMMIT');
             }
         }
@@ -804,12 +838,8 @@ class GameHandler {
         const developersJSON = req.body.developers;
 
         const developers = [];
-        const developersRAWG = [];
         for (const developer of developersJSON) {
-            if (developer.isRAWG) {
-                developersRAWG.push(developer.id);
-            }
-            else {
+            if (!developer.isRAWG) {
                 developers.push(developer.id);
             }
         }
@@ -822,9 +852,17 @@ class GameHandler {
         const limit = 20
         const offset = (page - 1) * limit;
 
+        const controller = req.abortController;
+        const signal = controller.signal;
+
         const client = await db.connect();
     
         try {
+            if (signal.aborted) {
+                logger.info(`${funcName}: Запрос отменен до начала выполнения`);
+                return res.status(499).json({ message: 'Запрос отменен' });
+            }
+
             if (page < 1) {
                 return res.status(400).json({ message: 'Номер страницы должен быть положительным числом' });
             }
@@ -863,7 +901,7 @@ class GameHandler {
             }
 
             if (developers.length > 0) {
-                logger.info(`${funcName}: Есть фильтрация по разработчикам добавляем таких разработчиков как ${genres}`);
+                logger.info(`${funcName}: Есть фильтрация по разработчикам добавляем таких разработчиков как ${developersJSON}`);
                 query += ` AND dev.id_developer = ANY (ARRAY[${developers}]) `;
             }
 
@@ -888,37 +926,107 @@ class GameHandler {
                 countResult = 888844;
                 totalCount = countResult;
             }
-            // else {
-            //     logger.info(`${funcName}: Получили ${rows.length} игр к RAWG обращаемся`);
-            //
-            //     const getGames = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&search_precise=true&page=${page}&page_size=${limit}`);
-            //
-            //     let rowsFromRAWG = [];
-            //
-            //     for (const value of getGames.data.results) {
-            //         const isNameUnique = rows.every(row => row.name !== value.name);
-            //         if (isNameUnique) {
-            //             await axios.post(`${process.env.HOST}/`)
-            //
-            //             let rawgJSON = {};
-            //             rawgJSON.name = value.name;
-            //             rawgJSON.main_picture = value.background_image;
-            //             rawgJSON.release_date = value.released;
-            //             rawgJSON.id_game = value.id;
-            //             rawgJSON.isRAWG = true;
-            //             rawgJSON.genres = value.genres.map(genre => genre.name);
-            //             rawgJSON.developers = [];
-            //             rawgJSON.game_score = 0;
-            //
-            //             rowsFromRAWG.push(rawgJSON);
-            //         }
-            //     }
-            //
-            //     rows.push(...rowsFromRAWG);
-            //
-            //     countResult = getGames.data.count;
-            //     totalCount = countResult;
-            // }
+            else {
+                logger.info(`${funcName}: Получили ${rows.length} игр к RAWG обращаемся`);
+
+                let isTimeout = false;
+                let timeoutId;
+                let timeoutSet = false;
+
+                timeoutId = setTimeout(() => {
+                    isTimeout = true;
+                    logger.info(`${funcName}: Таймаут 25 секунд, возвращаем что есть`);
+                }, 25000);
+
+                let i = 1;
+                while (rows.length <= 20 && !isTimeout) {
+                    if (signal.aborted) {
+                        if (timeoutId) clearTimeout(timeoutId);
+                        logger.info(`${funcName}: Запрос отменен во время запросов к RAWG`);
+                        return res.status(499).json({ message: 'Запрос отменен' });
+                    }
+
+                    const getGames = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&search_precise=true&page=${i}&page_size=25`);
+
+                    if (signal.aborted) {
+                        if (timeoutId) clearTimeout(timeoutId);
+                        return res.status(499).json({ message: 'Запрос отменен' });
+                    }
+
+                    let rowsFromRAWG = [];
+
+                    for (const value of getGames.data.results) {
+                        try {
+                            if (rows.length >= 20 || isTimeout) break;
+
+                            const isNameUnique = rows.every(row => row.name !== value.name);
+                            if (isNameUnique) {
+                                const response = await axios.post(`${process.env.HOST}/game-info/${value.id}`);
+
+                                if (response.data && response.data.games) {
+                                    let rawgJSON = {
+                                        name: value.name,
+                                        main_picture: value.background_image,
+                                        release_date: value.released,
+                                        id_game: response.game.id_game,
+                                        id_from_rawg: response.game.id_from_rawg,
+                                        genres: response.game.genres.map(genre => genre.name),
+                                        developers: response.game.developers.map(developer => developer.name),
+                                        game_score: 0
+                                    };
+
+                                    if (genres.length === 0 && developers.length === 0) {
+                                        // Без фильтров - добавляем все
+                                        rowsFromRAWG.push(rawgJSON);
+                                    }
+                                    else {
+                                        const hasSelectedGenres = genres.length === 0 ||
+                                            genres.every(selectedGenre =>
+                                                rawgJSON.genres.some(gameGenre => gameGenre === selectedGenre)
+                                            )
+                                        ;
+                                        const hasSelectedDevelopers = developers.length === 0 ||
+                                            developers.every(selectedDev =>
+                                                rawgJSON.developers.some(gameDev => gameDev === selectedDev.name)
+                                            )
+                                        ;
+
+                                        if (hasSelectedGenres || hasSelectedDevelopers) {
+                                            rowsFromRAWG.push(rawgJSON);
+                                        }
+                                        else {
+                                            logger.info(`${funcName}: Игра "${rawgJSON.name}" не прошла фильтрацию`);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (e) {
+                            logger.error(`${funcName}: Ошибка при обработке игры ${value.name}:`, e);
+                            continue;
+                        }
+                    }
+
+                    rows.push(...rowsFromRAWG);
+                    i++;
+
+                    if (rows.length >= 10 && !timeoutSet) {
+                        timeoutId = setTimeout(() => {
+                            isTimeout = true;
+                            logger.info(`${funcName}: Таймаут 25 секунд, возвращаем что есть`);
+                        }, 25000);
+                        timeoutSet = true;
+                    }
+
+                    if (rows.length === 20) {
+                        break;
+                    }
+
+                    countResult = getGames.data.count;
+                }
+
+                totalCount = countResult;
+            }
 
             const totalPages = Math.ceil(totalCount / limit);
 

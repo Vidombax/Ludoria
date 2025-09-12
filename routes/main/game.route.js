@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import handler from '../../handlers/main/game/handler.js'
+import { requestManager } from '../../middleware/request_manager.js'
 
 const router = new Router();
 
@@ -9,6 +10,6 @@ router.post('/search-game', handler.searchGameByName);
 router.post('/feedback-by-game/:id', handler.getFeedbacksByGame);
 router.get('/subs-by-game/:id', handler.getSubsToGame);
 router.get('/popularity-game', handler.getGamesByPopularity);
-router.post('/games-by-query', handler.getGamesByQueries);
+router.post('/games-by-query', requestManager, handler.getGamesByQueries);
 
 export default router;
