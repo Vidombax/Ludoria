@@ -71,7 +71,7 @@
             :picture="item.main_picture"
             :id="item.id_game"
             :genres="item.genres"
-            :score="Number(item.score).toFixed(2)"
+            :score="item.score"
         />
         <div class="skeleton_container" v-else>
           <div>

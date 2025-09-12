@@ -54,7 +54,7 @@
         params.value.genres.splice(genreIndex, 1);
       }
 
-      const response = await getGamesByQueries(params.value);
+      // const response = await getGamesByQueries(params.value);
 
       //gamesByQuery(response);
     }
@@ -77,7 +77,7 @@
         params.value.userList.splice(listIndex, 1);
       }
 
-      const response = await getGamesByQueries(params.value);
+      // const response = await getGamesByQueries(params.value);
 
       //gamesByQuery(response);
     }
@@ -100,7 +100,7 @@
         params.value.scores.splice(listIndex, 1);
       }
 
-      const response = await getGamesByQueries(params.value);
+      // const response = await getGamesByQueries(params.value);
 
       //gamesByQuery(response);
     }
@@ -113,47 +113,57 @@
   }
 
   const searchDevelopers = debounce(
-      async () => {
+      async (queryString, callback) => {
             try {
-              const response = await getDeveloperByName(developerNameSearch.value);
-              developers.value = response.developers;
-              return developers.value;
+              const response = await getDeveloperByName(queryString);
+              const formattedDevelopers = response.developers.map(developer => ({
+                value: developer.name,
+                id_developer: developer.id_developer,
+                isRAWG: developer.isRAWG
+              }));
+              callback(formattedDevelopers);
             }
             catch (e) {
               ElNotification({
                 message: e.response.data.message,
                 type: 'error',
               });
+              callback([]);
             }
       }, 500, {
         leading: true,
         trailing: true,
         maxWait: 12000
       }
-  )
+  );
 
-  const selectDeveloper = async (developer) => {
+  const selectDeveloper = async (item) => {
     try {
-      const id = developer.id_developer;
-
-      const listIndex = params.value.developers.indexOf(id);
-
-      if (listIndex === -1) {
-        params.value.developers.push(id);
+      const exists = params.value.developers.some(d => d.id === item.id_developer);
+      if (!exists) {
+        params.value.developers.push({
+          id: item.id_developer,
+          name: item.value,
+          isRAWG: item.isRAWG
+        });
+        developerNameSearch.value = '';
       }
-      else {
-        params.value.developers.splice(listIndex, 1);
-      }
-
-      const response = await getGamesByQueries(params.value);
-
-      gamesByQuery(response);
     }
     catch (e) {
+      console.error(e);
       ElNotification({
         message: e.response.data.message,
         type: 'error',
       });
+    }
+  }
+
+  const handleDevelopersList = (item) => {
+    if (params.value.developers.length === 1) {
+      params.value.developers.length = 0;
+    }
+    else {
+      params.value.developers = params.value.developers.slice(item, 1);
     }
   }
 </script>
@@ -218,8 +228,14 @@
               @select="selectDeveloper"
           />
         </div>
-        <div class="items" v-if="developers.length > 0">
-          <el-checkbox />
+        <div class="items" v-if="params.developers.length > 0">
+          <el-checkbox
+              v-for="item in params.developers"
+              :key="item.id"
+              :checked="true"
+              :label="item.name"
+              @click="handleDevelopersList(item.id_developer)"
+          />
         </div>
       </div>
     </div>

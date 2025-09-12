@@ -54,7 +54,7 @@ class DeveloperHandler {
                             const isNameUnique = developers.every(row => row.name !== rawgDeveloper.name);
                             if (isNameUnique && rawgDeveloper.name.toLowerCase().includes(name.toLowerCase())) {
                                 developers.push({
-                                    id: rawgDeveloper.id,
+                                    id_developer: rawgDeveloper.id,
                                     name: rawgDeveloper.name,
                                     isRAWG: true
                                 });
