@@ -5,7 +5,7 @@
   import api from '../../api/api.js'
   import { statusGame, paramsForFilters } from '../../../services/constants.js'
 
-  const { getAllGenres, getGamesByQueries } = api;
+  const { getAllGenres, getGamesByQueries, getDeveloperByName } = api;
 
   const emit = defineEmits(['filters']);
 
