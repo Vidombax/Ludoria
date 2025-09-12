@@ -217,19 +217,19 @@
         />
       </div>
     </div>
-    <div class="user_list">
-      <div class="header">
-        <p class="h">Добавленные</p>
-      </div>
-      <div class="items">
-        <el-checkbox
-            v-for="item in statusGame"
-            :key="item.id"
-            :label="item.label"
-            @click="selectUserList(item.value)"
-        />
-      </div>
-    </div>
+<!--    <div class="user_list">-->
+<!--      <div class="header">-->
+<!--        <p class="h">Добавленные</p>-->
+<!--      </div>-->
+<!--      <div class="items">-->
+<!--        <el-checkbox-->
+<!--            v-for="item in statusGame"-->
+<!--            :key="item.id"-->
+<!--            :label="item.label"-->
+<!--            @click="selectUserList(item.value)"-->
+<!--        />-->
+<!--      </div>-->
+<!--    </div>-->
     <div class="scores">
       <div class="header">
         <p class="h">Оценки</p>

@@ -702,7 +702,7 @@ class GameHandler {
             const { rows } = await client.query(`
                 SELECT
                     g.id_game,
-                    g.name,
+                    g.name, 
                     g.main_picture,
                     g.release_date,
                     g.id_from_rawg,
@@ -801,27 +801,69 @@ class GameHandler {
     async getGamesByQueries(req, res) {
         const funcName = 'getGamesByQueries';
 
-        const developers = req.body.developers;
+        const developersJSON = req.body.developers;
+
+        const developers = [];
+        const developersRAWG = [];
+        for (const developer of developersJSON) {
+            if (developer.isRAWG) {
+                developersRAWG.push(developer.id);
+            }
+            else {
+                developers.push(developer.id);
+            }
+        }
+
         const genres = req.query.genres ? req.query.genres.split(',') : [];
         const scores = req.query.scores ? req.query.scores.split(',') : [];
         const following = req.query.following ? req.query.following.split(',') : [];
 
+        const { page = 1 } = req.query;
+        const limit = 20
+        const offset = (page - 1) * limit;
+
         const client = await db.connect();
     
         try {
+            if (page < 1) {
+                return res.status(400).json({ message: 'Номер страницы должен быть положительным числом' });
+            }
+
             await client.query('BEGIN');
 
-            let query = '';
+            let query =
+                `SELECT
+                     g.id_game,
+                     g.name,
+                     g.main_picture,
+                     g.release_date,
+                     g.id_from_rawg,
+                     COALESCE(AVG(s.score)::float, 0) AS game_score,
+                     (COUNT(f.id_game)::int + COUNT(p.id_game)::int + COUNT(s.id_game)::int) AS popularity_score,
+                     COALESCE(ARRAY_AGG(DISTINCT gen.name) FILTER (WHERE gen.name IS NOT NULL), '{}') AS genres,
+                     COALESCE(ARRAY_AGG(DISTINCT dev.name) FILTER (WHERE dev.name IS NOT NULL), '{}') AS developers
+                 FROM games g
+                          LEFT JOIN genre_to_game gtg ON g.id_game = gtg.id_game
+                          LEFT JOIN genres gen ON gtg.id_genre = gen.id_genre
+                          LEFT JOIN developers_to_game dtg ON g.id_game = dtg.id_game
+                          LEFT JOIN developers dev ON dtg.id_developer = dev.id_developer
+                          LEFT JOIN scores s ON g.id_game = s.id_game
+                          LEFT JOIN feedbacks f ON g.id_game = f.id_game
+                          LEFT JOIN posts p ON g.id_game = p.id_game
+                 WHERE g.id_game IS NOT NULL`;
 
             if (scores.length > 0) {
+                logger.info(`${funcName}: Есть фильтрация по оценкам добавляем такие оценки как ${scores}`);
                 query += ` AND s.score = ANY (ARRAY[${scores}]) `;
             }
 
             if (genres.length > 0) {
-                query += ` AND g.id_genre = ANY (ARRAY[${genres}]) `;
+                logger.info(`${funcName}: Есть фильтрация по жанрам добавляем такие жанры как ${genres}`);
+                query += ` AND gen.id_genre = ANY (ARRAY[${genres}]) `;
             }
 
             if (developers.length > 0) {
+                logger.info(`${funcName}: Есть фильтрация по разработчикам добавляем таких разработчиков как ${genres}`);
                 query += ` AND dev.id_developer = ANY (ARRAY[${developers}]) `;
             }
 
@@ -829,20 +871,86 @@ class GameHandler {
                 query += ` AND following = ANY (ARRAY[${following}]) `;
             }
 
-            const games = await client.query(query);
+            query += `
+                GROUP BY g.id_game, g.name, g.main_picture, g.release_date, g.id_from_rawg
+                ORDER BY popularity_score DESC
+                LIMIT 20`
+            ;
 
-            if (games.rows.length > 0) {
-                res.status(200).json({ message: 'Получили список игр', data: games.rows });
+            const { rows } = await client.query(query);
+
+            let countResult,
+                totalCount;
+
+            if (rows.length === 20) {
+                logger.info(`${funcName}: Получили ${rows.length} игр к RAWG не обращаемся`);
+
+                countResult = 888844;
+                totalCount = countResult;
             }
-            else {
-                res.status(200).json({ message: 'Список игр по фильтрам пустой' });
-            }
+            // else {
+            //     logger.info(`${funcName}: Получили ${rows.length} игр к RAWG обращаемся`);
+            //
+            //     const getGames = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&search_precise=true&page=${page}&page_size=${limit}`);
+            //
+            //     let rowsFromRAWG = [];
+            //
+            //     for (const value of getGames.data.results) {
+            //         const isNameUnique = rows.every(row => row.name !== value.name);
+            //         if (isNameUnique) {
+            //             await axios.post(`${process.env.HOST}/`)
+            //
+            //             let rawgJSON = {};
+            //             rawgJSON.name = value.name;
+            //             rawgJSON.main_picture = value.background_image;
+            //             rawgJSON.release_date = value.released;
+            //             rawgJSON.id_game = value.id;
+            //             rawgJSON.isRAWG = true;
+            //             rawgJSON.genres = value.genres.map(genre => genre.name);
+            //             rawgJSON.developers = [];
+            //             rawgJSON.game_score = 0;
+            //
+            //             rowsFromRAWG.push(rawgJSON);
+            //         }
+            //     }
+            //
+            //     rows.push(...rowsFromRAWG);
+            //
+            //     countResult = getGames.data.count;
+            //     totalCount = countResult;
+            // }
+
+            const totalPages = Math.ceil(totalCount / limit);
+
+            res.status(200).json({
+                message: 'Игры по фильтрам',
+                data: rows.map(row => ({
+                    id_game: row.id_game,
+                    name: row.name,
+                    main_picture: row.main_picture,
+                    release_date: row.release_date,
+                    id_from_rawg: row.id_from_rawg,
+                    score: row.game_score,
+                    genres: row.genres ? row.genres.filter(Boolean) : [],
+                    developers: row.developers ? row.developers.filter(Boolean) : [],
+                    count_feedbacks: row.count_feedbacks,
+                    count_posts: row.count_posts,
+                    count_scores: row.count_scores,
+                    popularity_score: row.popularity_score
+                })),
+                pagination: {
+                    totalItems: totalCount,
+                    totalPages,
+                    currentPage: page,
+                    limit
+                }
+            });
     
             await client.query('COMMIT');
         }
         catch (e) {
             await client.query('ROLLBACK');
-            logger.error(`${funcName}: Ошибка получения игр:`, e);
+            logger.error(`${funcName}: Ошибка получения игр по фильтрам:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
