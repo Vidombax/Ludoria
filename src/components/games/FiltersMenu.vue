@@ -55,7 +55,7 @@
         params.value.genres.splice(genreIndex, 1);
       }
 
-      // const response = await getGamesByQueries(params.value);
+      const response = await getGamesByQueries(params.value);
 
       //gamesByQuery(response);
     }
@@ -78,7 +78,7 @@
         params.value.userList.splice(listIndex, 1);
       }
 
-      // const response = await getGamesByQueries(params.value);
+      const response = await getGamesByQueries(params.value);
 
       //gamesByQuery(response);
     }
@@ -101,7 +101,7 @@
         params.value.scores.splice(listIndex, 1);
       }
 
-      // const response = await getGamesByQueries(params.value);
+      const response = await getGamesByQueries(params.value);
 
       //gamesByQuery(response);
     }
@@ -164,7 +164,10 @@
           name: item.value,
           isRAWG: item.isRAWG
         });
+
         developerNameSearch.value = '';
+
+        const response = await getGamesByQueries(params.value);
       }
     }
     catch (e) {

@@ -9,6 +9,6 @@ router.post('/search-game', handler.searchGameByName);
 router.post('/feedback-by-game/:id', handler.getFeedbacksByGame);
 router.get('/subs-by-game/:id', handler.getSubsToGame);
 router.get('/popularity-game', handler.getGamesByPopularity);
-router.get('/games-by-query', handler.getGamesByQueries);
+router.post('/games-by-query', handler.getGamesByQueries);
 
 export default router;

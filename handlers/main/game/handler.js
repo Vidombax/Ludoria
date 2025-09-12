@@ -801,7 +801,7 @@ class GameHandler {
     async getGamesByQueries(req, res) {
         const funcName = 'getGamesByQueries';
 
-        const developers = req.query.developers ? req.query.developers.split(',') : [];
+        const developers = req.body.developers;
         const genres = req.query.genres ? req.query.genres.split(',') : [];
         const scores = req.query.scores ? req.query.scores.split(',') : [];
         const following = req.query.following ? req.query.following.split(',') : [];
