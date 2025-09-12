@@ -1,5 +1,6 @@
 <script setup>
   import { ref } from 'vue'
+  import { debounce } from 'lodash'
   import { ElNotification } from 'element-plus'
 
   import api from '../../api/api.js'
@@ -111,17 +112,25 @@
     }
   }
 
-  const searchDevelopers = async () => {
-    try {
-
-    }
-    catch (e) {
-      ElNotification({
-        message: e.response.data.message,
-        type: 'error',
-      });
-    }
-  }
+  const searchDevelopers = debounce(
+      async () => {
+            try {
+              const response = await getDeveloperByName(developerNameSearch.value);
+              developers.value = response.developers;
+              return developers.value;
+            }
+            catch (e) {
+              ElNotification({
+                message: e.response.data.message,
+                type: 'error',
+              });
+            }
+      }, 500, {
+        leading: true,
+        trailing: true,
+        maxWait: 12000
+      }
+  )
 
   const selectDeveloper = async (developer) => {
     try {
