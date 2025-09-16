@@ -36,16 +36,14 @@ async function processDevelopers(gameDataForDB, idGame, client) {
         } else {
             logger.info(`${funcName}: Не нашли разработчика в БД, создаем запись`);
             const createDeveloper = await client.query(
-                'INSERT INTO developers (name, logo) VALUES ($1, null) ' +
+                'INSERT INTO developers (name, logo, id_from_rawg) VALUES ($1, null, $2) ' +
                 'RETURNING *',
-                [gameDataForDB.developers[i].name]
+                [gameDataForDB.developers[i].name, gameDataForDB.developers[i].id]
             );
-
-            developers.push(createDeveloper.rows[0]);
 
             if (i === gameDataForDB.developers.length - 1) {
                 const getDevelopersByGame = await client.query(
-                    'SELECT developers.name, developers.logo, developers.id_developer FROM developers ' +
+                    'SELECT developers.id_developer, developers.name, developers.logo, developers.id_from_rawg FROM developers ' +
                     'INNER JOIN public.developers_to_game dtg ' +
                     'ON developers.id_developer = dtg.id_developer ' +
                     'WHERE dtg.id_game = $1', [idGame]
