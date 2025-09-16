@@ -885,10 +885,10 @@ class GameHandler {
             query += `
                 GROUP BY g.id_game, g.name, g.main_picture, g.release_date, g.id_from_rawg
                 ORDER BY popularity_score DESC
-                LIMIT 20`
+                LIMIT $1 OFFSET $2`
             ;
 
-            const { rows } = await client.query(query);
+            const { rows } = await client.query(query, [limit, offset]);
 
             let countResult,
                 totalCount;
