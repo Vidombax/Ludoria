@@ -809,12 +809,14 @@ class GameHandler {
     async getGamesByQueries(req, res) {
         const funcName = 'getGamesByQueries';
 
-        const developersJSON = req.body.developers;
+        const developersJSON = req.body.developers || [];
 
         const developers = [];
-        for (const developer of developersJSON) {
-            if (!developer.isRAWG) {
-                developers.push(developer.id);
+        if (developersJSON.length > 0) {
+            for (const developer of developersJSON) {
+                if (!developer.isRAWG) {
+                    developers.push(developer.id);
+                }
             }
         }
 
@@ -902,108 +904,103 @@ class GameHandler {
             else {
                 logger.info(`${funcName}: Получили ${rows.length} игр к RAWG обращаемся`);
 
-                if (developersJSON.length > 0) {
-                    logger.info(`${funcName}: Разработчики были в фильтрах сперва смотрим по ним`);
-                }
-                else {
-                    let isTimeout = false;
-                    let timeoutId;
-                    let timeoutSet = false;
+                let isTimeout = false;
+                let timeoutId;
+                let timeoutSet = false;
 
-                    timeoutId = setTimeout(() => {
-                        isTimeout = true;
-                        logger.info(`${funcName}: Таймаут 15 секунд, возвращаем что есть`);
-                    }, 15000);
+                timeoutId = setTimeout(() => {
+                    isTimeout = true;
+                    logger.info(`${funcName}: Таймаут 15 секунд, возвращаем что есть`);
+                }, 15000);
 
-                    let i = 1;
-                    while (rows.length <= 20 && !isTimeout) {
-                        if (signal.aborted) {
-                            if (timeoutId) clearTimeout(timeoutId);
-                            logger.info(`${funcName}: Запрос отменен во время запросов к RAWG`);
-                            return res.status(499).json({ message: 'Запрос отменен' });
-                        }
+                let i = 1;
+                while (rows.length <= 20 && !isTimeout) {
+                    if (signal.aborted) {
+                        if (timeoutId) clearTimeout(timeoutId);
+                        logger.info(`${funcName}: Запрос отменен во время запросов к RAWG`);
+                        return res.status(499).json({ message: 'Запрос отменен' });
+                    }
 
-                        const getGames = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&search_precise=true&page=${i}&page_size=25`);
+                    const getGames = await axios.get(`https://api.rawg.io/api/games?key=${process.env.RAWG_API}&search_precise=true&page=${i}&page_size=25`);
 
-                        if (signal.aborted) {
-                            if (timeoutId) clearTimeout(timeoutId);
-                            return res.status(499).json({ message: 'Запрос отменен' });
-                        }
+                    if (signal.aborted) {
+                        if (timeoutId) clearTimeout(timeoutId);
+                        return res.status(499).json({ message: 'Запрос отменен' });
+                    }
 
-                        let rowsFromRAWG = [];
+                    let rowsFromRAWG = [];
 
-                        for (const value of getGames.data.results) {
-                            try {
-                                if (rows.length >= 20 || isTimeout) break;
+                    for (const value of getGames.data.results) {
+                        try {
+                            if (rows.length >= 20 || isTimeout) break;
 
-                                const isNameUnique = rows.every(row => row.name !== value.name);
-                                if (isNameUnique) {
-                                    const response = await axios.post(`${process.env.HOST}/game-info/${value.id}`);
+                            const isNameUnique = rows.every(row => row.name !== value.name);
+                            if (isNameUnique) {
+                                const response = await axios.post(`${process.env.HOST}/game-info/${value.id}`);
 
-                                    if (response.data && response.data.games) {
-                                        let rawgJSON = {
-                                            name: value.name,
-                                            main_picture: value.background_image,
-                                            release_date: value.released,
-                                            id_game: response.game.id_game,
-                                            id_from_rawg: response.game.id_from_rawg,
-                                            genres: response.game.genres.map(genre => genre.name),
-                                            developers: response.game.developers.map(developer => developer.name),
-                                            game_score: 0
-                                        };
+                                if (response.data && response.data.games) {
+                                    let rawgJSON = {
+                                        name: value.name,
+                                        main_picture: value.background_image,
+                                        release_date: value.released,
+                                        id_game: response.game.id_game,
+                                        id_from_rawg: response.game.id_from_rawg,
+                                        genres: response.game.genres.map(genre => genre.name),
+                                        developers: response.game.developers.map(developer => developer.name),
+                                        game_score: 0
+                                    };
 
-                                        if (genres.length === 0 && developers.length === 0) {
-                                            // Без фильтров - добавляем все
+                                    if (genres.length === 0 && developers.length === 0) {
+                                        // Без фильтров - добавляем все
+                                        rowsFromRAWG.push(rawgJSON);
+                                    }
+                                    else {
+                                        const hasSelectedGenres = genres.length === 0 ||
+                                            genres.every(selectedGenre =>
+                                                rawgJSON.genres.some(gameGenre => gameGenre === selectedGenre)
+                                            )
+                                        ;
+                                        const hasSelectedDevelopers = developers.length === 0 ||
+                                            developers.every(selectedDev =>
+                                                rawgJSON.developers.some(gameDev => gameDev === selectedDev.name)
+                                            )
+                                        ;
+
+                                        if (hasSelectedGenres || hasSelectedDevelopers) {
                                             rowsFromRAWG.push(rawgJSON);
                                         }
                                         else {
-                                            const hasSelectedGenres = genres.length === 0 ||
-                                                genres.every(selectedGenre =>
-                                                    rawgJSON.genres.some(gameGenre => gameGenre === selectedGenre)
-                                                )
-                                            ;
-                                            const hasSelectedDevelopers = developers.length === 0 ||
-                                                developers.every(selectedDev =>
-                                                    rawgJSON.developers.some(gameDev => gameDev === selectedDev.name)
-                                                )
-                                            ;
-
-                                            if (hasSelectedGenres || hasSelectedDevelopers) {
-                                                rowsFromRAWG.push(rawgJSON);
-                                            }
-                                            else {
-                                                logger.info(`${funcName}: Игра "${rawgJSON.name}" не прошла фильтрацию`);
-                                            }
+                                            logger.info(`${funcName}: Игра "${rawgJSON.name}" не прошла фильтрацию`);
                                         }
                                     }
                                 }
                             }
-                            catch (e) {
-                                logger.error(`${funcName}: Ошибка при обработке игры ${value.name}:`, e);
-                                continue;
-                            }
                         }
-
-                        rows.push(...rowsFromRAWG);
-                        i++;
-
-                        if (rows.length >= 10 && !timeoutSet) {
-                            timeoutId = setTimeout(() => {
-                                isTimeout = true;
-                                logger.info(`${funcName}: Таймаут 25 секунд, возвращаем что есть`);
-                            }, 25000);
-                            timeoutSet = true;
+                        catch (e) {
+                            logger.error(`${funcName}: Ошибка при обработке игры ${value.name}:`, e);
+                            continue;
                         }
-
-                        if (rows.length === 20) {
-                            break;
-                        }
-
-                        countResult = getGames.data.count;
                     }
 
-                    totalCount = countResult;
+                    rows.push(...rowsFromRAWG);
+                    i++;
+
+                    if (rows.length >= 10 && !timeoutSet) {
+                        timeoutId = setTimeout(() => {
+                            isTimeout = true;
+                            logger.info(`${funcName}: Таймаут 15 секунд, возвращаем что есть`);
+                        }, 15000);
+                        timeoutSet = true;
+                    }
+
+                    if (rows.length === 20) {
+                        break;
+                    }
+
+                    countResult = getGames.data.count;
                 }
+
+                    totalCount = countResult;
             }
 
             const totalPages = Math.ceil(totalCount / limit);
