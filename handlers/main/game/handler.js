@@ -41,17 +41,6 @@ async function processDevelopers(gameDataForDB, idGame, client) {
                 [gameDataForDB.developers[i].name, gameDataForDB.developers[i].id]
             );
 
-            if (i === gameDataForDB.developers.length - 1) {
-                const getDevelopersByGame = await client.query(
-                    'SELECT developers.id_developer, developers.name, developers.logo, developers.id_from_rawg FROM developers ' +
-                    'INNER JOIN public.developers_to_game dtg ' +
-                    'ON developers.id_developer = dtg.id_developer ' +
-                    'WHERE dtg.id_game = $1', [idGame]
-                );
-
-                developers.push(getDevelopersByGame.rows);
-            }
-
             logger.info(`${funcName}: Связываем разработчика ${gameDataForDB.developers[i].name} с игрой`);
             const addDeveloperToGame = await client.query(
                 'INSERT INTO developers_to_game (id_game, id_developer) VALUES ($1, $2)',
@@ -59,6 +48,15 @@ async function processDevelopers(gameDataForDB, idGame, client) {
             );
         }
     }
+
+    const getDevelopersByGame = await client.query(
+        'SELECT developers.id_developer, developers.name, developers.logo, developers.id_from_rawg FROM developers ' +
+        'INNER JOIN public.developers_to_game dtg ' +
+        'ON developers.id_developer = dtg.id_developer ' +
+        'WHERE dtg.id_game = $1', [idGame]
+    );
+
+    developers = getDevelopersByGame.rows;
 
     return developers;
 }
