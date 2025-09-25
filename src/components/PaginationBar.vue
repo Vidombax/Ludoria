@@ -1,5 +1,6 @@
 <script setup>
   import { ref, watch } from 'vue'
+  import { useGameStore } from '@/stores/game/store.js'
 
   const props = defineProps({
     pagination: Object,
@@ -8,6 +9,7 @@
   });
 
   const emit = defineEmits(['pagination']);
+  const gameStore = useGameStore();
 
   const setPageNumber = (number) => {
     emit('pagination', number);
@@ -18,6 +20,7 @@
   const handleClickPagination = () => {
     props.getData(number.value);
     setPageNumber(number.value);
+    gameStore.pageNumber = number.value;
   }
 
   watch(() => props.pageNumber, (newValue) => {
