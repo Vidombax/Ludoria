@@ -12,6 +12,9 @@ async function createPost(data) {
 
     return (await axios.post(`/api/post`, data, config)).data;
 }
+async function getPost(id) {
+    return (await axios.get(`/api/post/${id}`)).data;
+}
 async function updatePost(data) {
     const config = {
         headers: {
@@ -42,6 +45,7 @@ async function deletePost(data) {
 
 export default {
     getNewestPosts,
+    getPost,
     createPost,
     updatePost,
     ratePost,

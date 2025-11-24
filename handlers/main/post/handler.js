@@ -1,5 +1,6 @@
 import db from '../../../db.js'
 import logger from '../../../logger.js'
+import { deleteRedisValue, getRedisValue, setRedisValue } from '../../../redis.js'
 
 class PostHandler {
     async createPost(req, res) {
@@ -18,6 +19,7 @@ class PostHandler {
                 [id_game, id_user, header.trim(), description.trim()]
             );
 
+            await setRedisValue(`post:${createPost.rows[0]}`, JSON.stringify(createPost.rows[0]));
             res.status(200).json({ message: 'Пост был создан' });
 
 
@@ -26,6 +28,52 @@ class PostHandler {
         catch (e) {
             await client.query('ROLLBACK');
             logger.error(`${funcName}: Ошибка создания поста:`, e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
+    async getPost(req, res) {
+        const funcName = 'getPost';
+
+        const { id } = req.params;
+
+        const client = await db.connect();
+
+        try {
+            let postRedis = await getRedisValue(`post:${id}`);
+
+            if (postRedis !== null) {
+                res.status(200).json({ message: 'Получили данные о посте', game: JSON.parse(postRedis) });
+                logger.info(`${funcName}: Нашли данные о посте ${id} в редисе`);
+            }
+            else {
+                await client.query('BEGIN');
+
+                const { rows } = await client.query(
+                    `SELECT id_post, id_game, id_user, header, description, create_data FROM posts 
+                                                                   WHERE id_post = $1
+                                                                   `,
+                    [id]
+                );
+
+                if (rows.length > 0) {
+                    logger.info(`${funcName}: Нашли новсть по заданному ID: ${id}`);
+                    await setRedisValue(`post:${id}`, JSON.stringify(rows[0]));
+
+                    res.status(200).json({ message: 'Нашли новость', post: rows[0] });
+                }
+                else {
+                    res.status(200).json({ message: 'Не нашли новость по заданному ID' });
+                }
+
+                await client.query('COMMIT');
+            }
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error(`${funcName}: Ошибка вывода поста:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
