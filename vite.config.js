@@ -15,9 +15,10 @@ dotenv.config();
 export default defineConfig({
   server: {
     proxy: {
-      '/api/': {
-        target: `${process.env.HOST}`,
+      '/api': {
+        target: process.env.HOST || 'http://localhost:3000',
         changeOrigin: true,
+        secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
