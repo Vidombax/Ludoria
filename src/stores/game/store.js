@@ -12,6 +12,17 @@ export const useGameStore = defineStore('game', {
                     hoverOffset: 4,
                 },
             ],
-        }
-    })
+        },
+        pageNumber: 1,
+    }),
+    actions: {
+        setPageNumber(newNumber) {
+            this.pageNumber = newNumber;
+        },
+    },
+    getters: {
+        getPageNumber: (state) => {
+            return state.pageNumber;
+        },
+    },
 });

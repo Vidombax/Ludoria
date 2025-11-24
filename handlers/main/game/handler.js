@@ -36,23 +36,10 @@ async function processDevelopers(gameDataForDB, idGame, client) {
         } else {
             logger.info(`${funcName}: Не нашли разработчика в БД, создаем запись`);
             const createDeveloper = await client.query(
-                'INSERT INTO developers (name, logo) VALUES ($1, null) ' +
+                'INSERT INTO developers (name, logo, id_from_rawg) VALUES ($1, null, $2) ' +
                 'RETURNING *',
-                [gameDataForDB.developers[i].name]
+                [gameDataForDB.developers[i].name, gameDataForDB.developers[i].id]
             );
-
-            developers.push(createDeveloper.rows[0]);
-
-            if (i === gameDataForDB.developers.length - 1) {
-                const getDevelopersByGame = await client.query(
-                    'SELECT developers.name, developers.logo, developers.id_developer FROM developers ' +
-                    'INNER JOIN public.developers_to_game dtg ' +
-                    'ON developers.id_developer = dtg.id_developer ' +
-                    'WHERE dtg.id_game = $1', [idGame]
-                );
-
-                developers.push(getDevelopersByGame.rows);
-            }
 
             logger.info(`${funcName}: Связываем разработчика ${gameDataForDB.developers[i].name} с игрой`);
             const addDeveloperToGame = await client.query(
@@ -61,6 +48,15 @@ async function processDevelopers(gameDataForDB, idGame, client) {
             );
         }
     }
+
+    const getDevelopersByGame = await client.query(
+        'SELECT developers.id_developer, developers.name, developers.logo, developers.id_from_rawg FROM developers ' +
+        'INNER JOIN public.developers_to_game dtg ' +
+        'ON developers.id_developer = dtg.id_developer ' +
+        'WHERE dtg.id_game = $1', [idGame]
+    );
+
+    developers = getDevelopersByGame.rows;
 
     return developers;
 }
@@ -811,12 +807,14 @@ class GameHandler {
     async getGamesByQueries(req, res) {
         const funcName = 'getGamesByQueries';
 
-        const developersJSON = req.body.developers;
+        const developersJSON = req.body.developers || [];
 
         const developers = [];
-        for (const developer of developersJSON) {
-            if (!developer.isRAWG) {
-                developers.push(developer.id);
+        if (developersJSON.length > 0) {
+            for (const developer of developersJSON) {
+                if (!developer.isRAWG) {
+                    developers.push(developer.id);
+                }
             }
         }
 
@@ -877,7 +875,6 @@ class GameHandler {
             }
 
             if (developers.length > 0) {
-                logger.info(`${funcName}: Есть фильтрация по разработчикам добавляем таких разработчиков как ${developersJSON}`);
                 query += ` AND dev.id_developer = ANY (ARRAY[${developers}]) `;
             }
 
@@ -888,10 +885,10 @@ class GameHandler {
             query += `
                 GROUP BY g.id_game, g.name, g.main_picture, g.release_date, g.id_from_rawg
                 ORDER BY popularity_score DESC
-                LIMIT 20`
+                LIMIT $1 OFFSET $2`
             ;
 
-            const { rows } = await client.query(query);
+            const { rows } = await client.query(query, [limit, offset]);
 
             let countResult,
                 totalCount;
@@ -911,8 +908,8 @@ class GameHandler {
 
                 timeoutId = setTimeout(() => {
                     isTimeout = true;
-                    logger.info(`${funcName}: Таймаут 25 секунд, возвращаем что есть`);
-                }, 25000);
+                    logger.info(`${funcName}: Таймаут 15 секунд, возвращаем что есть`);
+                }, 15000);
 
                 let i = 1;
                 while (rows.length <= 20 && !isTimeout) {
@@ -989,8 +986,8 @@ class GameHandler {
                     if (rows.length >= 10 && !timeoutSet) {
                         timeoutId = setTimeout(() => {
                             isTimeout = true;
-                            logger.info(`${funcName}: Таймаут 25 секунд, возвращаем что есть`);
-                        }, 25000);
+                            logger.info(`${funcName}: Таймаут 15 секунд, возвращаем что есть`);
+                        }, 15000);
                         timeoutSet = true;
                     }
 
@@ -1001,7 +998,7 @@ class GameHandler {
                     countResult = getGames.data.count;
                 }
 
-                totalCount = countResult;
+                    totalCount = countResult;
             }
 
             const totalPages = Math.ceil(totalCount / limit);

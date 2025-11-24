@@ -3,6 +3,7 @@
 
   import api from '@/api/api.js'
   import { ElNotification } from 'element-plus'
+  import { useGameStore } from '@/stores/game/store.js'
 
   import Card from '@/components/Card.vue'
   import CardSkeleton from '@/components/skeletons/CardSkeleton.vue'
@@ -11,9 +12,10 @@
   import FiltersMenu from '@/components/games/FiltersMenu.vue'
 
   const { getPopularGame } = api;
+  const gameStore = useGameStore();
 
   const games = ref([]);
-  const pageNumber = ref(1);
+  const pageNumber = ref(gameStore.pageNumber);
   const pagination = ref();
 
   const getGames = async (number) => {

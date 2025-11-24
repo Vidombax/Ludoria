@@ -5,8 +5,10 @@
 
   import api from '../../api/api.js'
   import { statusGame, paramsForFilters } from '../../../services/constants.js'
+  import { useGameStore } from '@/stores/game/store.js'
 
   const { getAllGenres, getGamesByQueries, getDeveloperByName } = api;
+  const gameStore = useGameStore();
 
   const emit = defineEmits(['filters']);
   let abortController = null;
@@ -55,9 +57,9 @@
         params.value.genres.splice(genreIndex, 1);
       }
 
-      const response = await getGamesByQueries(params.value);
+      const response = await getGamesByQueries(params.value, gameStore.pageNumber);
 
-      //gamesByQuery(response);
+      gamesByQuery(response.data);
     }
     catch (e) {
       ElNotification({
@@ -78,9 +80,9 @@
         params.value.userList.splice(listIndex, 1);
       }
 
-      const response = await getGamesByQueries(params.value);
+      const response = await getGamesByQueries(params.value, gameStore.pageNumber);
 
-      //gamesByQuery(response);
+      gamesByQuery(response.data);
     }
     catch (e) {
       ElNotification({
@@ -101,9 +103,9 @@
         params.value.scores.splice(listIndex, 1);
       }
 
-      const response = await getGamesByQueries(params.value);
+      const response = await getGamesByQueries(params.value, gameStore.pageNumber);
 
-      //gamesByQuery(response);
+      gamesByQuery(response.data);
     }
     catch (e) {
       ElNotification({
@@ -167,7 +169,8 @@
 
         developerNameSearch.value = '';
 
-        const response = await getGamesByQueries(params.value);
+        const response = await getGamesByQueries(params.value, gameStore.pageNumber);
+        gamesByQuery(response.data);
       }
     }
     catch (e) {
