@@ -6,6 +6,11 @@
     new_post: Array,
   });
 
+  let isPostExist = true;
+  if (props.new_post[0] === 'out') {
+    isPostExist = false;
+  }
+
   const info_obj = {
     href: '/posts',
     name_info: 'Новости',
@@ -25,6 +30,7 @@
   </div>
   <div class="posts">
     <NewPost
+        v-if="isPostExist"
         v-for="item in new_post"
         :key="item.id_post"
         :id_post="item.id_post"
@@ -33,6 +39,9 @@
         :date="item.create_data"
         :image="item.main_picture"
     />
+    <h3 v-else>
+      Не нашли статей для вас :(
+    </h3>
   </div>
 </template>
 

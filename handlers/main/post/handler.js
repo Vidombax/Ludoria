@@ -215,7 +215,7 @@ class PostHandler {
                 res.status(200).json({ message: 'Нашли статьи', data: posts.rows });
             }
             else {
-                res.status(404).json({ message: 'Не нашли статьи' });
+                res.status(200).json({ message: 'Не нашли статьи' });
             }
 
             await client.query('COMMIT');

@@ -27,9 +27,15 @@
   const newPosts = ref([]);
   const getPosts = async () => {
     const response = await getNewestPosts();
-    if (response) {
+    if (response.data) {
       newPosts.value = response.data;
-      newPosts.value.length = 4;
+      if (newPosts.value.length > 4) {
+        newPosts.value.length = 4;
+      }
+    }
+    else {
+      newPosts.value.push('out');
+      console.log(newPosts)
     }
   }
 
