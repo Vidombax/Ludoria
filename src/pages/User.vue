@@ -361,28 +361,28 @@
         />
       </transition>
     </div>
-    <div class="friends">
-      <a href=""><p class="h">Друзья</p></a>
-      <div class="items">
-        <Friend />
-        <Friend />
-        <Friend />
-      </div>
-    </div>
-    <div class="subscribes">
-      <a href=""><p class="h">Подписки</p></a>
-      <div class="items">
-        <a href="/subscribes">Разработчики</a>
-        <a href="/subscribes">Игры</a>
-        <a href="/subscribes">Франшизы</a>
-      </div>
-    </div>
-    <div class="users_posts">
-      <p class="h">Посты пользователя</p>
-      <div class="posts">
+<!--    <div class="friends">-->
+<!--      <a href=""><p class="h">Друзья</p></a>-->
+<!--      <div class="items">-->
+<!--        <Friend />-->
+<!--        <Friend />-->
+<!--        <Friend />-->
+<!--      </div>-->
+<!--    </div>-->
+<!--    <div class="subscribes">-->
+<!--      <a href=""><p class="h">Подписки</p></a>-->
+<!--      <div class="items">-->
+<!--        <a href="/subscribes">Разработчики</a>-->
+<!--        <a href="/subscribes">Игры</a>-->
+<!--        <a href="/subscribes">Франшизы</a>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--    <div class="users_posts">-->
+<!--      <p class="h">Посты пользователя</p>-->
+<!--      <div class="posts">-->
 
-      </div>
-    </div>
+<!--      </div>-->
+<!--    </div>-->
   </div>
 </template>
 

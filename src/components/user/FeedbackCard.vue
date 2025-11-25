@@ -85,6 +85,10 @@
     }
   }
   @media screen and (max-width: 768px) {
+    .feedback_info {
+      display: flex;
+      align-items: center;
+    }
     .item {
       grid-template-columns: 1fr;
     }
