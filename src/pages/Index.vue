@@ -64,6 +64,7 @@
   display: flex;
   flex-direction: column;
   padding: 12px;
+  margin-top: 30px;
 }
 .skeleton_container {
   display: grid;

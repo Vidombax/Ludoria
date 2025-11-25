@@ -479,6 +479,7 @@
     transition: 0.15s ease;
   }
   .photo_user {
+    margin-top: 15px;
     margin-bottom: 40px;
   }
   .img_user {
