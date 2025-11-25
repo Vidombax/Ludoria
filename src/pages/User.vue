@@ -103,8 +103,8 @@
       }
       else {
         ElNotification({
-          message: 'Файл не прошел проверку! Размер файла должен быть меньше 5 МБ',
-          type: 'error',
+          message: 'Размер файла не должен превышать 5 МБ!',
+          type: 'warning',
         });
       }
     }
@@ -344,7 +344,7 @@
           />
         </div>
       </div>
-      <div class="feedbacks">
+      <div class="feedbacks" v-if="feedbacks.length > 0">
         <el-tooltip placement="top">
           <template #content>Открыть</template>
           <p class="feedback_header" @click="handlerFeedbackModal">Отзывы: {{ feedbacks.length }}</p>

@@ -236,7 +236,7 @@
   }
   .user-menu {
     position: absolute;
-    right: 5%;
+    right: 8%;
     top: 100%;
     background: rgba(255, 255, 255);
     border-radius: 12px;
