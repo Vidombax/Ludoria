@@ -15,19 +15,14 @@
 </script>
 
 <template>
-  <div class="game">
-    <a :href="urlToGame">
-      <div class="info_game">
-        <a :href="urlToGame">
+  <a :href="urlToGame">
+    <div class="game">
+        <div class="info_game">
           <img :src="picture" alt="game">
-        </a>
-        <a :href="urlToGame"><p class="game-name">{{ name }}</p></a>
-      </div>
-      <div>
-
-      </div>
-    </a>
-  </div>
+          <p class="game-name">{{ name }}</p>
+        </div>
+    </div>
+  </a>
 </template>
 
 <style scoped>

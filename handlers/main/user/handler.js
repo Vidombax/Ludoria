@@ -37,7 +37,7 @@ class UserHandler {
                 const token = jwt.sign(
                     { email: email },
                     process.env.SECRET_KEY,
-                    { expiresIn: '24h' }
+                    { expiresIn: '168h' }
                 );
 
                 res.status(201).json({ token, message: 'Пользователь был зарегистрирован', id: createUser.rows[0].id_user });
@@ -192,7 +192,7 @@ class UserHandler {
                     const token = jwt.sign(
                         { email: email },
                         process.env.SECRET_KEY,
-                        { expiresIn: '24h' }
+                        { expiresIn: '168h' }
                     );
 
                     res.json({ token, message: 'Пользователь был найден', id: getUser.rows[0].id_user, userRole: getUser.rows[0].user_role });

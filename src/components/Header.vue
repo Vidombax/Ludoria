@@ -122,7 +122,7 @@
   <header>
     <div>
       <router-link to="/" class="logo">
-        <el-image src="./src/assets/bosinn.gif" alt="Logo" class="logo" style="height: 25px; width: 100px;" />
+        <img src="../assets/bosinn.gif" class="logo" alt="Logo">
       </router-link>
     </div>
     <div class="search">
@@ -209,6 +209,12 @@
   }
   .logo {
     transition: transform 0.3s ease;
+    height: 60px;
+    width: 60px;
+    max-width: 100%;
+    border-radius: 50%;
+    border: 2px solid #55c51c;
+    cursor: pointer;
   }
   .logo:hover {
     transform: scale(1.05);
@@ -319,17 +325,23 @@
   }
 
   @media screen and (max-width: 768px) {
+    header {
+      gap: 1rem;
+    }
     .selector {
       width: 100px;
     }
     .a_user {
       display: none;
     }
-    .logo {
-      display: none;
+    .search {
+      width: 180px;
     }
     .search_items {
-      margin-left: -60px;
+      margin-top: 25px;
+      margin-left: -120px;
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
     }
     .user-menu {
       right: 0;
