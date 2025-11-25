@@ -61,4 +61,16 @@
     font-weight: 800;
     font-size: larger;
   }
+
+  @media screen and (max-width: 1024px) {
+    .report {
+      left: 32%;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    .report {
+      left: 15%;
+    }
+  }
 </style>

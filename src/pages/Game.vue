@@ -174,12 +174,20 @@
             message: response.message,
             type: 'success',
           });
+
+          if (info.value.score === null) {
+            info.value.score = data.newScore.toFixed(2);
+          }
         }
       }
       else {
         ElNotification({
-          message: 'Авторизуйтесь чтобы поставить оценку!',
-          type: 'error',
+          message: '<span style="color: #55c51c; font-weight: bold;">Авторизуйтесь</span> чтобы поставить оценку!',
+          type: 'warning',
+          dangerouslyUseHTMLString: true,
+          onClick: () => {
+            routes.push('/login')
+          }
         });
         rateScore.value = 0;
       }
@@ -255,8 +263,12 @@
       }
       else {
         ElNotification({
-          message: 'Авторизуйтесь чтобы добавить игру в список!',
-          type: 'error',
+          message: '<span style="color: #55c51c; font-weight: bold;">Авторизуйтесь</span> чтобы добавить игру в список!',
+          type: 'warning',
+          dangerouslyUseHTMLString: true,
+          onClick: () => {
+            routes.push('/login')
+          }
         });
 
         nowStatusGame.value = '';
@@ -292,7 +304,19 @@
 
   const isModalFeedbackOpen = ref(false);
   const handleFeedbackModal = () => {
-    isModalFeedbackOpen.value = isModalFeedbackOpen.value !== true;
+    if (localStorage.getItem('idUser')) {
+      isModalFeedbackOpen.value = isModalFeedbackOpen.value !== true;
+    }
+    else {
+      ElNotification({
+        message: '<span style="color: #55c51c; font-weight: bold;">Авторизуйтесь</span> чтобы отправить отзыв!',
+        type: 'warning',
+        dangerouslyUseHTMLString: true,
+        onClick: () => {
+          routes.push('/login')
+        }
+      });
+    }
   }
 
   const isModalReportActive = ref(false);
@@ -581,6 +605,8 @@
     grid-row-start: 2;
     background: rgba(255, 255, 255, 0.9); /* Полупрозрачный белый фон */
     border-radius: 12px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
     padding: 20px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
@@ -652,6 +678,9 @@
     }
   }
   @media screen and (max-width: 768px) {
+    .fixed_block {
+      margin-top: 2rem;
+    }
     .game {
       padding: 0;
     }

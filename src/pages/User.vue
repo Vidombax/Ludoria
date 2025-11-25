@@ -205,8 +205,8 @@
       }
       else {
         ElNotification({
-          message: 'Авторизуйтесь чтобы отправить запрос!',
-          type: 'error',
+          message: '<span style="color: #55c51c; font-weight: bold;">Авторизуйтесь</span> чтобы отправить запрос!',
+          type: 'warning',
         });
       }
     }

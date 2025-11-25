@@ -59,8 +59,9 @@
       }
       else {
         ElNotification({
-          message: 'Авторизуйтесь чтобы отправить отзыв!',
-          type: 'error',
+          message: '<span style="color: #55c51c; font-weight: bold;">Авторизуйтесь</span> чтобы отправить отзыв!',
+          type: 'warning',
+          dangerouslyUseHTMLString: true,
         });
       }
     }
@@ -95,12 +96,19 @@
         type="text"
         placeholder="Заголовок (опционально)"
         style="font-size: larger;"
+        maxlength="20"
+        show-word-limit
+        word-limit-position="outside"
       />
       <el-input
           v-model="text"
           :rows="2"
           type="textarea"
+          :autosize="{ minRows: 5, maxRows: 6 }"
           placeholder="Текст отзыва"
+          maxlength="180"
+          show-word-limit
+          word-limit-position="outside"
       />
       <el-button @click="createClick" v-if="isFoundUserFeedback">Обновить</el-button>
       <el-button @click="createClick" v-else>Создать</el-button>
@@ -174,7 +182,11 @@
   }
   @media screen and (max-width: 600px) {
     .create_feedback {
-      left: 0;
+      left: 5%;
+    }
+    .header {
+      flex-direction: column;
+      gap: 0;
     }
     .el-textarea {
       width: 300px;

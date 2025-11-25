@@ -45,8 +45,9 @@
       }
       else {
         ElNotification({
-          message: 'Авторизуйтесь чтобы поставить оценку!',
-          type: 'error',
+          message: '<span style="color: #55c51c; font-weight: bold;">Авторизуйтесь</span> чтобы поставить оценку!',
+          type: 'warning',
+          dangerouslyUseHTMLString: true,
         });
       }
     }
