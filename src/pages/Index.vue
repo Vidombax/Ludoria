@@ -35,7 +35,6 @@
     }
     else {
       newPosts.value.push('out');
-      console.log(newPosts)
     }
   }
 
