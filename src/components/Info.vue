@@ -11,9 +11,9 @@
 
 <template>
   <div class="info" :style="{ backgroundColor: colorScheme }">
-    <router-link v-if="href" :to="href" :style="{ color: colorName }"><p>{{ nameInfo }}</p></router-link>
+    <router-link v-if="href" :to="href" class="nameInfo"><p>{{ nameInfo }}</p></router-link>
     <p v-else :style="{ color: colorName }">{{ nameInfo }}</p>
-    <router-link :to="href"><p><ArrowRight :color="colorName"/></p></router-link>
+    <router-link :to="href"><p><ArrowRight class="arrow"/></p></router-link>
   </div>
 </template>
 
@@ -23,9 +23,10 @@
     justify-content: space-between;
     padding: 8px;
     align-items: center;
-    border-left: 4px solid #236473;
     margin: 12px;
+    border-left: 4px solid #236473;
   }
+
   p {
     transition: .3s linear;
   }
@@ -37,5 +38,13 @@
     font-size: 24px;
     font-weight: 700;
     transition: color 0.3s ease;
+  }
+  .arrow {
+    padding-top: 8px;
+    color: black;
+    font-weight: bold;
+  }
+  .nameInfo {
+    color: black;
   }
 </style>
