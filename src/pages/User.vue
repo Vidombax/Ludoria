@@ -15,7 +15,7 @@
         () => import('@/components/user/Feedbacks.vue')
   );
 
-  const { getUserInfo, updateUser, updateUserPhoto } = api;
+  const { getUserInfo, updateUser, updateUserPhoto, handlerFriendRequest, getFriend } = api;
   const userStore = useUserStore();
   const gameStore = useGameStore();
 
@@ -34,6 +34,7 @@
   const isUser = ref(false); //Проверяем зашел ли пользователь на свою страницу
   const feedbacks = ref([]);
   const isUserLoad = ref(false);
+  const friendStatus = ref('Отправить запрос в друзья');
 
   const getUser = async () => {
     try {
@@ -193,14 +194,24 @@
     }
   }
 
-  const handlerFriend = async (isAdd) => {
+  const handlerFriendButton = async () => {
     try {
       if (userStore.id !== 0) {
-        if (isAdd === true) {
-
+        const data = {
+          token: userData.value.token,
+          id_user1: Number(localStorage.getItem('idUser')),
+          id_user2: userData.value.id,
+          isApproveQuery: false
         }
-        else {
+        const response = await handlerFriendRequest(data);
 
+        if (response.message) {
+          ElNotification({
+            message: `${response.message}`,
+            type: 'success',
+          });
+
+          friendStatus.value = response.text;
         }
       }
       else {
@@ -213,7 +224,7 @@
     catch (e) {
       console.error('Ошибка при выполнении запроса:', e);
       ElNotification({
-        message: e.response.data.message,
+        message: e.message,
         type: 'error',
       });
     }
@@ -224,12 +235,36 @@
     isModalFeedbacksOpen.value = isModalFeedbacksOpen.value !== true;
   }
 
+  const getFriendStatus = async () => {
+    try {
+      const data = {
+        token: userData.value.token,
+        id_user: Number(localStorage.getItem('idUser')),
+        id_friend: userData.value.id,
+      }
+
+      const response = await getFriend(data);
+
+      if (response.text) {
+        friendStatus.value = response.text;
+      }
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.message,
+        type: 'error',
+      });
+    }
+  }
+
   provide('user', {
     handlerFeedbackModal,
   });
 
   onMounted(async () => {
     await getUser();
+    await getFriendStatus();
     settingsDiv = document.getElementsByClassName('settings')[0];
 
     const param = route.query.settingModal;
@@ -325,8 +360,7 @@
             <el-button v-else @click="activitySettingsModal">Закрыть</el-button>
           </div>
           <div v-else>
-            <el-button v-if="isModalSettingsClosed" @click="handlerFriend(true)">Отправить запрос</el-button>
-            <el-button v-else @click="handlerFriend(false)">Удалить из друзей</el-button>
+            <el-button @click="handlerFriendButton()">{{ friendStatus }}</el-button>
           </div>
         </div>
       </div>

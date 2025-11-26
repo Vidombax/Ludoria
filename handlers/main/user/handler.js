@@ -1109,6 +1109,44 @@ class UserHandler {
             client.release();
         }
     }
+    async getFriend(req, res) {
+        const funcName = 'getFriend';
+
+        const { id, friend } = req.params;
+
+        const client = await db.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            const getFriend = await client.query(
+                `SELECT * FROM friends WHERE user1_id = $1 AND user2_id = $2`,
+                [id, friend]
+            );
+
+            if (getFriend.rows.length > 0) {
+                if (getFriend.rows[0].is_approved === true) {
+                    res.status(200).json({ message: 'Пользователи друзья', text: 'Удалить из друзей' });
+                }
+                else {
+                    res.status(200).json({ message: 'Пользователь еще на заявке', text: 'Удалить заявку в друзья' });
+                }
+            }
+            else {
+                res.status(200).json({ message: 'Пользователи никто друг другу', text: 'Отправить запрос в друзья' });
+            }
+
+            await client.query('COMMIT');
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error(`${funcName}: Ошибка получение статуса друга:`, e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
     async getFriendsList(req, res) {
         const funcName = 'getFriendsList';
 
@@ -1142,7 +1180,7 @@ class UserHandler {
     async handlerFriendRequest(req, res) {
         const funcName = 'handlerFriendRequest';
 
-        const { id_user1, id_user2 } = req.params;
+        const { id_user1, id_user2, isApproveQuery } = req.body;
 
         const client = await db.connect();
 
@@ -1168,31 +1206,46 @@ class UserHandler {
                     );
 
                     if (deleteFriend.rows) {
-                        res.status(200).json({ message: 'Успешно удалили из друзей' });
+                        res.status(200).json({ message: 'Успешно удалили из друзей', text: 'Отправить запрос в друзья' });
                     }
                 }
                 else {
-                    logger.info(`${funcName}: Заявку не выполнена значит добавляем в друзья`);
-                    const addFriend = await client.query(
-                        `UPDATE friends SET is_approved = true 
-                        WHERE id = $1 
-                        RETURNING *`,
-                        [getFriendRequest.rows[0].id]
-                    );
+                    if (isApproveQuery === true) {
+                        logger.info(`${funcName}: Заявка не выполнена значит добавляем в друзья`);
+                        const addFriend = await client.query(
+                            `UPDATE friends SET is_approved = true
+                            WHERE user1_id = $1 AND user2_id = $2
+                            RETURNING *`,
+                            [getFriendRequest.rows[0].user1_id, id_user1]
+                        );
 
-                    if (addFriend.rows) {
-                        res.status(200).json({ message: 'Успешно одобрили заявку в друзья' });
+                        if (addFriend.rows) {
+                            res.status(200).json({ message: 'Успешно одобрили заявку в друзья', text: 'Удалить из друзей' });
+                        }
+                    }
+                    else {
+                        logger.info(`${funcName}: Не approve запрос значит удаляем заявку`);
+                        const deleteQueryToFriend = await client.query(
+                            `DELETE FROM friends 
+                        WHERE id = $1`,
+                            [getFriendRequest.rows[0].id]
+                        );
+
+                        if (deleteQueryToFriend.rows) {
+                            res.status(200).json({ message: 'Успешно удалили заявку', text: 'Отправить запрос в друзья' });
+                        }
                     }
                 }
             }
             else {
                 logger.info(`${funcName}: Заявку не нашли создаем`);
                 const addRequest = await client.query(
-                    `INSERT INTO friends (user1_id, user2_id, is_approved) VALUES ($1, $2, false) RETURNING *`
+                    `INSERT INTO friends (user1_id, user2_id, is_approved) VALUES ($1, $2, false) RETURNING *`,
+                    [id_user1, id_user2]
                 );
 
                 if (addRequest.rows) {
-                    res.status(200).json({ message: 'Отправили заявку на дружбу' });
+                    res.status(200).json({ message: 'Отправили заявку на дружбу', text: 'Удалить заявку в друзья' });
                 }
             }
 
