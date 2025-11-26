@@ -1,6 +1,6 @@
 <script setup>
   import {useRoute} from 'vue-router'
-  import {defineAsyncComponent, onMounted, provide, ref} from 'vue'
+  import { defineAsyncComponent, onMounted, provide, ref, watch } from 'vue'
 
   import api from '@/api/api.js'
   import {useUserStore} from '@/stores/user/store.js'
@@ -15,7 +15,15 @@
         () => import('@/components/user/Feedbacks.vue')
   );
 
-  const { getUserInfo, updateUser, updateUserPhoto, handlerFriendRequest, getFriend } = api;
+  const {
+    getUserInfo,
+    updateUser,
+    updateUserPhoto,
+    handlerFriendRequest,
+    getFriend,
+    getFriendsList
+  } = api;
+
   const userStore = useUserStore();
   const gameStore = useGameStore();
 
@@ -194,15 +202,32 @@
     }
   }
 
-  const handlerFriendButton = async () => {
+  const handlerFriendButton = async (isApprove) => {
     try {
-      if (userStore.id !== 0) {
-        const data = {
-          token: userData.value.token,
-          id_user1: Number(localStorage.getItem('idUser')),
-          id_user2: userData.value.id,
-          isApproveQuery: false
+      let data = {
+        token: userData.value.token,
+        id_user1: Number(localStorage.getItem('idUser')),
+        id_user2: userData.value.id,
+        isApproveQuery: false
+      }
+
+      if (isApprove === true) {
+        data.isApproveQuery = true;
+
+        const response = await handlerFriendRequest(data);
+
+        if (response.message) {
+          ElNotification({
+            message: `${response.message}`,
+            type: 'success',
+          });
+
+          await fetchFriendsList();
+          return friendStatus.value = response.text;
         }
+      }
+
+      if (userStore.id !== 0) {
         const response = await handlerFriendRequest(data);
 
         if (response.message) {
@@ -230,7 +255,6 @@
       });
     }
   }
-
   const isModalFeedbacksOpen = ref(false);
   const handlerFeedbackModal = () => {
     isModalFeedbacksOpen.value = isModalFeedbacksOpen.value !== true;
@@ -259,12 +283,58 @@
     }
   }
 
+  const friends = ref([]);
+  const fetchFriendsList = async () => {
+    try {
+      const data = {
+        token: token,
+        id_user: userData.value.id
+      }
+      const response = await getFriendsList(data);
+      if (response.friends) {
+        friends.value = response.friends.slice(0, 3);
+      }
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.message,
+        type: 'error',
+      });
+    }
+  }
+
+  watch(
+      () => route.params.id,
+      async (newId) => {
+        if (newId) {
+          id.value = newId;
+          userData.value.id = newId;
+          url.value = `/user/${newId}`;
+
+          // Перезагружаем данные пользователя
+          await getUser(newId);
+
+          isUser.value = localStorage.getItem('idUser') === id.value;
+
+          userData.value.id = newId;
+          friends.value = [];
+          await fetchFriendsList();
+
+          if (localStorage.getItem('idUser')) {
+            await getFriendStatus();
+          }
+        }
+      }
+  );
+
   provide('user', {
     handlerFeedbackModal,
   });
 
   onMounted(async () => {
     await getUser();
+    await fetchFriendsList();
     settingsDiv = document.getElementsByClassName('settings')[0];
 
     const param = route.query.settingModal;
@@ -359,17 +429,18 @@
           <span v-if="userData.gender !== ''">{{ userData.gender }} /</span>
           <span v-if="userData.age">{{ userData.age }} лет /</span>
           <div v-if="isUser">
-            <el-button v-if="isModalSettingsClosed" @click="activitySettingsModal">Ред.</el-button>
+            <el-button v-if="isModalSettingsClosed" @click="activitySettingsModal">Редактировать</el-button>
             <el-button v-else @click="activitySettingsModal">Закрыть</el-button>
           </div>
-          <div v-else>
-            <el-button @click="handlerFriendButton()">{{ friendStatus }}</el-button>
+          <div class="based" v-else>
+            <el-button @click="handlerFriendButton(true)" v-if="friendStatus === 'Отказать в заявке'">Принять запрос в друзья</el-button>
+            <el-button @click="handlerFriendButton()" v-if="token != null">{{ friendStatus }}</el-button>
           </div>
         </div>
       </div>
       <div class="games-list">
         <router-link :to="url + '/list'">
-          <el-tooltip placement="top">
+          <el-tooltip placement="bottom">
             <template #content>Открыть</template>
             <p class="h" style="width: 140px;">Список игр</p>
           </el-tooltip>
@@ -382,7 +453,7 @@
         </div>
       </div>
       <div class="feedbacks" v-if="feedbacks.length > 0">
-        <el-tooltip placement="top">
+        <el-tooltip placement="bottom">
           <template #content>Открыть</template>
           <p class="feedback_header" @click="handlerFeedbackModal">Отзывы: {{ feedbacks.length }}</p>
         </el-tooltip>
@@ -398,14 +469,22 @@
         />
       </transition>
     </div>
-<!--    <div class="friends">-->
-<!--      <a href=""><p class="h">Друзья</p></a>-->
-<!--      <div class="items">-->
-<!--        <Friend />-->
-<!--        <Friend />-->
-<!--        <Friend />-->
-<!--      </div>-->
-<!--    </div>-->
+    <div class="friends">
+      <router-link :to="url + '/friends'">
+        <p class="h">Друзья</p>
+      </router-link>
+      <div class="items">
+        <Friend
+            v-if="friends.length > 0"
+            v-for="item in friends"
+            :key="item.id"
+            :name="item.name"
+            :id="item.id_user"
+            :photo="item.photo"
+        />
+        <h3 v-else>Нет друзей</h3>
+      </div>
+    </div>
 <!--    <div class="subscribes">-->
 <!--      <a href=""><p class="h">Подписки</p></a>-->
 <!--      <div class="items">-->
@@ -426,13 +505,13 @@
 <style scoped>
   .user {
     display: grid !important;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 0.5fr);
+    grid-template-rows: repeat(3, 0.5fr);
     justify-items: center;
     align-items: center;
     gap: 8px;
     background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
-    padding: 24px;
+    padding: 48px;
     min-height: 100vh;
   }
   .users_posts {
@@ -461,6 +540,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    width: 350px;
   }
   .bio_text span {
     margin-right: 0.5rem;
@@ -477,13 +557,23 @@
   .h:hover {
     color: #57a5b5;
   }
-  .friends,
+  .friends {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    gap: 8px;
+  }
   .friends .items {
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
     gap: 8px;
+    border-radius: 12px;
+    padding: 1rem;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
   .subscribes,
   .subscribes .items {
@@ -507,7 +597,6 @@
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-
   }
   .non_active {
     pointer-events: none;
@@ -522,7 +611,7 @@
     font-size: larger;
   }
   .feedback_header:hover {
-    text-decoration: underline;
+    color: #57a5b5;
   }
   .fade-enter-from {
     opacity: 0;
@@ -565,6 +654,13 @@
     .subscribes .items {
       display: grid;
       grid-template-columns: repeat(3, auto);
+    }
+    .friends .items {
+      flex-direction: row;
+      border-radius: 6px;
+      padding: 0.5rem;
+      border: 2px solid #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
   }
 </style>

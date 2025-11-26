@@ -7,11 +7,9 @@
 </script>
 
 <template>
-  <transition name="overlay">
-    <div class="overlay"></div>
-  </transition>
-  <transition name="modal">
-    <div class="default_modal based">
+  <div class="overlay"></div>
+  <div class="modal-container">
+    <div class="modal based">
       <div class="header">
         <p>Внимание</p>
       </div>
@@ -24,23 +22,30 @@
         </div>
       </div>
     </div>
-  </transition>
+  </div>
 </template>
 
 <style scoped>
+  .modal-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
   .buttons {
     display: flex;
     justify-content: flex-end;
     margin-top: 20px;
   }
-  .default_modal {
-    position: absolute;
-    left: 45%;
-    top: 40%;
+  .modal {
     z-index: 1000;
     background: rgba(255, 255, 255);
     border-radius: 12px;
-    padding: 20px;
+    padding: 24px;
+    height: 20%;
+    width: auto;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
   p {
@@ -49,18 +54,10 @@
   .header {
     width: 100%;
   }
-  .modal-enter-from,
-  .modal-leave-to {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  .modal-enter-to,
-  .modal-leave-from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  .modal-enter-active,
-  .modal-leave-active {
-    transition: all 0.3s ease;
+
+  @media screen and (max-width: 768px) {
+    .modal {
+      height: 28%;
+    }
   }
 </style>

@@ -11,6 +11,7 @@
   import InfoSkeleton from '@/components/skeletons/InfoSkeleton.vue'
   import ArrowLeft from '@/assets/svg/ArrowLeft.vue'
   import MenuButton from '@/components/MenuButton.vue'
+  import ModalDefault from "@/components/ModalDefault.vue";
 
   const { getSubscribesGamesByUser, getUserInfo, getSubscribesGamesByQueries } = api;
   const route = useRoute();
@@ -18,6 +19,7 @@
   const id = ref(route.params.id);
   const url = `/user/${id.value}`;
   const token = localStorage.getItem('token');
+  const isLogin = ref(true);
   let data = {
     id: id.value,
     token: token,
@@ -206,14 +208,22 @@
   });
 
   onMounted(async () => {
-    await getUserGames();
-    await getUser();
+    if (localStorage.getItem('idUser')) {
+      await getUserGames();
+      await getUser();
+    }
+    else {
+      isLogin.value = false;
+    }
 
     window.addEventListener('resize', updateScreenWidth);
   });
 </script>
 
 <template>
+  <transition name="modal">
+    <ModalDefault v-if="!isLogin" info="Авторизуйтесь чтобы продолжить!" />
+  </transition>>
   <div class="container">
     <div class="games">
       <router-link :to="url">
@@ -413,6 +423,7 @@
     width: 100%;
     gap: 16px;
     padding: 24px;
+    margin-top: 2rem;
   }
   .menu_close_btn {
     display: none;
@@ -478,8 +489,28 @@
   .collapse-enter-active {
     transition: 0.15s ease;
   }
+  .modal-enter-from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  .modal-enter-to {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .modal-leave-from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .modal-leave-to {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  .modal-enter-active,
+  .modal-leave-active {
+    transition: all 0.3s ease;
+  }
   .photo_user {
-    margin-top: 15px;
+    margin-top: 2.5rem;
     margin-bottom: 40px;
   }
   .img_user {

@@ -1,9 +1,0 @@
-export const shorthands = undefined;
-
-export const up = (pgm) => {
-    pgm.addColumn('posts', {
-        is_active: { type: 'boolean', notNull: false }
-    }, { ifNotExists: true });
-};
-
-export const down = (pgm) => {};

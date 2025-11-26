@@ -222,7 +222,7 @@
   .user_info {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     gap: 6px;
   }
   .img_user {
@@ -236,7 +236,6 @@
   }
   .user-menu {
     position: absolute;
-    right: 8%;
     top: 100%;
     background: rgba(255, 255, 255);
     border-radius: 12px;
@@ -330,9 +329,6 @@
     }
     .selector {
       width: 100px;
-    }
-    .a_user {
-      display: none;
     }
     .search {
       width: 180px;

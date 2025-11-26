@@ -1166,12 +1166,22 @@ class UserHandler {
         const client = await db.connect();
 
         try {
-            const friends = await client.query(
-                `SELECT u.name, u.photo, f.user2_id FROM friends 
+            const friends_first = await client.query(
+                `SELECT u.name, u.photo, f.user2_id as id_user FROM friends 
                 f INNER JOIN public.users u on u.id_user = f.user2_id 
                 WHERE f.user1_id = $1 AND f.is_approved = true`,
                 [id]
             );
+
+            const friends_second = await client.query(
+                `SELECT u.name, u.photo, f.user1_id as id_user FROM friends 
+                f INNER JOIN public.users u on u.id_user = f.user1_id 
+                WHERE f.user2_id = $1 AND f.is_approved = true`,
+                [id]
+            );
+
+            const friends = {};
+            friends.rows = [...friends_first.rows, ...friends_second.rows]
 
             if (friends.rows.length > 0) {
                 res.status(200).json({ message: 'Получили список друзей', friends: friends.rows });
