@@ -1109,6 +1109,104 @@ class UserHandler {
             client.release();
         }
     }
+    async getFriendsList(req, res) {
+        const funcName = 'getFriendsList';
+
+        const { id } = req.params;
+
+        const client = await db.connect();
+
+        try {
+            const friends = await client.query(
+                `SELECT u.name, u.photo, f.user2_id FROM friends 
+                f INNER JOIN public.users u on u.id_user = f.user2_id 
+                WHERE f.user1_id = $1 AND f.is_approved = true`,
+                [id]
+            );
+
+            if (friends.rows.length > 0) {
+                res.status(200).json({ message: 'Получили список друзей', friends: friends.rows });
+            }
+            else {
+                res.status(200).json({ message: 'Список друзей пустой' });
+            }
+        }
+        catch (e) {
+            logger.error(`${funcName}: Ошибка получения листа друзей:`, e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
+    async handlerFriendRequest(req, res) {
+        const funcName = 'handlerFriendRequest';
+
+        const { id_user1, id_user2 } = req.params;
+
+        const client = await db.connect();
+
+        try {
+            await client.query('BEGIN');
+            
+            logger.info(`${funcName}: Проверяем была ли заявка у пользователей ${id_user1}, ${id_user2}`);
+
+            const getFriendRequest = await client.query(
+                `SELECT * FROM FRIENDS
+                 WHERE user1_id = $1 AND user2_id = $2 OR user1_id = $2 OR user2_id = $1`,
+                [id_user1, id_user2]
+            );
+
+            if (getFriendRequest.rows.length > 0) {
+                logger.info(`${funcName}: Заявку нашли проверяем теперь выполнена она или нет`);
+                if (getFriendRequest.rows[0].is_approved === true) {
+                    logger.info(`${funcName}: Заявку выполнена значит удаляем из друзей`);
+                    const deleteFriend = await client.query(
+                        `DELETE FROM friends 
+                        WHERE id = $1`,
+                        [getFriendRequest.rows[0].id]
+                    );
+
+                    if (deleteFriend.rows) {
+                        res.status(200).json({ message: 'Успешно удалили из друзей' });
+                    }
+                }
+                else {
+                    logger.info(`${funcName}: Заявку не выполнена значит добавляем в друзья`);
+                    const addFriend = await client.query(
+                        `UPDATE friends SET is_approved = true 
+                        WHERE id = $1 
+                        RETURNING *`,
+                        [getFriendRequest.rows[0].id]
+                    );
+
+                    if (addFriend.rows) {
+                        res.status(200).json({ message: 'Успешно одобрили заявку в друзья' });
+                    }
+                }
+            }
+            else {
+                logger.info(`${funcName}: Заявку не нашли создаем`);
+                const addRequest = await client.query(
+                    `INSERT INTO friends (user1_id, user2_id, is_approved) VALUES ($1, $2, false) RETURNING *`
+                );
+
+                if (addRequest.rows) {
+                    res.status(200).json({ message: 'Отправили заявку на дружбу' });
+                }
+            }
+
+            await client.query('COMMIT');
+        }
+        catch (e) {
+            await client.query('ROLLBACK');
+            logger.error(`${funcName}: Ошибка функции обработки заявки друзей:`, e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
 }
 
 export default new UserHandler();

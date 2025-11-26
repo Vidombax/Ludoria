@@ -23,5 +23,7 @@ router.post('/rate-comment', authenticateToken, handler.rateComment);
 router.delete('/delete-comment/:idcomment', authenticateToken, handler.deleteComment);
 router.post('/user-following-query/:id', authenticateToken, handler.getFollowingGamesByQueries);
 router.post('/report', authenticateToken, handler.createReport);
+router.get('/friends/:id', authenticateToken, handler.getFriendsList);
+router.post('/friend', authenticateToken, handler.handlerFriendRequest);
 
 export default router;

@@ -135,6 +135,26 @@ async function sendReport(data) {
     return (await axios.post(`/api/report`, data, config)).data;
 }
 
+async function getFriendsList(data) {
+    const config = {
+        headers: {
+            Authorization: `${data.token}`
+        }
+    };
+
+    return (await axios.get(`/api/friends/${data.id_user}`, config)).data;
+}
+
+async function handlerFriendRequest(data) {
+    const config = {
+        headers: {
+            Authorization: `${data.token}`
+        }
+    };
+
+    return (await axios.post(`/api/friend`, data, config)).data;
+}
+
 export default {
     loginUser,
     registrationUser,
@@ -150,5 +170,7 @@ export default {
     createFeedback,
     getSubscribesGamesByUser,
     getSubscribesGamesByQueries,
-    sendReport
+    sendReport,
+    getFriendsList,
+    handlerFriendRequest
 }
