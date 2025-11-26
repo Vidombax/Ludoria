@@ -45,7 +45,7 @@
       }
       else {
         ElNotification({
-          message: '<span style="color: #55c51c; font-weight: bold;">Авторизуйтесь</span> чтобы поставить оценку!',
+          message: '<span style="color: #55c51c; font-weight: bold; cursor: pointer;">Авторизуйтесь</span> чтобы поставить оценку!',
           type: 'warning',
           dangerouslyUseHTMLString: true,
         });

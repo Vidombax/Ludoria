@@ -1120,16 +1120,27 @@ class UserHandler {
             await client.query('BEGIN');
 
             const getFriend = await client.query(
-                `SELECT * FROM friends WHERE user1_id = $1 AND user2_id = $2`,
+                `SELECT * FROM friends 
+                WHERE user1_id = $1 AND user2_id = $2 OR user1_id = $2 AND user2_id = $1`,
                 [id, friend]
             );
 
             if (getFriend.rows.length > 0) {
-                if (getFriend.rows[0].is_approved === true) {
-                    res.status(200).json({ message: 'Пользователи друзья', text: 'Удалить из друзей' });
+                if (getFriend.rows[0].user2_id === Number(id)) {
+                    if (getFriend.rows[0].is_approved === true) {
+                        res.status(200).json({ message: 'Пользователи друзья', text: 'Удалить из друзей' });
+                    }
+                    else {
+                        res.status(200).json({ message: 'Пользователь еще на заявке', text: 'Отказать в заявке' });
+                    }
                 }
                 else {
-                    res.status(200).json({ message: 'Пользователь еще на заявке', text: 'Удалить заявку в друзья' });
+                    if (getFriend.rows[0].is_approved === true) {
+                        res.status(200).json({ message: 'Пользователи друзья', text: 'Удалить из друзей' });
+                    }
+                    else {
+                        res.status(200).json({ message: 'Пользователь еще на заявке', text: 'Удалить заявку в друзья' });
+                    }
                 }
             }
             else {

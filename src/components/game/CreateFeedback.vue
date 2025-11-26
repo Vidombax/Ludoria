@@ -59,7 +59,7 @@
       }
       else {
         ElNotification({
-          message: '<span style="color: #55c51c; font-weight: bold;">Авторизуйтесь</span> чтобы отправить отзыв!',
+          message: '<span style="color: #55c51c; font-weight: bold; cursor: pointer;">Авторизуйтесь</span> чтобы отправить отзыв!',
           type: 'warning',
           dangerouslyUseHTMLString: true,
         });

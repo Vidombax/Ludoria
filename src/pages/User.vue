@@ -216,8 +216,9 @@
       }
       else {
         ElNotification({
-          message: '<span style="color: #55c51c; font-weight: bold;">Авторизуйтесь</span> чтобы отправить запрос!',
+          message: '<span style="color: #55c51c; font-weight: bold; cursor: pointer;">Авторизуйтесь</span> чтобы отправить запрос!',
           type: 'warning',
+          dangerouslyUseHTMLString: true
         });
       }
     }
@@ -264,13 +265,15 @@
 
   onMounted(async () => {
     await getUser();
-    await getFriendStatus();
     settingsDiv = document.getElementsByClassName('settings')[0];
 
     const param = route.query.settingModal;
     if (param === 'true') {
       isModalSettingsClosed.value = true;
       activitySettingsModal();
+    }
+    if (localStorage.getItem('idUser')) {
+      await getFriendStatus();
     }
   });
 </script>
