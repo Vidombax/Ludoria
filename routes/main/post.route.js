@@ -6,6 +6,7 @@ const router = new Router();
 
 router.post('/post', authenticateToken, handler.createPost);
 router.get('/post/:id', handler.getPost);
+router.get('/user-posts/:id', handler.getUserPosts);
 router.post('/update-post', authenticateToken, handler.updatePost);
 router.post('/rate-post', authenticateToken, handler.ratePost);
 router.get('/new-post', handler.getNewestPost);

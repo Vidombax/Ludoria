@@ -13,7 +13,7 @@
 
   const info_obj = {
     href: '/posts',
-    name_info: 'Новости',
+    name_info: 'Новости & Статьи',
     color_scheme: 'rgba(92,232,22,0.27)',
     color_name: 'rgb(56,145,12)'
   }
@@ -38,9 +38,10 @@
         :name="item.name"
         :date="item.create_data"
         :image="item.main_picture"
+        :is-my-posts-page="false"
     />
     <h3 v-else>
-      Не нашли статей для вас :(
+      Не нашли новостей или статей для вас :(
     </h3>
   </div>
 </template>

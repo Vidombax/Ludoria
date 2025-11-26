@@ -15,6 +15,9 @@ async function createPost(data) {
 async function getPost(id) {
     return (await axios.get(`/api/post/${id}`)).data;
 }
+async function getUserPosts(id) {
+    return (await axios.get(`/api/user-posts/${id}`)).data;
+}
 async function updatePost(data) {
     const config = {
         headers: {
@@ -49,5 +52,6 @@ export default {
     createPost,
     updatePost,
     ratePost,
-    deletePost
+    deletePost,
+    getUserPosts
 }

@@ -15,6 +15,10 @@ import User from '@/pages/User.vue'
 import Game from '@/pages/Game.vue'
 import UserList from '@/pages/UserList.vue'
 import Games from '@/pages/Games.vue'
+import Post from '@/pages/Post.vue'
+import Posts from '@/pages/Posts.vue'
+import CreatePost from '@/pages/CreatePost.vue'
+import UserPosts from '@/pages/UserPosts.vue'
 
 const pinia = createPinia();
 const app = createApp(App);
@@ -26,6 +30,10 @@ const routes = [
     { path: '/game/:id', name: 'Game', component: Game },
     { path: '/user/:id/list', name: 'UserList', component: UserList },
     { path: '/games', name: 'Games', component: Games },
+    { path: '/post/:id', name: 'Post', component: Post },
+    { path: '/posts', name: 'Posts', component: Posts },
+    { path: '/user/:id/posts', name: 'UserPosts', component: UserPosts },
+    { path: '/create-post', name: 'CreatePost', component: CreatePost },
 ];
 
 const router = createRouter({

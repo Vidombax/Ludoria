@@ -6,7 +6,7 @@ class PostHandler {
     async createPost(req, res) {
         const funcName = 'createPost';
 
-        const { id_game, id_user, header, description } = req.body;
+        const { id_game, id_user, header, description, is_article } = req.body;
 
         const client = await db.connect();
 
@@ -14,9 +14,9 @@ class PostHandler {
             await client.query('BEGIN');
 
             const createPost = await client.query(
-                'INSERT INTO posts (id_game, id_user, header, description, create_data) ' +
-                'VALUES ($1, $2, $3, $4, CURRENT_DATE)',
-                [id_game, id_user, header.trim(), description.trim()]
+                'INSERT INTO posts (id_game, id_user, header, description, create_data, is_article) ' +
+                'VALUES ($1, $2, $3, $4, CURRENT_DATE, $5)',
+                [id_game, id_user, header.trim(), description.trim(), is_article]
             );
 
             await setRedisValue(`post:${createPost.rows[0]}`, JSON.stringify(createPost.rows[0]));
@@ -52,7 +52,7 @@ class PostHandler {
                 await client.query('BEGIN');
 
                 const { rows } = await client.query(
-                    `SELECT id_post, id_game, id_user, header, description, create_data FROM posts 
+                    `SELECT id_post, id_game, id_user, header, description, create_data, is_article FROM posts 
                                                                    WHERE id_post = $1
                                                                    `,
                     [id]
@@ -74,6 +74,37 @@ class PostHandler {
         catch (e) {
             await client.query('ROLLBACK');
             logger.error(`${funcName}: Ошибка вывода поста:`, e);
+            res.status(500).json({ message: 'Ошибка на стороне сервера' });
+        }
+        finally {
+            client.release();
+        }
+    }
+    async getUserPosts(req, res) {
+        const funcName = 'getPosts';
+
+        const { id } = req.params;
+
+        const client = await db.connect();
+
+        try {
+            const articles = await client.query(
+                `SELECT * FROM posts WHERE id_user = $1 AND is_article = true`,
+                [id]
+            );
+
+            const news = await client.query(
+                'SELECT posts.id_post, posts.id_game, g.name, g.main_picture, posts.header, posts.description, posts.create_data, posts.is_article ' +
+                'FROM posts ' +
+                'INNER JOIN public.games g ON g.id_game = posts.id_game ' +
+                'WHERE posts.id_user = $1 AND is_article = false',
+                [id]
+            );
+
+            res.status(200).json({ message: 'Получили посты пользователя', articles: articles.rows, news: news.rows});
+        }
+        catch (e) {
+            logger.error(`${funcName}: Ошибка получения постов пользователя:`, e);
             res.status(500).json({ message: 'Ошибка на стороне сервера' });
         }
         finally {
@@ -205,7 +236,7 @@ class PostHandler {
             await client.query('BEGIN');
 
             const posts = await client.query(
-                'SELECT posts.id_post, posts.id_game, g.name, g.main_picture, posts.header, posts.description, posts.create_data ' +
+                'SELECT posts.id_post, posts.id_game, g.name, g.main_picture, posts.header, posts.description, posts.create_data, posts.is_article ' +
                 'FROM posts ' +
                 'INNER JOIN public.games g ON g.id_game = posts.id_game ' +
                 'ORDER BY create_data DESC'

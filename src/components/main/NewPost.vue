@@ -7,7 +7,8 @@
     header: String,
     name: String,
     id_post: Number,
-    date: Date
+    date: Date,
+    isMyPostsPage: Boolean
   });
 
   const urlToPost = ref(`/post/${props.id_post}`);
@@ -33,6 +34,9 @@
           <p class="h">Дата статьи:</p>
           <p>{{ format(parseISO(date), 'dd-MM-yyyy') }}</p>
         </div>
+      </div>
+      <div v-if="isMyPostsPage" style="display: flex; align-items: center; justify-content: center; padding: 8px">
+        <el-button>Редактировать запись</el-button>
       </div>
     </template>
   </el-card>
@@ -72,5 +76,11 @@
   }
   .h {
     font-weight: 800;
+  }
+
+  @media screen and (max-width: 768px) {
+    .el-image {
+      height: 170px;
+    }
   }
 </style>
