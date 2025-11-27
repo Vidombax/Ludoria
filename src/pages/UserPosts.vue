@@ -65,7 +65,11 @@
     </div>
     <transition name="right">
       <div class="articles-div" v-if="isArticleActive === true">
-        <el-button size="large">Написать новую статью</el-button>
+        <el-button size="large">
+          <router-link to="/create-post">
+            Написать новую статью
+          </router-link>
+        </el-button>
         <div class="items-articles">
           <NewPost
               v-for="item in userPosts[0]"
@@ -82,7 +86,11 @@
     </transition>
     <transition name="left">
       <div class="news-div" v-if="isArticleActive === false">
-        <el-button size="large">Написать новую новость</el-button>
+        <el-button size="large">
+          <router-link to="/create-post">
+            Написать новую новость
+          </router-link>
+        </el-button>
         <div class="items-news">
           <NewPost
               v-for="item in userPosts[1]"
