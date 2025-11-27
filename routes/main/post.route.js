@@ -1,10 +1,11 @@
 import { Router } from 'express'
 import { authenticateToken } from '../../middleware/auth.js'
 import handler from '../../handlers/main/post/handler.js'
+import { uploadPostPicture } from '../../services/files_uploader.js'
 
 const router = new Router();
 
-router.post('/post', authenticateToken, handler.createPost);
+router.post('/post', uploadPostPicture.single('file'), authenticateToken, handler.createPost);
 router.get('/post/:id', handler.getPost);
 router.get('/user-posts/:id', handler.getUserPosts);
 router.post('/update-post', authenticateToken, handler.updatePost);

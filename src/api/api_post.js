@@ -6,11 +6,21 @@ async function getNewestPosts() {
 async function createPost(data) {
     const config = {
         headers: {
-            Authorization: `${data.token}`
+            Authorization: `${data.token}`,
         }
     };
 
-    return (await axios.post(`/api/post`, data, config)).data;
+    const formData = new FormData();
+
+    formData.append('file', data.file);
+
+    formData.append('header', data.header);
+    formData.append('description', data.description);
+    formData.append('id_game', data.id_game);
+    formData.append('id_user', data.id_user);
+    formData.append('is_article', data.is_article);
+
+    return (await axios.post(`/api/post`, formData, config)).data;
 }
 async function getPost(id) {
     return (await axios.get(`/api/post/${id}`)).data;

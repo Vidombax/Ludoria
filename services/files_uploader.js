@@ -13,4 +13,5 @@ const createStorage = (folder) => {
 }
 
 export const uploadProfilePicture = multer({ storage: createStorage('profilePictures') });
+export const uploadPostPicture = multer({ storage: createStorage('postPicture') });
 

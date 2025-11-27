@@ -22,10 +22,6 @@
 </template>
 
 <style scoped>
-  main {
-    display: flex;
-    justify-content: center;
-  }
   .non_auth {
     margin-top: 60px;
   }

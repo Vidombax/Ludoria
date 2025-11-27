@@ -1,5 +1,5 @@
 <script setup>
-  import { ref, watch } from 'vue'
+  import { ref } from 'vue'
   import { debounce } from 'lodash'
 
   import api from '@/api/api.js'
@@ -10,6 +10,8 @@
   const userRole = localStorage.getItem('userRole');
   const idUser = Number(localStorage.getItem('idUser'));
   const isArticle = ref(true);
+  const fileInput = ref('');
+  const selectedFile = ref('');
   const post = ref({
     id: 0,
     header: '',
@@ -69,6 +71,70 @@
       });
     }
   }
+
+  const triggerFileInput = () => {
+    fileInput.value.click();
+  }
+
+  const handleFileChange = async () => {
+    const files = fileInput.value.files;
+    if (files && files.length > 0) {
+      if (files[0].size < 5 * 1024 * 1024) {
+        selectedFile.value = files[0];
+
+        if (selectedFile.value !== '') {
+          ElNotification({
+            message: 'Фото добавлено',
+            type: 'success',
+          });
+        }
+      }
+      else {
+        ElNotification({
+          message: 'Размер файла не должен превышать 5 МБ!',
+          type: 'warning',
+        });
+      }
+    }
+  }
+
+  const submitPost = async () => {
+    if (!selectedFile.value) {
+      ElNotification({ message: 'Пожалуйста, выберите фото', type: 'warning' });
+      return;
+    }
+    if (!post.value.header || !post.value.id) {
+      ElNotification({ message: 'Заполните заголовок и выберите игру', type: 'warning' });
+      return;
+    }
+
+    const payload = {
+      token: localStorage.getItem('token'),
+      file: selectedFile.value,
+      header: post.value.header,
+      description: post.value.description,
+      id_game: post.value.id,
+      id_user: idUser,
+      is_article: isArticle.value
+    };
+
+    try {
+      await createPost(payload);
+
+      ElNotification({ message: 'Пост успешно создан!', type: 'success' });
+
+      post.value.header = '';
+      post.value.description = '';
+      selectedFile.value = '';
+
+    } catch (e) {
+      console.error(e);
+      ElNotification({
+        message: e.response?.data?.message || 'Ошибка создания поста',
+        type: 'error'
+      });
+    }
+  }
 </script>
 
 <template>
@@ -89,7 +155,7 @@
         >
           <el-input
               v-model="post.header" class="input"
-              maxlength="80"
+              maxlength="50"
               show-word-limit
               word-limit-position="outside"
           />
@@ -101,7 +167,7 @@
         >
           <el-input
               v-model="post.header" class="input"
-              maxlength="80"
+              maxlength="30"
               show-word-limit
               word-limit-position="outside"
           />
@@ -118,11 +184,26 @@
               class="input"
               placeholder="Поиск..."
               @select="selectGame"
-              fit-input-width="true"
               maxlength="50"
               show-word-limit
               word-limit-position="outside"
           />
+        </el-form-item>
+        <el-form-item
+            v-if="isArticle"
+            label="Логотип статьи"
+            label-position="top"
+        >
+          <input
+              type="file"
+              id="fileInput"
+              @change="handleFileChange"
+              ref="fileInput"
+              accept=".jpg, .png, .jpeg"
+              style="opacity: 0; position: absolute; z-index: 1;"
+          />
+          <el-button @click="triggerFileInput" style="z-index: 50;" v-if="selectedFile === ''">Выбрать файл</el-button>
+          <el-button @click="triggerFileInput" style="z-index: 50;" v-else>Заменить файл</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -135,7 +216,6 @@
     flex-direction: column;
     align-items: stretch;
     justify-content: center;
-    width: 100%;
   }
   .first_settings {
     display: grid;
@@ -146,7 +226,7 @@
   }
   .form {
     display: flex;
-    gap: 12px;
+    gap: 4px;
     align-items: center;
   }
   .which_type_post {
@@ -159,5 +239,28 @@
   .input {
     width: 250px;
     height: 35px;
+  }
+
+  @media screen and (max-width: 1400px) {
+    .form {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media screen and (max-width: 768px) {
+    .first_settings {
+      grid-template-columns: 0.95fr;
+    }
+    .form {
+      grid-template-columns: 0.7fr;
+      justify-items: center;
+      gap: 0;
+    }
+    .input {
+      width: 200px;
+    }
+    .first_settings {
+      padding: 15px 0 0;
+    }
   }
 </style>

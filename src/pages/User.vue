@@ -417,88 +417,90 @@
       </el-form-item>
     </el-form>
   </div>
-  <div class="user">
-    <div class="user_photo">
-      <img :src="userData.photo" alt="user photo" class="img_user" v-if="isUserLoad && userData.photo">
-      <img src="../assets/images/default_profile_photo.png" class="img_user" alt="user photo" v-else>
-    </div>
-    <div class="user_info">
-      <div class="bio">
-        <p class="h">{{ userData.name }}</p>
-        <div class="bio_text">
-          <span v-if="userData.gender !== ''">{{ userData.gender }} /</span>
-          <span v-if="userData.age">{{ userData.age }} лет /</span>
-          <div v-if="isUser">
-            <el-button v-if="isModalSettingsClosed" @click="activitySettingsModal">Редактировать</el-button>
-            <el-button v-else @click="activitySettingsModal">Закрыть</el-button>
-          </div>
-          <div class="based" v-else>
-            <el-button @click="handlerFriendButton(true)" v-if="friendStatus === 'Отказать в заявке'">Принять запрос в друзья</el-button>
-            <el-button @click="handlerFriendButton()" v-if="token != null">{{ friendStatus }}</el-button>
+  <div class="based">
+    <div class="user">
+      <div class="user_photo">
+        <img :src="userData.photo" alt="user photo" class="img_user" v-if="isUserLoad && userData.photo">
+        <img src="../assets/images/default_profile_photo.png" class="img_user" alt="user photo" v-else>
+      </div>
+      <div class="user_info">
+        <div class="bio">
+          <p class="h">{{ userData.name }}</p>
+          <div class="bio_text">
+            <span v-if="userData.gender !== ''">{{ userData.gender }} /</span>
+            <span v-if="userData.age">{{ userData.age }} лет /</span>
+            <div v-if="isUser">
+              <el-button v-if="isModalSettingsClosed" @click="activitySettingsModal">Редактировать</el-button>
+              <el-button v-else @click="activitySettingsModal">Закрыть</el-button>
+            </div>
+            <div class="based" v-else>
+              <el-button @click="handlerFriendButton(true)" v-if="friendStatus === 'Отказать в заявке'">Принять запрос в друзья</el-button>
+              <el-button @click="handlerFriendButton()" v-if="token != null">{{ friendStatus }}</el-button>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="games-list">
-        <router-link :to="url + '/list'">
+        <div class="games-list">
+          <router-link :to="url + '/list'">
+            <el-tooltip placement="bottom">
+              <template #content>Открыть</template>
+              <p class="h" style="width: 140px;">Список игр</p>
+            </el-tooltip>
+          </router-link>
+          <div>
+            <DoughnutChart
+                :chart-data="gameStore.chartGameData"
+                :chart-options="chartOptions"
+            />
+          </div>
+        </div>
+        <div class="feedbacks" v-if="feedbacks.length > 0">
           <el-tooltip placement="bottom">
             <template #content>Открыть</template>
-            <p class="h" style="width: 140px;">Список игр</p>
+            <p class="feedback_header" @click="handlerFeedbackModal">Отзывы: {{ feedbacks.length }}</p>
           </el-tooltip>
-        </router-link>
-        <div>
-          <DoughnutChart
-              :chart-data="gameStore.chartGameData"
-              :chart-options="chartOptions"
+        </div>
+        <transition name="overlay">
+          <div v-if="isModalFeedbacksOpen" class="overlay"></div>
+        </transition>
+        <transition name="fade">
+          <feedbacks-modal
+              v-if="isModalFeedbacksOpen"
+              :feedbacks="feedbacks"
+              :name="userData.name"
           />
+        </transition>
+      </div>
+      <div class="friends">
+        <router-link :to="url + '/friends'">
+          <p class="h">Друзья</p>
+        </router-link>
+        <div class="items">
+          <Friend
+              v-if="friends.length > 0"
+              v-for="item in friends"
+              :key="item.id"
+              :name="item.name"
+              :id="item.id_user"
+              :photo="item.photo"
+          />
+          <h3 v-else>Нет друзей</h3>
         </div>
       </div>
-      <div class="feedbacks" v-if="feedbacks.length > 0">
-        <el-tooltip placement="bottom">
-          <template #content>Открыть</template>
-          <p class="feedback_header" @click="handlerFeedbackModal">Отзывы: {{ feedbacks.length }}</p>
-        </el-tooltip>
-      </div>
-      <transition name="overlay">
-        <div v-if="isModalFeedbacksOpen" class="overlay"></div>
-      </transition>
-      <transition name="fade">
-        <feedbacks-modal
-            v-if="isModalFeedbacksOpen"
-            :feedbacks="feedbacks"
-            :name="userData.name"
-        />
-      </transition>
-    </div>
-    <div class="friends">
-      <router-link :to="url + '/friends'">
-        <p class="h">Друзья</p>
-      </router-link>
-      <div class="items">
-        <Friend
-            v-if="friends.length > 0"
-            v-for="item in friends"
-            :key="item.id"
-            :name="item.name"
-            :id="item.id_user"
-            :photo="item.photo"
-        />
-        <h3 v-else>Нет друзей</h3>
-      </div>
-    </div>
-<!--    <div class="subscribes">-->
-<!--      <a href=""><p class="h">Подписки</p></a>-->
-<!--      <div class="items">-->
-<!--        <a href="/subscribes">Разработчики</a>-->
-<!--        <a href="/subscribes">Игры</a>-->
-<!--        <a href="/subscribes">Франшизы</a>-->
-<!--      </div>-->
-<!--    </div>-->
-<!--    <div class="users_posts">-->
-<!--      <p class="h">Посты пользователя</p>-->
-<!--      <div class="posts">-->
+      <!--    <div class="subscribes">-->
+      <!--      <a href=""><p class="h">Подписки</p></a>-->
+      <!--      <div class="items">-->
+      <!--        <a href="/subscribes">Разработчики</a>-->
+      <!--        <a href="/subscribes">Игры</a>-->
+      <!--        <a href="/subscribes">Франшизы</a>-->
+      <!--      </div>-->
+      <!--    </div>-->
+      <!--    <div class="users_posts">-->
+      <!--      <p class="h">Посты пользователя</p>-->
+      <!--      <div class="posts">-->
 
-<!--      </div>-->
-<!--    </div>-->
+      <!--      </div>-->
+      <!--    </div>-->
+    </div>
   </div>
 </template>
 

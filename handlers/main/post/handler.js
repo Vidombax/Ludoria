@@ -6,6 +6,11 @@ class PostHandler {
     async createPost(req, res) {
         const funcName = 'createPost';
 
+        if (!req.file) {
+            return res.status(400).json({ message: 'Файл не был загружен' });
+        }
+
+        const photoName = '/postPicture/' + req.file.filename;
         const { id_game, id_user, header, description, is_article } = req.body;
 
         const client = await db.connect();
@@ -14,16 +19,21 @@ class PostHandler {
             await client.query('BEGIN');
 
             const createPost = await client.query(
-                'INSERT INTO posts (id_game, id_user, header, description, create_data, is_article) ' +
-                'VALUES ($1, $2, $3, $4, CURRENT_DATE, $5)',
-                [id_game, id_user, header.trim(), description.trim(), is_article]
+                'INSERT INTO posts (id_game, id_user, header, description, create_data, is_article, photo) ' +
+                'VALUES ($1, $2, $3, $4, CURRENT_DATE, $5, $6) ' +
+                'RETURNING *',
+                [id_game, id_user, header.trim(), description.trim(), is_article, photoName]
             );
 
-            await setRedisValue(`post:${createPost.rows[0]}`, JSON.stringify(createPost.rows[0]));
-            res.status(200).json({ message: 'Пост был создан' });
+            const newPost = createPost.rows[0];
 
+            if (newPost) {
+                await setRedisValue(`post:${createPost.rows[0]}`, JSON.stringify(createPost.rows[0]));
+            }
 
             await client.query('COMMIT');
+
+            res.status(200).json({ message: 'Пост был создан' });
         }
         catch (e) {
             await client.query('ROLLBACK');

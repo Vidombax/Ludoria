@@ -223,7 +223,7 @@
 <template>
   <transition name="modal">
     <ModalDefault v-if="!isLogin" info="Авторизуйтесь чтобы продолжить!" />
-  </transition>>
+  </transition>
   <div class="container">
     <div class="games">
       <router-link :to="url">
