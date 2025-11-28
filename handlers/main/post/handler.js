@@ -5,13 +5,16 @@ import { deleteRedisValue, getRedisValue, setRedisValue } from '../../../redis.j
 class PostHandler {
     async createPost(req, res) {
         const funcName = 'createPost';
-
-        if (!req.file) {
-            return res.status(400).json({ message: 'Файл не был загружен' });
-        }
-
-        const photoName = '/postPicture/' + req.file.filename;
         const { id_game, id_user, header, description, is_article } = req.body;
+        let photoName;
+
+        if (is_article === true) {
+            if (!req.file) {
+                return res.status(400).json({ message: 'Файл не был загружен' });
+            }
+
+            photoName = '/postPicture/' + req.file.filename
+        }
 
         const client = await db.connect();
 
@@ -19,8 +22,8 @@ class PostHandler {
             await client.query('BEGIN');
 
             const createPost = await client.query(
-                'INSERT INTO posts (id_game, id_user, header, description, create_data, is_article, photo) ' +
-                'VALUES ($1, $2, $3, $4, CURRENT_DATE, $5, $6) ' +
+                'INSERT INTO posts (id_game, id_user, header, description, is_active, create_data, is_article, photo) ' +
+                'VALUES ($1, $2, $3, $4, false, CURRENT_DATE, $5, $6) ' +
                 'RETURNING *',
                 [id_game, id_user, header.trim(), description.trim(), is_article, photoName]
             );
@@ -28,7 +31,7 @@ class PostHandler {
             const newPost = createPost.rows[0];
 
             if (newPost) {
-                await setRedisValue(`post:${createPost.rows[0]}`, JSON.stringify(createPost.rows[0]));
+                await setRedisValue(`post:${newPost.id_post}`, JSON.stringify(newPost));
             }
 
             await client.query('COMMIT');
@@ -69,7 +72,7 @@ class PostHandler {
                 );
 
                 if (rows.length > 0) {
-                    logger.info(`${funcName}: Нашли новсть по заданному ID: ${id}`);
+                    logger.info(`${funcName}: Нашли новость по заданному ID: ${id}`);
                     await setRedisValue(`post:${id}`, JSON.stringify(rows[0]));
 
                     res.status(200).json({ message: 'Нашли новость', post: rows[0] });

@@ -5,6 +5,7 @@
   import api from '@/api/api.js'
   import { ElNotification } from 'element-plus'
   import TextEditor from '@/components/TextEditor.vue'
+  import ArrowLeft from '@/assets/svg/ArrowLeft.vue'
 
   const { createPost, getGameByName, getGameInfo } = api;
 
@@ -20,6 +21,7 @@
     game_name: '',
     isRAWG: false
   });
+  const url = ref(`/user/${localStorage.getItem('idUser')}/posts`);
 
   const searchGames = debounce(
       async (queryString, callback) => {
@@ -101,20 +103,21 @@
 
   const emitText = (text) => {
     post.value.description = text;
-    console.log(post.value.description)
   }
 
   const submitPost = async () => {
-    if (!selectedFile.value) {
-      ElNotification({ message: 'Пожалуйста, выберите фото', type: 'warning' });
-      return;
+    if (isArticle === true) {
+      if (!selectedFile.value) {
+        ElNotification({ message: 'Пожалуйста, выберите фото', type: 'warning' });
+        return;
+      }
     }
     if (!post.value.header || !post.value.id) {
       ElNotification({ message: 'Заполните заголовок и выберите игру', type: 'warning' });
       return;
     }
 
-    const payload = {
+    let payload = {
       token: localStorage.getItem('token'),
       file: selectedFile.value,
       header: post.value.header,
@@ -125,6 +128,13 @@
     };
 
     try {
+      if (post.value.isRAWG === true) {
+        const response = await getGameInfo(post.value.id);
+        if (response.game) {
+          payload.id_game = response.game.id_game;
+        }
+      }
+
       await createPost(payload);
 
       ElNotification({ message: 'Пост успешно создан!', type: 'success' });
@@ -144,6 +154,15 @@
 </script>
 
 <template>
+  <div>
+    <router-link :to="url">
+      <div class="back_to_profile">
+        <ArrowLeft style="transform: rotate(90deg)"/>
+        <p v-if="userRole === '0'"><span class="h">К странице "Мои статьи"</span></p>
+        <p v-else><span class="h">К странице "Мои новости и статьи"</span></p>
+      </div>
+    </router-link>
+  </div>
   <div class="container">
     <div class="first_settings">
       <div class="which_type_post">
@@ -218,6 +237,10 @@
           @text-editor="emitText"
       />
     </div>
+    <div class="public">
+      <el-button v-if="isArticle" @click="submitPost">Отправить статью на рассмотрение</el-button>
+      <el-button v-else @click="submitPost">Отправить новость на рассмотрение</el-button>
+    </div>
   </div>
 </template>
 
@@ -250,6 +273,15 @@
   .input {
     width: 250px;
     height: 35px;
+  }
+  .public {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+  }
+  .back_to_profile {
+    padding: 12px;
   }
 
   @media screen and (max-width: 1400px) {

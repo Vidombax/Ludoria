@@ -464,13 +464,6 @@
     padding: 0 0.4rem;
     border-bottom: 2px solid #e0e0e0;
   }
-  .back_to_profile {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-  }
   .back_to_profile p {
     font-weight: 800;
   }
