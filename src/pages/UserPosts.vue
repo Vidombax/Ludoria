@@ -76,7 +76,7 @@
               :key="item.id"
               :id_post="item.id_post"
               :header="item.header"
-              :name="item.description"
+              :name="item.name"
               :date="item.create_data"
               :image="item.photo"
               :is-my-posts-page="true"

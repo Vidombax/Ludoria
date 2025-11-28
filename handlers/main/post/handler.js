@@ -102,7 +102,10 @@ class PostHandler {
 
         try {
             const articles = await client.query(
-                `SELECT * FROM posts WHERE id_user = $1 AND is_article = true`,
+                'SELECT posts.id_post, posts.id_game, g.name, posts.header, posts.description, posts.photo, posts.create_data, posts.is_article ' +
+                'FROM posts ' +
+                'INNER JOIN public.games g ON g.id_game = posts.id_game ' +
+                'WHERE posts.id_user = $1 AND is_article = true',
                 [id]
             );
 

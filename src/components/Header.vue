@@ -209,6 +209,7 @@
     width: 100%;
     background: linear-gradient(135deg, #0f2027, #203a43);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    max-height: 75px;
   }
   .logo {
     transition: transform 0.3s ease;
@@ -329,6 +330,7 @@
   @media screen and (max-width: 768px) {
     header {
       gap: 1rem;
+      max-height: 75px;
     }
     .selector {
       width: 100px;
@@ -337,7 +339,7 @@
       width: 180px;
     }
     .search_items {
-      margin-top: 25px;
+      margin-top: 20px;
       margin-left: -120px;
       border-top-left-radius: 0;
       border-top-right-radius: 0;

@@ -26,6 +26,6 @@
     margin-top: 60px;
   }
   .auth {
-    margin-top: 90px;
+    margin-top: 70px;
   }
 </style>
