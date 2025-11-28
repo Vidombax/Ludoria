@@ -4,6 +4,7 @@
 
   import api from '@/api/api.js'
   import { ElNotification } from 'element-plus'
+  import TextEditor from '@/components/TextEditor.vue'
 
   const { createPost, getGameByName, getGameInfo } = api;
 
@@ -96,6 +97,11 @@
         });
       }
     }
+  }
+
+  const emitText = (text) => {
+    post.value.description = text;
+    console.log(post.value.description)
   }
 
   const submitPost = async () => {
@@ -206,6 +212,11 @@
           <el-button @click="triggerFileInput" style="z-index: 50;" v-else>Заменить файл</el-button>
         </el-form-item>
       </el-form>
+    </div>
+    <div class="description">
+      <TextEditor
+          @text-editor="emitText"
+      />
     </div>
   </div>
 </template>
