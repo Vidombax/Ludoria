@@ -65,20 +65,21 @@ class PostHandler {
                 await client.query('BEGIN');
 
                 const { rows } = await client.query(
-                    `SELECT id_post, id_game, id_user, header, description, create_data, is_article FROM posts 
-                                                                   WHERE id_post = $1
-                                                                   `,
+                    'SELECT posts.id_post, posts.id_game, g.name, g.main_picture, posts.header, posts.description, posts.create_data, posts.is_article ' +
+                    'FROM posts ' +
+                    'INNER JOIN public.games g ON g.id_game = posts.id_game ' +
+                    'WHERE posts.id_user = $1',
                     [id]
                 );
 
                 if (rows.length > 0) {
-                    logger.info(`${funcName}: Нашли новость по заданному ID: ${id}`);
+                    logger.info(`${funcName}: Нашли пост по заданному ID: ${id}`);
                     await setRedisValue(`post:${id}`, JSON.stringify(rows[0]));
 
-                    res.status(200).json({ message: 'Нашли новость', post: rows[0] });
+                    res.status(200).json({ message: 'Нашли пост', post: rows[0] });
                 }
                 else {
-                    res.status(200).json({ message: 'Не нашли новость по заданному ID' });
+                    res.status(200).json({ message: 'Не нашли пост по заданному ID' });
                 }
 
                 await client.query('COMMIT');

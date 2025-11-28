@@ -1,21 +1,26 @@
 <script setup>
   import { onMounted, ref } from 'vue'
   import { useRoute } from 'vue-router'
-  import { ElNotification } from 'element-plus'
 
+  import { ElNotification } from 'element-plus'
   import api from '@/api/api.js'
+  import { openLoading } from '../../services/helpers.js'
 
   const route = useRoute();
   const id = ref(route.params.id);
   const { getPost } = api;
 
   const post = ref({});
-  const loading = ref(false);
+  const isLoading = ref(true);
 
   const getPostData = async () => {
     try {
+      await openLoading(isLoading.value);
+
       const response = await getPost(id.value);
       post.value = response.post;
+
+      isLoading.value = false;
     }
     catch (e) {
       console.error('Ошибка при выполнении запроса:', e);
@@ -34,11 +39,66 @@
 </script>
 
 <template>
-  <div class="post" v-if="post">
+  <div class="post based" v-if="isLoading === false">
+    <div class="post_navigation">
 
+    </div>
+    <div class="post_information">
+
+    </div>
+    <div class="post_header">
+
+    </div>
+    <div class="post_author">
+
+    </div>
+    <div class="post_text">
+
+    </div>
+    <div class="game_about_post">
+      <div class="game">
+        <div class="game_logo">
+
+        </div>
+        <div class="game_info">
+          <div class="game_name">
+
+          </div>
+          <div class="information_of_game">
+
+          </div>
+        </div>
+      </div>
+      <div class="game_rate">
+        <div class="rate">
+
+        </div>
+        <div class="user_rate">
+
+        </div>
+      </div>
+    </div>
+    <div class="comments">
+      <div class="header">
+
+      </div>
+      <div class="items">
+
+      </div>
+    </div>
+    <div class="another_posts">
+      <div class="header">
+
+      </div>
+      <div class="items">
+
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
+  .post {
 
+  }
 </style>
