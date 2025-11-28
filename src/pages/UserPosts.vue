@@ -220,7 +220,7 @@
     .items-articles,
     .items-news {
       padding: 12px;
-      width: 140%;
+      width: 100%;
       box-sizing: border-box;
       grid-template-columns: repeat(1, 1fr);
     }
