@@ -1,3 +1,4 @@
+import axios from 'axios'
 import db from '../../../db.js'
 import logger from '../../../logger.js'
 import { deleteRedisValue, getRedisValue, setRedisValue } from '../../../redis.js'
@@ -51,6 +52,13 @@ class PostHandler {
         const funcName = 'getPost';
 
         const { id } = req.params;
+        const { id_user, token } = req.body;
+        let post = {
+            post: [],
+            userRate: {},
+            comments: [],
+            anotherPost: []
+        };
 
         const client = await db.connect();
 
@@ -65,18 +73,40 @@ class PostHandler {
                 await client.query('BEGIN');
 
                 const { rows } = await client.query(
-                    'SELECT posts.id_post, posts.id_game, g.name, g.main_picture, posts.header, posts.description, posts.create_data, posts.is_article ' +
-                    'FROM posts ' +
-                    'INNER JOIN public.games g ON g.id_game = posts.id_game ' +
-                    'WHERE posts.id_user = $1',
-                    [id]
+                    `
+                        SELECT
+                            u.id_user as author_id,
+                            u.name as author_name,
+                            u.photo as author_photo,
+                            p.id_post,
+                            p.header as header_post,
+                            p.description as header_description,
+                            p.create_data as header_create_data,
+                            p.is_article,
+                            p.photo as article_photo,
+                            p.id_game,
+                            g.main_picture as game_photo
+                        FROM posts p
+                                 INNER JOIN public.games g ON g.id_game = p.id_game
+                                 INNER JOIN public.users u on u.id_user = p.id_user
+                        WHERE p.id_post = ${id} AND p.is_active = true
+                    `
                 );
 
                 if (rows.length > 0) {
-                    logger.info(`${funcName}: Нашли пост по заданному ID: ${id}`);
-                    await setRedisValue(`post:${id}`, JSON.stringify(rows[0]));
+                    post.post = rows[0];
+                    if (id_user !== 0) {
+                        const userRateOnGame = await axios.get(`${process.env.HOST}/get-rate/${id_user}/${rows[0].id_game}`);
+                        console.log(userRateOnGame.data)
+                        if (userRateOnGame.data) {
+                            post.userRate = userRateOnGame.data.message;
+                        }
+                    }
 
-                    res.status(200).json({ message: 'Нашли пост', post: rows[0] });
+                    logger.info(`${funcName}: Нашли пост по заданному ID: ${id}`);
+                    // await setRedisValue(`post:${id}`, JSON.stringify(rows[0]));
+
+                    res.status(200).json({ message: 'Нашли пост', post });
                 }
                 else {
                     res.status(200).json({ message: 'Не нашли пост по заданному ID' });

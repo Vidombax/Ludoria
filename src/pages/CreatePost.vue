@@ -137,7 +137,12 @@
 
       await createPost(payload);
 
-      ElNotification({ message: 'Пост успешно создан!', type: 'success' });
+      if (isArticle.value === true) {
+        ElNotification({ message: 'Статья отправлена на рассмотрение!', type: 'success' });
+      }
+      else {
+        ElNotification({ message: 'Новость отправлена на рассмотрение!', type: 'success' });
+      }
 
       post.value.header = '';
       post.value.description = '';
@@ -180,7 +185,7 @@
         >
           <el-input
               v-model="post.header" class="input"
-              maxlength="50"
+              maxlength="100"
               show-word-limit
               word-limit-position="outside"
           />
@@ -192,7 +197,7 @@
         >
           <el-input
               v-model="post.header" class="input"
-              maxlength="30"
+              maxlength="100"
               show-word-limit
               word-limit-position="outside"
           />

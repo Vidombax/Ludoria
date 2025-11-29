@@ -15,7 +15,7 @@ router.get('/sub-to-game/:iduser/:idgame', authenticateToken, handler.getSubscri
 router.post('/subscribe', authenticateToken, handler.subscribeToGame);
 router.post('/unsubscribe', authenticateToken, handler.unsubscribeToGame);
 router.post('/rate-game', authenticateToken, handler.rateGame);
-router.get('/get-rate/:iduser/:idgame', authenticateToken, handler.getUserScore);
+router.get('/get-rate/:iduser/:idgame', handler.getUserScore);
 router.post('/feedback', authenticateToken, handler.createFeedback);
 router.post('/rate-feedback', authenticateToken, handler.rateFeedback);
 router.post('/comment', authenticateToken, handler.createComment);

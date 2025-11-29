@@ -6,7 +6,7 @@ import { uploadPostPicture } from '../../services/files_uploader.js'
 const router = new Router();
 
 router.post('/post', uploadPostPicture.single('file'), authenticateToken, handler.createPost);
-router.get('/post/:id', handler.getPost);
+router.post('/post/:id', handler.getPost);
 router.get('/user-posts/:id', handler.getUserPosts);
 router.post('/update-post', authenticateToken, handler.updatePost);
 router.post('/rate-post', authenticateToken, handler.ratePost);

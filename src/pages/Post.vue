@@ -15,9 +15,14 @@
 
   const getPostData = async () => {
     try {
+      const data = {
+        id: id.value,
+        id_user: Number(localStorage.getItem('idUser')) || 0,
+        token: localStorage.getItem('token') || null
+      }
       await openLoading(isLoading.value);
 
-      const response = await getPost(id.value);
+      const response = await getPost(data);
       post.value = response.post;
 
       isLoading.value = false;

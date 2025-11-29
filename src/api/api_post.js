@@ -22,8 +22,14 @@ async function createPost(data) {
 
     return (await axios.post(`/api/post`, formData, config)).data;
 }
-async function getPost(id) {
-    return (await axios.get(`/api/post/${id}`)).data;
+async function getPost(data) {
+    const config = {
+        headers: {
+            Authorization: `${data.token}`,
+        }
+    };
+
+    return (await axios.post(`/api/post/${data.id}`, data, config)).data;
 }
 async function getUserPosts(id) {
     return (await axios.get(`/api/user-posts/${id}`)).data;
