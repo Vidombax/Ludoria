@@ -1,7 +1,6 @@
 import axios from 'axios'
 import db from '../../../db.js'
 import logger from '../../../logger.js'
-import { deleteRedisValue, getRedisValue, setRedisValue } from '../../../redis.js'
 
 class PostHandler {
     async createPost(req, res) {
@@ -29,12 +28,6 @@ class PostHandler {
                 [id_game, id_user, header.trim(), description.trim(), is_article, photoName]
             );
 
-            const newPost = createPost.rows[0];
-
-            if (newPost) {
-                await setRedisValue(`post:${newPost.id_post}`, JSON.stringify(newPost));
-            }
-
             await client.query('COMMIT');
 
             res.status(200).json({ message: 'Пост был создан' });
@@ -52,68 +45,93 @@ class PostHandler {
         const funcName = 'getPost';
 
         const { id } = req.params;
-        const { id_user, token } = req.body;
+        const { id_user } = req.body;
         let post = {
             post: [],
             userRate: {},
             comments: [],
-            anotherPost: []
+            anotherPosts: []
         };
 
         const client = await db.connect();
 
         try {
-            let postRedis = await getRedisValue(`post:${id}`);
+            await client.query('BEGIN');
 
-            if (postRedis !== null) {
-                res.status(200).json({ message: 'Получили данные о посте', game: JSON.parse(postRedis) });
-                logger.info(`${funcName}: Нашли данные о посте ${id} в редисе`);
-            }
-            else {
-                await client.query('BEGIN');
+            const { rows } = await client.query(
+                `
+                    SELECT
+                        u.id_user as author_id,
+                        u.name as author_name,
+                        u.photo as author_photo,
+                        p.id_post,
+                        p.header as header_post,
+                        p.description as header_description,
+                        p.create_data as create_data,
+                        p.is_article,
+                        p.photo as article_photo,
+                        p.id_game,
+                        g.main_picture as game_photo
+                    FROM posts p
+                             INNER JOIN public.games g ON g.id_game = p.id_game
+                             INNER JOIN public.users u on u.id_user = p.id_user
+                    WHERE p.id_post = ${id} AND p.is_active = true
+                `
+            );
 
-                const { rows } = await client.query(
-                    `
-                        SELECT
-                            u.id_user as author_id,
-                            u.name as author_name,
-                            u.photo as author_photo,
-                            p.id_post,
-                            p.header as header_post,
-                            p.description as header_description,
-                            p.create_data as header_create_data,
-                            p.is_article,
-                            p.photo as article_photo,
-                            p.id_game,
-                            g.main_picture as game_photo
-                        FROM posts p
-                                 INNER JOIN public.games g ON g.id_game = p.id_game
-                                 INNER JOIN public.users u on u.id_user = p.id_user
-                        WHERE p.id_post = ${id} AND p.is_active = true
-                    `
+            if (rows.length > 0) {
+                post.post = rows[0];
+                if (id_user !== 0) {
+                    logger.info(`${funcName}: Получаем оценку пользователя ${id_user}`);
+                    const userRateOnGame = await axios.get(`${process.env.HOST}/get-rate/${id_user}/${rows[0].id_game}`);
+                    if (userRateOnGame.data) {
+                        post.userRate = userRateOnGame.data.message;
+                    }
+                }
+
+                logger.info(`${funcName}: Получаем комментарии по посту ${id}`);
+                const getCommentsByPost = await client.query(
+                    `SELECT u.id_user, u.name, u.photo, c.comment 
+                        FROM comments c 
+                            INNER JOIN public.users u ON u.id_user = c.id_user
+                    WHERE c.id_post = $1`,
+                    [id]
                 );
 
-                if (rows.length > 0) {
-                    post.post = rows[0];
-                    if (id_user !== 0) {
-                        const userRateOnGame = await axios.get(`${process.env.HOST}/get-rate/${id_user}/${rows[0].id_game}`);
-                        console.log(userRateOnGame.data)
-                        if (userRateOnGame.data) {
-                            post.userRate = userRateOnGame.data.message;
-                        }
-                    }
-
-                    logger.info(`${funcName}: Нашли пост по заданному ID: ${id}`);
-                    // await setRedisValue(`post:${id}`, JSON.stringify(rows[0]));
-
-                    res.status(200).json({ message: 'Нашли пост', post });
-                }
-                else {
-                    res.status(200).json({ message: 'Не нашли пост по заданному ID' });
+                if (getCommentsByPost.rows.length > 0) {
+                    post.comments = getCommentsByPost.rows;
                 }
 
-                await client.query('COMMIT');
+                logger.info(`${funcName}: Получаем еще посты по игре ${rows[0].id_game}`);
+                const getAnotherPostsByGame = await client.query(
+                    `SELECT
+                         p.id_post,
+                         p.header as header_post,
+                         p.create_data as create_data,
+                         p.is_article,
+                         p.photo as article_photo,
+                         p.id_game,
+                         g.main_picture as game_photo
+                     FROM posts p
+                              INNER JOIN public.games g ON g.id_game = p.id_game
+                     WHERE NOT p.id_post = $1 AND p.is_active = true AND p.id_game = $2`,
+                    [id, rows[0].id_game]
+                );
+
+                if (getAnotherPostsByGame.rows.length > 0) {
+                    post.anotherPosts = getAnotherPostsByGame.rows;
+                }
+
+                logger.info(`${funcName}: Нашли пост по заданному ID: ${id}`);
+
+                res.status(200).json({ message: 'Нашли пост', post });
             }
+            else {
+                res.status(200).json({ message: `Не нашли пост по заданному ID ${id}` });
+            }
+
+            await client.query('COMMIT');
+
         }
         catch (e) {
             await client.query('ROLLBACK');

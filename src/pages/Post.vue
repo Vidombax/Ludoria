@@ -1,5 +1,5 @@
 <script setup>
-  import { onMounted, ref } from 'vue'
+  import {onMounted, ref, watch} from 'vue'
   import { useRoute } from 'vue-router'
 
   import { ElNotification } from 'element-plus'
@@ -8,9 +8,10 @@
 
   const route = useRoute();
   const id = ref(route.params.id);
-  const { getPost } = api;
+  const { getPost, getGameInfo } = api;
 
   const post = ref({});
+  const game = ref({});
   const isLoading = ref(true);
 
   const getPostData = async () => {
@@ -25,7 +26,23 @@
       const response = await getPost(data);
       post.value = response.post;
 
+      await getGame(post.value.post.id_game);
+
       isLoading.value = false;
+    }
+    catch (e) {
+      console.error('Ошибка при выполнении запроса:', e);
+      ElNotification({
+        message: e.response.data.message,
+        type: 'error',
+      });
+    }
+  }
+
+  const getGame = async (id) => {
+    try {
+      const response = await getGameInfo(id);
+      game.value = response.game;
     }
     catch (e) {
       console.error('Ошибка при выполнении запроса:', e);
